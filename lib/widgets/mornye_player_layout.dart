@@ -17,14 +17,12 @@ import 'package:mornye/widgets/player_volume_control.dart';
 import 'package:mornye/widgets/overflow_marquee.dart';
 import 'package:mornye/widgets/player_artwork.dart';
 import 'package:mornye/widgets/player_gesture_regions.dart';
-import 'package:mornye/widgets/player_lyrics.dart';
-import 'package:mornye/widgets/player_lyrics_controls.dart';
 import 'package:mornye/widgets/player_metadata_title.dart';
 import 'package:mornye/widgets/playback_source_label.dart';
 import 'package:mornye/widgets/player_playback_controls.dart';
 import 'package:mornye/widgets/player_track_swipe.dart';
 
-const _mornyeContentInset = mornyeLyricsContentInset;
+const _mornyeContentInset = 36.0;
 const _mornyeHeaderButtonSize = 48.0;
 const _mornyeCompactIconSize = 28.0;
 
@@ -50,10 +48,6 @@ class MornyePlayerLayout extends ConsumerWidget {
     required this.artworkTopInset,
     required this.artworkKeys,
     required this.artworkForeground,
-    required this.lyricsControlsHidden,
-    required this.lyricsOptionsOpen,
-    required this.lyricsBuilder,
-    required this.lyricsOptions,
     required this.onPageChanged,
     required this.onTrackNavigation,
     required this.onMoreActions,
@@ -76,10 +70,6 @@ class MornyePlayerLayout extends ConsumerWidget {
   final double artworkTopInset;
   final MornyePlayerArtworkKeys artworkKeys;
   final ValueListenable<Map<String, Color>> artworkForeground;
-  final bool lyricsControlsHidden;
-  final bool lyricsOptionsOpen;
-  final Widget Function(bool showOptions) lyricsBuilder;
-  final Widget? lyricsOptions;
   final ValueChanged<int> onPageChanged;
   final Future<void> Function(BuildContext, MediaItem) onTrackNavigation;
   final Future<void> Function(BuildContext, MediaItem, Rect?) onMoreActions;
@@ -87,11 +77,9 @@ class MornyePlayerLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(musicPlayerControllerProvider);
-    final showLyrics = page == 1;
-    final showQueue = page == 2;
-    final compactStage = showLyrics || showQueue;
+    final showQueue = page == 1;
     ColorScheme foreground(String region) {
-      final color = compactStage
+      final color = showQueue
           ? null
           : artworkForeground.value[region] ?? colorScheme.onSurface;
       return color == null
@@ -112,10 +100,6 @@ class MornyePlayerLayout extends ConsumerWidget {
     );
     final landscape =
         MediaQuery.sizeOf(context).width > MediaQuery.sizeOf(context).height;
-    Widget hideControls(Widget child) => PlayerLyricsControlsVisibility(
-      hidden: showLyrics && lyricsControlsHidden && !landscape,
-      child: child,
-    );
     // Any rebuild below this builder, such as a position tick, lays it out
     // and so repaints its parent; what it returns keeps its own layer (the
     // scroll viewport has one already).
@@ -134,9 +118,9 @@ class MornyePlayerLayout extends ConsumerWidget {
           double progress = 0,
         }) => LayoutBuilder(
           builder: (context, stage) {
-            final compact = compactStage && !artworkOnly;
+            final compact = showQueue && !artworkOnly;
             final expandedArtwork =
-                artworkOnly || (!compactStage && insetArtwork);
+                artworkOnly || (!showQueue && insetArtwork);
             final artSize = (stage.maxWidth - (artworkOnly ? 56 : 48)).clamp(
               0.0,
               (stage.maxHeight - (artworkOnly ? 24 : 8)).clamp(0.0, 360.0),
@@ -189,7 +173,7 @@ class MornyePlayerLayout extends ConsumerWidget {
                               fit: StackFit.expand,
                               children: [
                                 // Preserve each panel's parent and key when
-                                // it becomes outgoing, including lyric scroll.
+                                // it becomes outgoing.
                                 for (final child in [
                                   ...previousChildren,
                                   ?currentChild,
@@ -205,21 +189,13 @@ class MornyePlayerLayout extends ConsumerWidget {
                               ],
                             ),
                         // Keep the outgoing panel until it fades out;
-                        // closing the queue must never substitute lyrics.
+                        // closing the queue must never substitute the player.
                         child: compact
                             ? KeyedSubtree(
                                 key: ValueKey(page),
-                                child: showQueue
-                                    ? MornyePlayerQueue(
-                                        colorScheme: colorScheme,
-                                      )
-                                    : _mornyeLyricsViewport(
-                                        context,
-                                        lyricsBuilder(false),
-                                        visibleHeight:
-                                            stage.minHeight -
-                                            (8 + compactHeaderHeight + 16),
-                                      ),
+                                child: MornyePlayerQueue(
+                                  colorScheme: colorScheme,
+                                ),
                               )
                             : null,
                       ),
@@ -392,18 +368,9 @@ class MornyePlayerLayout extends ConsumerWidget {
           return RepaintBoundary(
             child: MornyeLandscapePlayer(
               page: page,
-              isPlaying: ref.watch(playbackPlayingProvider),
-              autoHideLyricsControls: ref.watch(
-                settingsProvider.select(
-                  (settings) => settings.autoHideLyricsControls,
-                ),
-              ),
-              controlsHeldOpen: lyricsOptionsOpen,
               onPageChanged: onPageChanged,
               artwork: stage(artworkOnly: true),
               header: _trackHeader(context, colorScheme, compact: true),
-              lyrics: lyricsBuilder(true),
-              lyricsOptions: showLyrics ? lyricsOptions : null,
               queue: MornyePlayerQueue(colorScheme: colorScheme),
               controls: controls(),
               volume: showVolume ? const PlayerVolumeControl() : null,
@@ -411,9 +378,8 @@ class MornyePlayerLayout extends ConsumerWidget {
           );
         }
 
-        final options = showLyrics ? lyricsOptions : null;
         Widget content() => TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: compactStage ? 1 : 0),
+          tween: Tween(begin: 0, end: showQueue ? 1 : 0),
           duration: motion,
           curve: Curves.easeInOutCubic,
           builder: (context, progress, controls) => CustomMultiChildLayout(
@@ -421,7 +387,6 @@ class MornyePlayerLayout extends ConsumerWidget {
               progress: progress,
               compactHeight: compactHeaderHeight,
               compactLeft: _mornyeContentInset + compactCoverSize + 12,
-              expandLyrics: showLyrics,
             ),
             children: [
               LayoutId(
@@ -444,31 +409,24 @@ class MornyePlayerLayout extends ConsumerWidget {
                 ),
               ),
               LayoutId(id: _PlayerHeaderSlot.controls, child: controls!),
-              if (options != null)
-                LayoutId(
-                  id: _PlayerHeaderSlot.lyricsOptions,
-                  child: hideControls(options),
-                ),
             ],
           ),
-          child: hideControls(
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                controls(),
-                if (showVolume) ...[
-                  SizedBox(height: volumeGap - transportShift + headroom),
-                  AnimatedBuilder(
-                    animation: artworkForeground,
-                    builder: (context, _) => PlayerVolumeControl(
-                      key: artworkKeys.volume,
-                      foreground: foreground('volume').onSurface,
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              controls(),
+              if (showVolume) ...[
+                SizedBox(height: volumeGap - transportShift + headroom),
+                AnimatedBuilder(
+                  animation: artworkForeground,
+                  builder: (context, _) => PlayerVolumeControl(
+                    key: artworkKeys.volume,
+                    foreground: foreground('volume').onSurface,
                   ),
-                ],
-                SizedBox(height: showVolume ? 8 : 8 + headroom),
+                ),
               ],
-            ),
+              SizedBox(height: showVolume ? 8 : 8 + headroom),
+            ],
           ),
         );
 
@@ -585,55 +543,11 @@ class MornyePlayerLayout extends ConsumerWidget {
       ),
     );
   }
-
-  Widget _mornyeLyricsViewport(
-    BuildContext context,
-    Widget child, {
-    required double visibleHeight,
-  }) => TweenAnimationBuilder<double>(
-    tween: Tween(begin: 0, end: lyricsControlsHidden ? 1 : 0),
-    duration: MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 220),
-    curve: Curves.easeOutCubic,
-    builder: (context, reveal, child) => ShaderMask(
-      blendMode: BlendMode.dstIn,
-      shaderCallback: (bounds) {
-        final height = bounds.height.clamp(1.0, double.infinity);
-        final end = visibleHeight.clamp(0.0, height);
-        final start = (end - 24).clamp(0.0, end);
-        return LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          stops: [0, start / height, end / height, 1],
-          colors: [
-            Colors.white,
-            Colors.white,
-            Colors.white.withValues(alpha: reveal),
-            Colors.white.withValues(alpha: reveal),
-          ],
-        ).createShader(bounds);
-      },
-      child: LayoutBuilder(
-        builder: (context, constraints) => LyricsCoveredBottom(
-          height: constraints.hasBoundedHeight
-              ? (constraints.maxHeight - visibleHeight).clamp(
-                      0.0,
-                      double.infinity,
-                    ) *
-                    (1 - reveal)
-              : 0,
-          child: child!,
-        ),
-      ),
-    ),
-    child: child,
-  );
 }
 
-enum _PlayerHeaderSlot { stage, header, controls, lyricsOptions }
+enum _PlayerHeaderSlot { stage, header, controls }
 
-/// Keep one live header throughout the cover/lyrics/queue transition. Measuring
+/// Keep one live header throughout the cover/queue transition. Measuring
 /// it at its current width also accommodates accessibility text sizes without
 /// moving the transport controls below this layout.
 class _PlayerHeaderLayout extends MultiChildLayoutDelegate {
@@ -641,13 +555,11 @@ class _PlayerHeaderLayout extends MultiChildLayoutDelegate {
     required this.progress,
     required this.compactHeight,
     required this.compactLeft,
-    required this.expandLyrics,
   });
 
   final double progress;
   final double compactHeight;
   final double compactLeft;
-  final bool expandLyrics;
 
   @override
   void performLayout(Size size) {
@@ -679,15 +591,14 @@ class _PlayerHeaderLayout extends MultiChildLayoutDelegate {
         .clamp(0.0, contentHeight);
     layoutChild(
       _PlayerHeaderSlot.stage,
-      // Lyrics always extend behind controls. The minimum height marks their
-      // unobscured area for the paint mask; hiding controls never changes either
-      // constraint, scroll padding or the Scrollable's identity.
+      // The minimum height marks the stage's unobscured area for the paint
+      // mask; hiding controls never changes either constraint, scroll padding
+      // or the Scrollable's identity.
       BoxConstraints(
         minWidth: size.width,
         maxWidth: size.width,
         minHeight: stageHeight,
-        maxHeight:
-            stageHeight + (expandLyrics ? controls.height * progress : 0),
+        maxHeight: stageHeight,
       ),
     );
     positionChild(_PlayerHeaderSlot.stage, Offset.zero);
@@ -698,22 +609,11 @@ class _PlayerHeaderLayout extends MultiChildLayoutDelegate {
         (contentHeight - header.height - 8) * (1 - progress) + 8 * progress,
       ),
     );
-    if (hasChild(_PlayerHeaderSlot.lyricsOptions)) {
-      final options = layoutChild(
-        _PlayerHeaderSlot.lyricsOptions,
-        BoxConstraints.loose(size),
-      );
-      positionChild(
-        _PlayerHeaderSlot.lyricsOptions,
-        Offset(_mornyeContentInset, contentHeight - options.height - 8),
-      );
-    }
   }
 
   @override
   bool shouldRelayout(_PlayerHeaderLayout oldDelegate) =>
       progress != oldDelegate.progress ||
       compactHeight != oldDelegate.compactHeight ||
-      compactLeft != oldDelegate.compactLeft ||
-      expandLyrics != oldDelegate.expandLyrics;
+      compactLeft != oldDelegate.compactLeft;
 }

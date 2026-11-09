@@ -11,16 +11,13 @@ import 'package:mornye/controllers/player_track_navigation.dart';
 import 'package:mornye/controllers/player_metadata_controller.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/library_collections_provider.dart';
-import 'package:mornye/providers/lyrics_translation_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
 import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/routes/now_playing_route.dart';
 import 'package:mornye/screens/equalizer_screen.dart';
-import 'package:mornye/screens/lyrics_share_screen.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/theme/player_artwork_theme.dart';
 import 'package:mornye/utils/file_access.dart';
-import 'package:mornye/utils/lyrics_parser.dart';
 import 'package:mornye/utils/playback_seek_preview.dart';
 import 'package:mornye/widgets/app_bottom_sheet.dart';
 import 'package:mornye/widgets/app_snack_bar.dart';
@@ -34,8 +31,6 @@ import 'package:mornye/widgets/desktop/desktop_inspector.dart';
 import 'package:mornye/widgets/link/link_actions.dart';
 import 'package:mornye/widgets/network_offline_actions.dart';
 import 'package:mornye/widgets/link/link_devices_sheet.dart';
-import 'package:mornye/widgets/lyrics_options_button.dart';
-import 'package:mornye/widgets/lyrics_screen_awake.dart';
 import 'package:mornye/widgets/player_artwork.dart';
 import 'package:mornye/widgets/player_gesture_regions.dart';
 import 'package:mornye/widgets/player_playback_controls.dart';
@@ -44,8 +39,6 @@ import 'package:mornye/widgets/player_details_sheet.dart';
 import 'package:mornye/widgets/material_player_backdrop.dart';
 import 'package:mornye/widgets/material_player_layout.dart';
 import 'package:mornye/widgets/mornye_player_layout.dart';
-import 'package:mornye/widgets/player_lyrics_controls.dart';
-import 'package:mornye/widgets/player_lyrics_section.dart';
 import 'package:mornye/widgets/playlist_picker_sheet.dart';
 import 'package:mornye/widgets/settings_group.dart';
 import 'package:mornye/widgets/mornye_player_background.dart';
@@ -79,42 +72,28 @@ class _FadingAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Animation<double> opacity;
   final AppBar child;
 
-  /// Material's immersive lyrics fade the bar's buttons away too.
-  final bool hidden;
-
-  const _FadingAppBar({
-    required this.opacity,
-    required this.child,
-    this.hidden = false,
-  });
+  const _FadingAppBar({required this.opacity, required this.child});
 
   @override
   Size get preferredSize => child.preferredSize;
 
   @override
-  Widget build(BuildContext context) => FadeTransition(
-    opacity: opacity,
-    child: PlayerLyricsControlsVisibility(hidden: hidden, child: child),
-  );
+  Widget build(BuildContext context) =>
+      FadeTransition(opacity: opacity, child: child);
 }
 
 class NowPlayingScreen extends ConsumerStatefulWidget {
   const NowPlayingScreen({
     super.key,
     this.metadataControllerFactory,
-    this.initialPage = 0,
     this.embedded = false,
   });
 
   final PlayerMetadataController Function()? metadataControllerFactory;
 
-  /// The page shown first: 0 is the player, 1 the lyrics and 2 Up Next
-  /// (Mornye only).
-  final int initialPage;
-
   /// Shown in the desktop content pane rather than as a route. Minimizing
-  /// returns to the content, and lyrics and Up Next open in the desktop
-  /// inspector beside the player instead of replacing it.
+  /// returns to the content, and Up Next opens in the desktop inspector
+  /// beside the player instead of replacing it.
   final bool embedded;
 
   @override
@@ -123,28 +102,14 @@ class NowPlayingScreen extends ConsumerStatefulWidget {
 
 class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
   ProviderSubscription<AsyncValue<MediaItem?>>? _mediaItemSub;
-  ProviderSubscription<bool>? _lyricsPlayingSub;
-  ProviderSubscription<bool>? _lyricsAutoHideSub;
   late final _trackMetadata =
       widget.metadataControllerFactory?.call() ?? PlayerMetadataController();
-  late final LyricsTranslationController _lyricsTranslation;
-  late int _currentPage = widget.initialPage;
+  int _currentPage = 0;
   bool _landscape = false;
   bool _queueSheetShowing = false;
   String? _measuredMotionSource;
   double? _motionAspectRatio;
   String? _failedMotionSource;
-  bool _lyricsControlsHidden = false;
-  bool _lyricsOptionsOpen = false;
-  bool _audioOutputOpen = false;
-  bool _sharingLyrics = false;
-  double _lyricsScrollDistance = 0;
-  Timer? _lyricsIdleTimer;
-  final _lyricsPointers = <int, Offset>{};
-  bool _lyricsPointerMoved = false;
-  // Skipping, seeking or opening the queue from the compact player keeps it
-  // compact; only a touch elsewhere restores the full player.
-  bool _compactPlayerTouched = false;
   final _artworkHeaderKey = GlobalKey();
   final _artworkControlsKey = GlobalKey();
   final _artworkVolumeKey = GlobalKey();
@@ -158,49 +123,18 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
   @override
   void initState() {
     super.initState();
-    _lyricsTranslation = ref.read(lyricsTranslationProvider.notifier);
     if (widget.embedded) desktopInspectorPanel.addListener(_onInspectorChanged);
     _mediaItemSub = ref.listenManual<AsyncValue<MediaItem?>>(
       currentMediaItemProvider,
       (previous, next) {
         if (previous?.value?.id != next.value?.id) _seekPreview.reset();
-        unawaited(
-          _trackMetadata.load(
-            next.value,
-            inspectUnresolvedContentUri: _currentPage == 1,
-          ),
-        );
-      },
-    );
-    _lyricsPlayingSub = ref.listenManual<bool>(playbackPlayingProvider, (
-      previous,
-      playing,
-    ) {
-      if (!playing && _lyricsControlsHidden) {
-        setState(() => _lyricsControlsHidden = false);
-      }
-      _scheduleLyricsControlsHide();
-    });
-    _lyricsAutoHideSub = ref.listenManual<bool>(
-      settingsProvider.select((settings) => settings.autoHideLyricsControls),
-      (_, enabled) {
-        if (!enabled) {
-          _lyricsPointers.clear();
-          _lyricsScrollDistance = 0;
-          if (_lyricsControlsHidden) {
-            setState(() => _lyricsControlsHidden = false);
-          }
-        }
-        _scheduleLyricsControlsHide();
+        unawaited(_trackMetadata.load(next.value));
       },
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(
-        _trackMetadata.load(
-          ref.read(currentMediaItemProvider).value,
-          inspectUnresolvedContentUri: _currentPage == 1,
-        ),
+        _trackMetadata.load(ref.read(currentMediaItemProvider).value),
       );
     });
   }
@@ -210,34 +144,23 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
     super.didChangeDependencies();
     final size = MediaQuery.sizeOf(context);
     _landscape = context.isMornye && size.width > size.height;
-    if (!_lyricsAutoHideLayout || MediaQuery.accessibleNavigationOf(context)) {
-      _lyricsControlsHidden = false;
-    }
-    _scheduleLyricsControlsHide();
   }
 
   void _onInspectorChanged() {
     if (mounted) setState(() {});
   }
 
-  /// Whether the lyrics (1) or Up Next (2) toggle shows as selected. The
-  /// embedded player shows them in the desktop inspector instead.
+  /// Whether the Up Next toggle shows as selected. The embedded player shows
+  /// it in the desktop inspector instead.
   bool _showsPage(int page) => widget.embedded
-      ? desktopInspectorPanel.value ==
-            (page == 1
-                ? DesktopInspectorPanel.lyrics
-                : DesktopInspectorPanel.upNext)
+      ? desktopInspectorPanel.value == DesktopInspectorPanel.upNext
       : _currentPage == page;
 
-  /// Opens lyrics (1) or Up Next (2) in the desktop inspector when embedded.
+  /// Opens Up Next in the desktop inspector when embedded.
   /// Returns false when the player should switch pages itself.
   bool _toggleInspector(int page) {
     if (!widget.embedded) return false;
-    if (page == 1 || page == 2) {
-      toggleDesktopInspector(
-        page == 1 ? DesktopInspectorPanel.lyrics : DesktopInspectorPanel.upNext,
-      );
-    }
+    if (page == 1) toggleDesktopInspector(DesktopInspectorPanel.upNext);
     return true;
   }
 
@@ -261,11 +184,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
       desktopInspectorPanel.removeListener(_onInspectorChanged);
     }
     _artworkRoute?.readArtwork = null;
-    _lyricsIdleTimer?.cancel();
     _mediaItemSub?.close();
-    _lyricsPlayingSub?.close();
-    _lyricsAutoHideSub?.close();
-    _lyricsTranslation.cancel(owner: this);
     _trackMetadata.dispose();
     _artworkForeground.dispose();
     _seekPreview.dispose();
@@ -289,23 +208,20 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
         (s) => s.playerCoverStyleFor(mornye: mornye) == 'fullscreen',
       ),
     );
-    return LyricsScreenAwake(
-      visible: _currentPage == 1 && mediaItem != null,
-      child: mornye
-          ? _buildPlayer(context, mediaItem, fullScreenCover: fullScreenCover)
-          // Material takes the track's artwork scheme. The providers it needs
-          // are read above, so the scoped builder reads none.
-          : PlayerArtworkTheme(
-              artUri: mediaItem?.artUri?.toString(),
-              child: Builder(
-                builder: (context) => _buildPlayer(
-                  context,
-                  mediaItem,
-                  fullScreenCover: fullScreenCover,
-                ),
+    return mornye
+        ? _buildPlayer(context, mediaItem, fullScreenCover: fullScreenCover)
+        // Material takes the track's artwork scheme. The providers it needs
+        // are read above, so the scoped builder reads none.
+        : PlayerArtworkTheme(
+            artUri: mediaItem?.artUri?.toString(),
+            child: Builder(
+              builder: (context) => _buildPlayer(
+                context,
+                mediaItem,
+                fullScreenCover: fullScreenCover,
               ),
             ),
-    );
+          );
   }
 
   Widget _buildPlayer(
@@ -374,7 +290,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
     final materialFullScreen =
         materialBackdrop &&
         MediaQuery.orientationOf(context) == Orientation.portrait;
-    final overCover = materialFullScreen && _currentPage != 1;
+    final overCover = materialFullScreen;
     // Portrait keeps the "Playing on" row while empty, so the controls stay
     // put when a computer takes over playback. On an iPhone the row reaches
     // into the home indicator's inset rather than stacking a second empty
@@ -467,19 +383,12 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
         : MediaQuery.orientationOf(context) == Orientation.landscape
         ? 0
         : 36;
-    final materialLandscapeArtwork =
-        !mornye &&
-        !widget.embedded &&
-        MediaQuery.orientationOf(context) == Orientation.landscape &&
-        ref.watch(settingsProvider.select((s) => s.landscapeLyricsArtwork));
     final player = Scaffold(
-      extendBodyBehindAppBar: materialLandscapeArtwork,
       backgroundColor: mornye || materialBackdrop
           ? Colors.transparent
           : colorScheme.surface,
       appBar: _FadingAppBar(
         opacity: contentOpacity,
-        hidden: !mornye && _lyricsImmersive,
         child: AppBar(
           backgroundColor: mornye || materialBackdrop
               ? Colors.transparent
@@ -553,208 +462,130 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
       body: FadeTransition(
         opacity: contentOpacity,
         child: SafeArea(
-          top: !materialLandscapeArtwork,
           bottom: homeIndicatorBelowRow == null,
           child: Column(
             children: [
-              if (materialLandscapeArtwork) ...[
-                SizedBox(height: MediaQuery.viewPaddingOf(context).top),
-                PlayerLyricsControlsCollapse(
-                  key: const ValueKey('material-landscape-toolbar-space'),
-                  hidden: _lyricsImmersive,
-                  child: const SizedBox(height: kToolbarHeight),
-                ),
-              ],
               Expanded(
                 child: mornye
-                    ? NotificationListener<ScrollUpdateNotification>(
-                        onNotification: _onLyricsScroll,
-                        child: MornyePlayerLayout(
-                          mediaItem: mediaItem,
-                          metadata: _trackMetadata,
-                          seekPreview: _seekPreview,
-                          colorScheme: colorScheme,
-                          page: _currentPage,
-                          motionArtwork: artwork(),
-                          artworkAspectRatio: artworkRatio,
-                          controlsHeadroom: reservesPlayingOnRow
-                              ? _mornyeControlsHeadroom
-                              : 0,
-                          insetArtwork: !fullBleed,
-                          artworkTopInset:
-                              MediaQuery.paddingOf(context).top +
-                              (widget.embedded ? mornyeToolbarHeight! : 36),
-                          artworkKeys: (
-                            header: _artworkHeaderKey,
-                            controls: _artworkControlsKey,
-                            volume: _artworkVolumeKey,
-                            expanded: _expandedArtworkKey,
-                            compact: _compactArtworkKey,
-                          ),
-                          artworkForeground: _artworkForeground,
-                          lyricsControlsHidden: _lyricsControlsHidden,
-                          lyricsOptionsOpen: _lyricsOptionsOpen,
-                          lyricsBuilder: (showOptions) => _lyricsSection(
-                            colorScheme,
-                            isActive: _currentPage == 1,
-                            showOptions: showOptions,
-                          ),
-                          lyricsOptions: _lyricsOptionsButton(colorScheme),
-                          onPageChanged: _setMornyePage,
-                          onTrackNavigation: _showTrackNavigationMenu,
-                          onMoreActions: (buttonContext, item, anchor) =>
-                              _showMoreActions(
-                                context: buttonContext,
-                                mediaItem: item,
-                                source:
-                                    item.extras?['source']?.toString() ?? '',
-                                colorScheme: colorScheme,
-                                anchor: anchor,
-                              ),
+                    ? MornyePlayerLayout(
+                        mediaItem: mediaItem,
+                        metadata: _trackMetadata,
+                        seekPreview: _seekPreview,
+                        colorScheme: colorScheme,
+                        page: _currentPage,
+                        motionArtwork: artwork(),
+                        artworkAspectRatio: artworkRatio,
+                        controlsHeadroom: reservesPlayingOnRow
+                            ? _mornyeControlsHeadroom
+                            : 0,
+                        insetArtwork: !fullBleed,
+                        artworkTopInset:
+                            MediaQuery.paddingOf(context).top +
+                            (widget.embedded ? mornyeToolbarHeight! : 36),
+                        artworkKeys: (
+                          header: _artworkHeaderKey,
+                          controls: _artworkControlsKey,
+                          volume: _artworkVolumeKey,
+                          expanded: _expandedArtworkKey,
+                          compact: _compactArtworkKey,
                         ),
+                        artworkForeground: _artworkForeground,
+                        onPageChanged: _setMornyePage,
+                        onTrackNavigation: _showTrackNavigationMenu,
+                        onMoreActions: (buttonContext, item, anchor) =>
+                            _showMoreActions(
+                              context: buttonContext,
+                              mediaItem: item,
+                              source:
+                                  item.extras?['source']?.toString() ?? '',
+                              colorScheme: colorScheme,
+                              anchor: anchor,
+                            ),
                       )
                     : MaterialPlayerLayout(
                         mediaItem: mediaItem,
                         metadata: _trackMetadata,
                         seekPreview: _seekPreview,
                         colorScheme: colorScheme,
-                        showLyrics: _currentPage == 1,
-                        immersive: _lyricsImmersive,
-                        compactPlayer: ref.watch(
-                          settingsProvider.select((s) => s.compactPlayer),
-                        ),
-                        onCompactPlayerTouch: () =>
-                            _compactPlayerTouched = true,
                         fullScreenArtwork: materialFullScreen,
-                        landscapeLyricsArtwork: ref.watch(
-                          settingsProvider.select(
-                            (s) => s.landscapeLyricsArtwork,
-                          ),
-                        ),
-                        lyricsBuilder: (_) =>
-                            _lyricsSection(colorScheme, isActive: true),
                         onOpenQueue: () =>
                             _showQueueSheet(context, colorScheme),
                       ),
               ),
-              _autoHidingLyricsControls(
-                PlayerQueueSwipeRegion(
-                  onOpenQueue: () => _showQueueSheet(context, colorScheme),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (mornye && !_landscape)
-                        FractionallySizedBox(
-                          widthFactor: 0.72,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                tooltip: _currentPage == 1
-                                    ? context.l10n.nowPlayingTabPlayer
-                                    : context.l10n.nowPlayingTabLyrics,
-                                isSelected: _showsPage(1),
-                                color: Colors.white,
-                                style: IconButton.styleFrom(
-                                  backgroundColor: _showsPage(1)
-                                      ? Colors.white.withValues(alpha: 0.16)
-                                      : Colors.transparent,
-                                ),
-                                icon: const AppIcon(
-                                  CupertinoIcons.quote_bubble,
-                                ),
-                                onPressed: _toggleMornyeLyrics,
-                              ),
-                              AudioOutputButton(
-                                color: Colors.white,
-                                onPickerChanged: (open) {
-                                  if (!mounted) return;
-                                  setState(() => _audioOutputOpen = open);
-                                  _scheduleLyricsControlsHide();
-                                },
-                              ),
-                              // The row spreads its buttons apart, so the
-                              // Devices entry only takes a slot when paired.
-                              if (ref.watch(linkPhoneClientProvider) != null)
-                                const LinkDevicesButton(color: Colors.white),
-                              IconButton(
-                                tooltip: context.l10n.nowPlayingUpNext,
-                                color: Colors.white,
-                                isSelected: _showsPage(2),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: _showsPage(2)
-                                      ? Colors.white.withValues(alpha: 0.16)
-                                      : Colors.transparent,
-                                ),
-                                icon: const AppIcon(CupertinoIcons.list_bullet),
-                                onPressed: () =>
-                                    _setMornyePage(_currentPage == 2 ? 0 : 2),
-                              ),
-                            ],
-                          ),
-                        )
-                      else if (!mornye)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 28),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // Filled pills like the shuffle and repeat
-                              // segments between them.
-                              ExpressiveIconButton(
-                                key: const ValueKey('material-lyrics-toggle'),
-                                tooltip: _currentPage == 1
-                                    ? context.l10n.nowPlayingTabPlayer
-                                    : context.l10n.nowPlayingTabLyrics,
-                                selected: _showsPage(1),
-                                width: PlayerPlaybackModeToolbar.segmentWidth,
-                                foregroundColor: _showsPage(1)
-                                    ? colorScheme.onPrimaryContainer
-                                    : colorScheme.onSurfaceVariant,
+              PlayerQueueSwipeRegion(
+                onOpenQueue: () => _showQueueSheet(context, colorScheme),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (mornye && !_landscape)
+                      FractionallySizedBox(
+                        widthFactor: 0.72,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            AudioOutputButton(color: Colors.white),
+                            // The row spreads its buttons apart, so the
+                            // Devices entry only takes a slot when paired.
+                            if (ref.watch(linkPhoneClientProvider) != null)
+                              const LinkDevicesButton(color: Colors.white),
+                            IconButton(
+                              tooltip: context.l10n.nowPlayingUpNext,
+                              color: Colors.white,
+                              isSelected: _showsPage(1),
+                              style: IconButton.styleFrom(
                                 backgroundColor: _showsPage(1)
-                                    ? colorScheme.primaryContainer
-                                    : colorScheme.surfaceContainerHigh,
-                                icon: const AppIcon(Icons.lyrics_outlined),
-                                onPressed: _toggleMaterialLyrics,
+                                    ? Colors.white.withValues(alpha: 0.16)
+                                    : Colors.transparent,
                               ),
-                              PlayerPlaybackModeToolbar(
-                                colorScheme: colorScheme,
-                              ),
-                              AudioOutputButton(
-                                color: colorScheme.onSurfaceVariant,
-                                backgroundColor:
-                                    colorScheme.surfaceContainerHigh,
-                                width: PlayerPlaybackModeToolbar.segmentWidth,
-                              ),
-                            ],
-                          ),
+                              icon: const AppIcon(CupertinoIcons.list_bullet),
+                              onPressed: () =>
+                                  _setMornyePage(_currentPage == 1 ? 0 : 1),
+                            ),
+                          ],
                         ),
-                      // Landscape has no row to spare; the toolbar's devices
-                      // button shows the device there. Short phones' lyrics
-                      // keep the room an empty row would take.
-                      if (MediaQuery.orientationOf(context) ==
-                          Orientation.portrait) ...[
-                        if (!reservesPlayingOnRow) ...[
-                          LinkPlayingOnLabel(
-                            color: mornye ? Colors.white : null,
-                          ),
-                          const SizedBox(height: 8),
-                        ] else
-                          SizedBox(
-                            key: const ValueKey('link-playing-on-row'),
-                            height: _playingOnRowHeight,
-                            child: Center(
-                              child: LinkPlayingOnLabel(
-                                color: mornye ? Colors.white : null,
-                                height: _playingOnRowHeight,
-                              ),
+                      )
+                    else if (!mornye)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 28),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Filled pills like the shuffle and repeat
+                            // segments between them.
+                            PlayerPlaybackModeToolbar(
+                              colorScheme: colorScheme,
+                            ),
+                            AudioOutputButton(
+                              color: colorScheme.onSurfaceVariant,
+                              backgroundColor: colorScheme.surfaceContainerHigh,
+                              width: PlayerPlaybackModeToolbar.segmentWidth,
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Landscape has no row to spare; the toolbar's devices
+                    // button shows the device there.
+                    if (MediaQuery.orientationOf(context) ==
+                        Orientation.portrait) ...[
+                      if (!reservesPlayingOnRow) ...[
+                        LinkPlayingOnLabel(
+                          color: mornye ? Colors.white : null,
+                        ),
+                        const SizedBox(height: 8),
+                      ] else
+                        SizedBox(
+                          key: const ValueKey('link-playing-on-row'),
+                          height: _playingOnRowHeight,
+                          child: Center(
+                            child: LinkPlayingOnLabel(
+                              color: mornye ? Colors.white : null,
+                              height: _playingOnRowHeight,
                             ),
                           ),
-                      ],
+                        ),
                     ],
-                  ),
+                  ],
                 ),
-                collapse: true,
               ),
               if (homeIndicatorBelowRow != null)
                 SizedBox(height: homeIndicatorBelowRow),
@@ -764,16 +595,16 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
       ),
     );
     if (!mornye) {
-      if (!materialBackdrop) return _lyricsPointerListener(player);
+      if (!materialBackdrop) return player;
       return Stack(
         fit: StackFit.expand,
         children: [
           MaterialPlayerBackdrop(
             mediaItem: mediaItem,
             colorScheme: colorScheme,
-            showArtwork: materialFullScreen && _currentPage != 1,
+            showArtwork: materialFullScreen,
           ),
-          _lyricsPointerListener(player),
+          player,
         ],
       );
     }
@@ -814,236 +645,16 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                     : null,
               ),
             ),
-            _lyricsPointerListener(player),
+            player,
           ],
         ),
       ),
     );
   }
 
-  /// A touch on the lyrics page holds the controls; a tap brings hidden
-  /// ones back.
-  Widget _lyricsPointerListener(Widget child) => Listener(
-    behavior: HitTestBehavior.translucent,
-    onPointerDown: (event) {
-      if (!_canAutoHideLyricsControls) return;
-      if (_lyricsPointers.isEmpty) _lyricsPointerMoved = false;
-      _lyricsPointers[event.pointer] = event.position;
-      _lyricsIdleTimer?.cancel();
-    },
-    onPointerMove: (event) {
-      final origin = _lyricsPointers[event.pointer];
-      if (origin != null && (event.position - origin).distance > 12) {
-        _lyricsPointerMoved = true;
-      }
-    },
-    onPointerUp: (event) => _endLyricsInteraction(event.pointer),
-    onPointerCancel: (event) =>
-        _endLyricsInteraction(event.pointer, cancelled: true),
-    child: child,
-  );
-
-  void _toggleMaterialLyrics() {
-    if (_toggleInspector(1)) return;
-    setState(() {
-      _currentPage = _currentPage == 1 ? 0 : 1;
-      _lyricsControlsHidden = false;
-    });
-    _scheduleLyricsControlsHide();
-    if (_currentPage == 1) {
-      unawaited(
-        _trackMetadata.load(
-          ref.read(currentMediaItemProvider).value,
-          inspectUnresolvedContentUri: true,
-        ),
-      );
-    }
-  }
-
-  void _toggleMornyeLyrics() {
-    _setMornyePage(_currentPage == 1 ? 0 : 1);
-  }
-
   void _setMornyePage(int page) {
     if (_toggleInspector(page)) return;
-    setState(() {
-      _currentPage = page;
-      _lyricsControlsHidden = false;
-      _lyricsScrollDistance = 0;
-    });
-    _scheduleLyricsControlsHide();
-    if (_currentPage == 1) {
-      unawaited(
-        _trackMetadata.load(
-          ref.read(currentMediaItemProvider).value,
-          inspectUnresolvedContentUri: true,
-        ),
-      );
-    }
-  }
-
-  /// Lyrics fill the column, so idle controls can hide: Mornye in portrait
-  /// (its landscape player hides its own actions), and Material's portrait
-  /// column or its landscape artwork beside lyrics, which shows no transport
-  /// either, like Mornye's. Two plain panes keep the transport beside the
-  /// lyrics, and the desktop opens lyrics in the inspector.
-  bool get _lyricsAutoHideLayout => context.isMornye
-      ? !_landscape
-      : !widget.embedded &&
-            (MediaQuery.orientationOf(context) == Orientation.portrait ||
-                ref.read(settingsProvider).landscapeLyricsArtwork);
-
-  bool get _canAutoHideLyricsControls =>
-      _lyricsAutoHideLayout &&
-      ref.read(settingsProvider).autoHideLyricsControls &&
-      _currentPage == 1 &&
-      ref.read(playbackPlayingProvider) &&
-      !MediaQuery.accessibleNavigationOf(context);
-
-  void _scheduleLyricsControlsHide() {
-    _lyricsIdleTimer?.cancel();
-    if (!_canAutoHideLyricsControls ||
-        _lyricsOptionsOpen ||
-        _audioOutputOpen ||
-        _lyricsControlsHidden ||
-        _lyricsPointers.isNotEmpty) {
-      return;
-    }
-    _lyricsIdleTimer = Timer(const Duration(seconds: 5), () {
-      if (!mounted || !_canAutoHideLyricsControls) return;
-      if (ModalRoute.of(context)?.isCurrent == false) {
-        _scheduleLyricsControlsHide();
-        return;
-      }
-      setState(() => _lyricsControlsHidden = true);
-    });
-  }
-
-  void _endLyricsInteraction(int pointer, {bool cancelled = false}) {
-    if (_lyricsPointers.remove(pointer) == null || _lyricsPointers.isNotEmpty) {
-      return;
-    }
-    final compactTouch = _compactPlayerTouched;
-    _compactPlayerTouched = false;
-    if (!cancelled &&
-        !_lyricsPointerMoved &&
-        !compactTouch &&
-        _lyricsControlsHidden) {
-      setState(() => _lyricsControlsHidden = false);
-    }
-    _scheduleLyricsControlsHide();
-  }
-
-  bool _onLyricsScroll(ScrollUpdateNotification notification) {
-    if (_currentPage != 1 ||
-        !ref.read(settingsProvider).autoHideLyricsControls ||
-        _landscape ||
-        notification.dragDetails == null ||
-        notification.metrics.axis != Axis.vertical) {
-      return false;
-    }
-    final delta = notification.scrollDelta ?? 0;
-    if (delta.sign != _lyricsScrollDistance.sign) _lyricsScrollDistance = 0;
-    _lyricsScrollDistance += delta;
-    if (_lyricsScrollDistance.abs() >= 16) {
-      final hidden = _lyricsScrollDistance > 0;
-      if (hidden != _lyricsControlsHidden) {
-        setState(() => _lyricsControlsHidden = hidden);
-      }
-      _lyricsScrollDistance = 0;
-    }
-    return false;
-  }
-
-  bool get _lyricsImmersive =>
-      _currentPage == 1 && _lyricsControlsHidden && _lyricsAutoHideLayout;
-
-  /// Mornye fades the controls in place; Material folds a [collapse] row
-  /// away so the lyrics take its room.
-  Widget _autoHidingLyricsControls(Widget child, {bool collapse = false}) =>
-      !context.isMornye && collapse
-      ? PlayerLyricsControlsCollapse(hidden: _lyricsImmersive, child: child)
-      : PlayerLyricsControlsVisibility(hidden: _lyricsImmersive, child: child);
-
-  Widget _lyricsSection(
-    ColorScheme colorScheme, {
-    required bool isActive,
-    bool showOptions = true,
-  }) => PlayerLyricsSection(
-    metadata: _trackMetadata,
-    seekPreview: _seekPreview,
-    colorScheme: colorScheme,
-    isActive: isActive,
-    options: showOptions && isActive && !_landscape
-        ? _autoHidingLyricsControls(_lyricsOptionsButton(colorScheme))
-        : null,
-    onShareLyrics: _shareLyrics,
-  );
-
-  Future<void> _shareLyrics([LyricLine? line]) async {
-    if (_sharingLyrics) return;
-    final mediaItem = ref.read(currentMediaItemProvider).value;
-    if (mediaItem == null) return;
-    _sharingLyrics = true;
-    try {
-      // The menu offers sharing before the lyrics page has read the file, so
-      // read it now (including an unresolved document) and wait for parsing.
-      if (_trackMetadata.lyrics.isEmpty) {
-        await _trackMetadata.load(mediaItem, inspectUnresolvedContentUri: true);
-        await _untilMetadataLoaded();
-      }
-      if (!mounted ||
-          ref.read(currentMediaItemProvider).value?.id != mediaItem.id) {
-        return;
-      }
-      if (_trackMetadata.lyrics.isEmpty) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text(context.l10n.nowPlayingNoLyrics)),
-          );
-        return;
-      }
-      await openLyricsShare(
-        context,
-        mediaItem: mediaItem,
-        lyrics: _trackMetadata.lyrics,
-        initial: line,
-      );
-    } finally {
-      _sharingLyrics = false;
-    }
-  }
-
-  /// Completes once a load already in flight (started elsewhere) finishes.
-  Future<void> _untilMetadataLoaded() {
-    if (!_trackMetadata.loading) return Future.value();
-    final done = Completer<void>();
-    void listener() {
-      if (_trackMetadata.loading || done.isCompleted) return;
-      _trackMetadata.removeListener(listener);
-      done.complete();
-    }
-
-    _trackMetadata.addListener(listener);
-    return done.future.timeout(
-      const Duration(seconds: 10),
-      onTimeout: () => _trackMetadata.removeListener(listener),
-    );
-  }
-
-  Widget _lyricsOptionsButton(ColorScheme colorScheme) => LyricsOptionsButton(
-    metadata: _trackMetadata,
-    colorScheme: colorScheme,
-    translationOwner: this,
-    onOpenChanged: _onLyricsOptionsOpenChanged,
-  );
-
-  void _onLyricsOptionsOpenChanged(bool open) {
-    if (!mounted) return;
-    if (open) _lyricsIdleTimer?.cancel();
-    setState(() => _lyricsOptionsOpen = open);
-    if (!open) _scheduleLyricsControlsHide();
+    setState(() => _currentPage = page);
   }
 
   Future<void> _openExternally(String source) async {
@@ -1169,11 +780,6 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                     title: sheetContext.l10n.nowPlayingDetails,
                     onTap: () => Navigator.of(sheetContext).pop('details'),
                   ),
-                  SettingsItem(
-                    icon: Icons.format_quote_outlined,
-                    title: sheetContext.l10n.lyricsShareTitle,
-                    onTap: () => Navigator.of(sheetContext).pop('shareLyrics'),
-                  ),
                   if (sendToDesktop != null)
                     SettingsItem(
                       icon: Icons.computer,
@@ -1257,9 +863,6 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
         break;
       case 'album':
         await _goToCurrentAlbum(mediaItem: mediaItem, source: source);
-        break;
-      case 'shareLyrics':
-        await _shareLyrics();
         break;
       case 'linkSend':
         await linkSendSongsToDesktop(context, ref, transfer.phone);

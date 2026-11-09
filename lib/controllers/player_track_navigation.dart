@@ -2,9 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/controllers/clickable_metadata.dart';
-import 'package:mornye/providers/download_history_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
-import 'package:mornye/screens/downloaded_album_screen.dart';
 import 'package:mornye/screens/local_album_screen.dart';
 import 'package:mornye/utils/logger.dart';
 
@@ -35,33 +33,6 @@ Future<void> openPlayingAlbum(
 }) async {
   final albumName = (mediaItem.album ?? '').trim();
   if (albumName.isEmpty) return;
-
-  // Prefer the stored collection so this action remains useful offline and
-  // opens the exact files the user is currently playing.
-  try {
-    final historyItem = source.isEmpty
-        ? null
-        : await ref
-              .read(downloadHistoryProvider.notifier)
-              .getByFilePathAsync(source);
-    if (!context.mounted) return;
-    if (historyItem != null) {
-      final albumArtist = (historyItem.albumArtist ?? '').trim();
-      pushViaPreferredNavigator(
-        context,
-        (_) => DownloadedAlbumScreen(
-          albumName: historyItem.albumName,
-          artistName: albumArtist.isNotEmpty
-              ? albumArtist
-              : historyItem.artistName,
-          coverUrl: historyItem.coverUrl,
-        ),
-      );
-      return;
-    }
-  } catch (e) {
-    _log.w('Failed to resolve downloaded album: $e');
-  }
 
   try {
     final album = await ref

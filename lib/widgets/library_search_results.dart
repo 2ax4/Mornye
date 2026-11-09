@@ -10,14 +10,12 @@ import 'package:mornye/providers/library_lyrics_search_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
 import 'package:mornye/providers/playback_provider.dart';
 import 'package:mornye/providers/settings_provider.dart';
-import 'package:mornye/screens/downloaded_album_screen.dart';
 import 'package:mornye/screens/library_tracks_folder_screen.dart';
 import 'package:mornye/screens/local_album_screen.dart';
 import 'package:mornye/screens/track_metadata_screen.dart';
 import 'package:mornye/services/batch_track_actions.dart';
 import 'package:mornye/services/library_database.dart';
 import 'package:mornye/services/library_search.dart';
-import 'package:mornye/services/local_track_redownload_service.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/utils/adaptive_layout.dart';
 import 'package:mornye/utils/desktop_platform.dart';
@@ -173,10 +171,7 @@ class _LibrarySearchResultsState extends ConsumerState<LibrarySearchResults> {
     final allSelected =
         visibleIds.isNotEmpty && visibleIds.every(_selected.containsKey);
     final flacEligible = items.every((item) => item.localItem != null)
-        ? items
-              .map((item) => item.localItem!)
-              .where(LocalTrackRedownloadService.isFlacUpgradeEligible)
-              .toList(growable: false)
+        ? items.map((item) => item.localItem!).toList(growable: false)
         : const <LocalLibraryItem>[];
     return LibraryTrackSelectionBar(
       playbackActions: LibrarySelectionPlaybackActions(
@@ -379,15 +374,6 @@ class _LibrarySearchResultsState extends ConsumerState<LibrarySearchResults> {
                 artistName: hit.artist,
                 coverPath: hit.cover,
                 tracks: rows.map(LocalLibraryItem.fromJson).toList(),
-              ),
-            );
-          } else {
-            await pushPage<void>(
-              context,
-              (_) => DownloadedAlbumScreen(
-                albumName: hit.title,
-                artistName: hit.artist,
-                coverUrl: hit.cover,
               ),
             );
           }

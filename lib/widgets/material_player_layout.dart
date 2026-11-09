@@ -11,9 +11,7 @@ import 'package:mornye/routes/now_playing_route.dart';
 import 'package:mornye/theme/app_motion.dart';
 import 'package:mornye/utils/playback_seek_preview.dart';
 import 'package:mornye/widgets/player_artwork.dart';
-import 'package:mornye/widgets/player_compact_bar.dart';
 import 'package:mornye/widgets/player_gesture_regions.dart';
-import 'package:mornye/widgets/player_lyrics_controls.dart';
 import 'package:mornye/widgets/player_metadata_title.dart';
 import 'package:mornye/widgets/playback_source_label.dart';
 import 'package:mornye/widgets/player_playback_controls.dart';
@@ -26,41 +24,18 @@ class MaterialPlayerLayout extends StatelessWidget {
     required this.metadata,
     required this.seekPreview,
     required this.colorScheme,
-    required this.showLyrics,
-    required this.lyricsBuilder,
     required this.onOpenQueue,
     this.fullScreenArtwork = false,
-    this.landscapeLyricsArtwork = false,
-    this.immersive = false,
-    this.compactPlayer = false,
-    this.onCompactPlayerTouch,
   });
 
   final MediaItem mediaItem;
   final PlayerMetadataController metadata;
   final PlaybackSeekPreview seekPreview;
   final ColorScheme colorScheme;
-  final bool showLyrics;
-  final WidgetBuilder lyricsBuilder;
   final VoidCallback onOpenQueue;
 
   /// The page backdrop paints the cover; this area only keeps its gestures.
   final bool fullScreenArtwork;
-
-  /// Replaces landscape track details with artwork alongside the lyrics.
-  final bool landscapeLyricsArtwork;
-
-  /// Lyrics left idle while playing: the title and controls fold away so
-  /// the lyrics fill the column.
-  final bool immersive;
-
-  /// Immersive portrait lyrics shrink the title and controls to a smaller
-  /// player instead of folding them away entirely.
-  final bool compactPlayer;
-
-  /// A touch landed on the compact player, before the page's own listener
-  /// sees it.
-  final VoidCallback? onCompactPlayerTouch;
 
   @override
   Widget build(BuildContext context) {
@@ -158,84 +133,17 @@ class MaterialPlayerLayout extends StatelessWidget {
           ),
         );
 
-        Widget visual() => AnimatedSwitcher(
-          duration: MediaQuery.disableAnimationsOf(context)
-              ? Duration.zero
-              : const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeInOutCubic,
-          switchOutCurve: Curves.easeInOutCubic,
-          child: showLyrics
-              ? KeyedSubtree(
-                  key: const ValueKey('material-player-lyrics'),
-                  child: lyricsBuilder(context),
-                )
-              : cover(),
-        );
+        Widget visual() => cover();
 
         // Tablet/landscape: artwork pane left, metadata and controls right,
         // instead of one narrow column in a sea of empty space.
         final landscape =
             MediaQuery.orientationOf(context) == Orientation.landscape;
-        final artworkBesideLyrics = landscapeLyricsArtwork && landscape;
         final twoPane =
             landscape ||
             (constraints.maxWidth >= 720 &&
                 constraints.maxWidth > constraints.maxHeight);
         if (twoPane) {
-          if (artworkBesideLyrics) {
-            return Row(
-              key: const ValueKey('material-landscape-artwork-lyrics'),
-              children: [
-                Expanded(child: cover()),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Column(
-                      children: [
-                        ..._metadataAndControls(
-                          context,
-                          compact: true,
-                          showControls: false,
-                        ),
-                        Expanded(
-                          child: AnimatedSwitcher(
-                            duration: MediaQuery.disableAnimationsOf(context)
-                                ? Duration.zero
-                                : const Duration(milliseconds: 300),
-                            child: showLyrics
-                                ? KeyedSubtree(
-                                    key: const ValueKey('landscape-lyrics'),
-                                    child: lyricsBuilder(context),
-                                  )
-                                : LayoutBuilder(
-                                    key: const ValueKey('landscape-controls'),
-                                    builder: (context, area) =>
-                                        SingleChildScrollView(
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              minHeight: area.maxHeight,
-                                            ),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: _metadataAndControls(
-                                                context,
-                                                compact: true,
-                                                showMetadata: false,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          }
           return Row(
             children: [
               Expanded(child: visual()),
@@ -262,46 +170,21 @@ class MaterialPlayerLayout extends StatelessWidget {
           child: Column(
             children: [
               Expanded(child: visual()),
-              PlayerLyricsControlsCollapse(
-                hidden: immersive && showLyrics,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: PlayerQueueSwipeRegion(
-                    onOpenQueue: onOpenQueue,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      // Short phones keep the room for artwork and lyrics;
-                      // the hardware buttons still set the volume there.
-                      children: _metadataAndControls(
-                        context,
-                        showVolume: constraints.maxHeight >= 600,
-                      ),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: PlayerQueueSwipeRegion(
+                  onOpenQueue: onOpenQueue,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    // Short phones keep the room for artwork and controls;
+                    // the hardware buttons still set the volume there.
+                    children: _metadataAndControls(
+                      context,
+                      showVolume: constraints.maxHeight >= 600,
                     ),
                   ),
                 ),
               ),
-              // Unfolds as the full controls fold, in the same motion. Its
-              // timeline rests while folded, and touches on it keep it
-              // compact instead of restoring the full player.
-              if (compactPlayer)
-                PlayerLyricsControlsCollapse(
-                  hidden: !(immersive && showLyrics),
-                  child: TickerMode(
-                    enabled: immersive && showLyrics,
-                    child: Listener(
-                      onPointerDown: (_) => onCompactPlayerTouch?.call(),
-                      child: PlayerQueueSwipeRegion(
-                        onOpenQueue: onOpenQueue,
-                        child: PlayerCompactBar(
-                          mediaItem: mediaItem,
-                          seekPreview: seekPreview,
-                          colorScheme: colorScheme,
-                          onOpenQueue: onOpenQueue,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
         );

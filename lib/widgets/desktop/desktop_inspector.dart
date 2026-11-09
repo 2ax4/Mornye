@@ -1,32 +1,27 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mornye/controllers/player_metadata_controller.dart';
 import 'package:mornye/l10n/l10n.dart';
-import 'package:mornye/providers/lyrics_translation_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
 import 'package:mornye/providers/runtime_profile_provider.dart';
 import 'package:mornye/theme/app_motion.dart';
 import 'package:mornye/theme/mornye_theme.dart';
-import 'package:mornye/utils/playback_seek_preview.dart';
 import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/app_icon_button.dart';
 import 'package:mornye/widgets/desktop/desktop_window.dart'
     show desktopWindowFullScreen;
-import 'package:mornye/widgets/lyrics_options_button.dart';
 import 'package:mornye/widgets/mornye_player_background.dart';
 import 'package:mornye/widgets/mornye_player_queue.dart';
-import 'package:mornye/widgets/player_lyrics_section.dart';
 import 'package:mornye/widgets/player_queue_sheet.dart';
 import 'package:mornye/widgets/no_scrollbars.dart';
 
+part 'desktop_full_screen.dart';
+
 /// A panel of the desktop trailing inspector.
-enum DesktopInspectorPanel { lyrics, upNext }
+enum DesktopInspectorPanel { upNext }
 
 /// Width of the trailing inspector.
 const double desktopInspectorWidth = 340;
@@ -52,34 +47,9 @@ void toggleDesktopInspector(DesktopInspectorPanel panel) {
       : panel;
 }
 
-bool _wasFullScreen = false;
-DesktopInspectorPanel? _lastPanel;
-bool _fullScreenLyricsBound = false;
-
-/// Opens Now Playing when lyrics open in a full screen window, or when the
-/// window enters full screen with lyrics open. Call once at startup.
-void bindDesktopFullScreenLyrics() {
-  if (_fullScreenLyricsBound) return;
-  _fullScreenLyricsBound = true;
-  desktopWindowFullScreen.addListener(_syncFullScreenLyrics);
-  desktopInspectorPanel.addListener(_syncFullScreenLyrics);
-  _syncFullScreenLyrics();
-}
-
-void _syncFullScreenLyrics() {
-  final fullScreen = desktopWindowFullScreen.value;
-  final panel = desktopInspectorPanel.value;
-  final lyricsOpened =
-      panel == DesktopInspectorPanel.lyrics &&
-      (!_wasFullScreen || _lastPanel != DesktopInspectorPanel.lyrics);
-  _wasFullScreen = fullScreen;
-  _lastPanel = panel;
-  if (fullScreen && lyricsOpened) desktopNowPlayingOpen.value = true;
-}
-
-/// Closes Now Playing back to the shell. In full screen the lyrics panel
-/// closes with it, so the next lyrics toggle opens the player again rather
-/// than a panel beside the content.
+/// Closes Now Playing back to the shell. In full screen the inspector panel
+/// closes with it, so the next toggle opens the player again rather than a
+/// panel beside the content.
 void closeDesktopNowPlaying() {
   desktopNowPlayingOpen.value = false;
   if (desktopWindowFullScreen.value) desktopInspectorPanel.value = null;
@@ -130,7 +100,7 @@ class DesktopNowPlayingCloser extends NavigatorObserver {
   }
 }
 
-/// Lyrics or Up Next beside the content pane. [overlay] adds the elevation
+/// Up Next beside the content pane. [overlay] adds the elevation
 /// of a panel that floats over the content in narrow windows.
 class DesktopInspector extends ConsumerWidget {
   const DesktopInspector({
@@ -148,10 +118,7 @@ class DesktopInspector extends ConsumerWidget {
     final glass = mornye && overlay;
     final l10n = context.l10n;
     final mediaItem = ref.watch(currentMediaItemProvider).value;
-    final title = switch (panel) {
-      DesktopInspectorPanel.lyrics => l10n.nowPlayingTabLyrics,
-      DesktopInspectorPanel.upNext => l10n.nowPlayingUpNext,
-    };
+    final title = l10n.nowPlayingUpNext;
 
     Widget content(BuildContext context) {
       final colorScheme = Theme.of(context).colorScheme;
@@ -197,15 +164,9 @@ class DesktopInspector extends ConsumerWidget {
           ),
         );
       } else {
-        body = switch (panel) {
-          DesktopInspectorPanel.lyrics => _InspectorLyrics(
-            colorScheme: colorScheme,
-          ),
-          DesktopInspectorPanel.upNext =>
-            mornye
-                ? MornyePlayerQueue(colorScheme: colorScheme)
-                : DesktopMaterialQueue(colorScheme: colorScheme),
-        };
+        body = mornye
+            ? MornyePlayerQueue(colorScheme: colorScheme)
+            : DesktopMaterialQueue(colorScheme: colorScheme);
       }
       // The player capsule's toggles close the glass panel.
       if (glass) {
@@ -222,8 +183,8 @@ class DesktopInspector extends ConsumerWidget {
 
     final Widget panelSurface;
     if (mornye) {
-      // Lyrics and Up Next keep the player's dark artwork backdrop, as the
-      // full player draws them in white over it.
+      // Up Next keeps the player's dark artwork backdrop, as the
+      // full player draws it in white over it.
       final theme = MornyeTheme.fromContext(
         context,
         brightness: Brightness.dark,
@@ -299,7 +260,7 @@ class DesktopInspector extends ConsumerWidget {
                 ]
               : null,
         ),
-        // Lyrics and Up Next scroll without a bar, as in the full player.
+        // Up Next scrolls without a bar, as in the full player.
         child: NoScrollbars(child: panelSurface),
       ),
     );
@@ -432,62 +393,6 @@ class _DesktopInspectorTransitionState extends State<DesktopInspectorTransition>
       },
     );
   }
-}
-
-/// The current track's lyrics, loaded on their own so the inspector works
-/// without the full player.
-class _InspectorLyrics extends ConsumerStatefulWidget {
-  const _InspectorLyrics({required this.colorScheme});
-
-  final ColorScheme colorScheme;
-
-  @override
-  ConsumerState<_InspectorLyrics> createState() => _InspectorLyricsState();
-}
-
-class _InspectorLyricsState extends ConsumerState<_InspectorLyrics> {
-  final _metadata = PlayerMetadataController();
-  final _seekPreview = PlaybackSeekPreview();
-  ProviderSubscription<AsyncValue<MediaItem?>>? _mediaItemSub;
-  late final LyricsTranslationController _lyricsTranslation;
-
-  @override
-  void initState() {
-    super.initState();
-    _lyricsTranslation = ref.read(lyricsTranslationProvider.notifier);
-    _mediaItemSub = ref.listenManual<AsyncValue<MediaItem?>>(
-      currentMediaItemProvider,
-      (previous, next) {
-        if (previous?.value?.id == next.value?.id) return;
-        unawaited(
-          _metadata.load(next.value, inspectUnresolvedContentUri: true),
-        );
-      },
-      fireImmediately: true,
-    );
-  }
-
-  @override
-  void dispose() {
-    _mediaItemSub?.close();
-    _lyricsTranslation.cancel(owner: this);
-    _metadata.dispose();
-    _seekPreview.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => PlayerLyricsSection(
-    metadata: _metadata,
-    seekPreview: _seekPreview,
-    colorScheme: widget.colorScheme,
-    isActive: true,
-    options: LyricsOptionsButton(
-      metadata: _metadata,
-      colorScheme: widget.colorScheme,
-      translationOwner: this,
-    ),
-  );
 }
 
 /// The Material Up Next list in a desktop panel.

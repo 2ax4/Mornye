@@ -18,7 +18,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:mornye/controllers/clickable_metadata.dart';
 import 'package:mornye/l10n/l10n.dart';
-import 'package:mornye/screens/network_storage_screen.dart';
 import 'package:mornye/models/settings.dart';
 import 'package:mornye/providers/download_queue_provider.dart';
 import 'package:mornye/providers/local_library_provider.dart';
@@ -150,27 +149,6 @@ class _FilesSettingsPageState extends ConsumerState<FilesSettingsPage> {
                   onTap: () => _pickDirectory(context, ref),
                   showDivider: false,
                 ),
-                SettingsItem(
-                  icon: Icons.dns_outlined,
-                  title: context.l10n.networkDownloadDestination,
-                  subtitle: settings.networkDownloadFolder.isEmpty
-                      ? context.l10n.networkUseForDownloads
-                      : settings.networkDownloadLabel,
-                  onTap: () => pushPage<void>(
-                    context,
-                    (_) => const NetworkStorageScreen(),
-                  ),
-                  showDivider: settings.networkDownloadFolder.isNotEmpty,
-                ),
-                if (settings.networkDownloadFolder.isNotEmpty)
-                  SettingsItem(
-                    icon: Icons.phone_android_outlined,
-                    title: context.l10n.networkUseLocalDownloads,
-                    onTap: () => ref
-                        .read(settingsProvider.notifier)
-                        .setNetworkDownloadFolder('', ''),
-                    showDivider: false,
-                  ),
               ],
             ),
             if (Platform.isAndroid &&

@@ -223,17 +223,7 @@ extension _QueueTabNavigation on _QueueTabState {
     Navigator.of(context).push(route).then((_) => _searchFocusNode.unfocus());
   }
 
-  void _navigateToDownloadedAlbum(_GroupedAlbum album) {
-    _navigateWithUnfocus(
-      slidePageRoute(
-        page: DownloadedAlbumScreen(
-          albumName: album.albumName,
-          artistName: album.artistName,
-          coverUrl: album.coverUrl,
-        ),
-      ),
-    );
-  }
+  void _navigateToDownloadedAlbum(_GroupedAlbum album) {}
 
   /// Plays a scanned album from its first track, loading its tracks when the
   /// Library page did not.
@@ -250,17 +240,7 @@ extension _QueueTabNavigation on _QueueTabState {
     }
   }
 
-  Future<void> _playDownloadedAlbum(_GroupedAlbum album) async {
-    try {
-      await playDownloadedAlbum(
-        ref,
-        albumName: album.albumName,
-        artistName: album.artistName,
-      );
-    } catch (e) {
-      if (mounted) showCannotOpenFileSnackBar(context, e);
-    }
-  }
+  Future<void> _playDownloadedAlbum(_GroupedAlbum album) async {}
 
   void _navigateToLocalAlbum(_GroupedLocalAlbum album) {
     Future<List<LocalLibraryItem>> loadTracks() => _loadLocalAlbumTracks(album);

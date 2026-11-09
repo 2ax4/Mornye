@@ -58,7 +58,6 @@ import 'package:mornye/screens/equalizer_screen.dart';
 import 'package:mornye/screens/library_mix_screen.dart';
 import 'package:mornye/screens/listening_statistics_screen.dart';
 import 'package:mornye/screens/music_recognition_screen.dart';
-import 'package:mornye/screens/network_storage_screen.dart';
 import 'package:mornye/screens/now_playing_screen.dart';
 import 'package:mornye/services/library_database.dart';
 import 'package:mornye/services/listening_statistics.dart';
@@ -82,8 +81,6 @@ import 'package:mornye/widgets/desktop/desktop_commands.dart'
 import 'package:mornye/utils/file_access.dart';
 import 'package:mornye/utils/home_greeting.dart';
 import 'package:mornye/screens/playlist_screen.dart';
-import 'package:mornye/screens/downloaded_album_screen.dart';
-import 'package:mornye/widgets/download_service_picker.dart';
 import 'package:mornye/widgets/track_collection_quick_actions.dart';
 import 'package:mornye/widgets/desktop/context_menu.dart';
 import 'package:mornye/widgets/animation_utils.dart';
@@ -98,7 +95,6 @@ import 'package:mornye/widgets/preview_button.dart';
 import 'package:mornye/widgets/app_search_field.dart';
 import 'package:mornye/widgets/track_detail_actions.dart';
 import 'package:mornye/widgets/view_queue_snackbar_action.dart';
-import 'package:mornye/widgets/profile_avatar.dart';
 import 'package:mornye/widgets/downloadable_cover.dart';
 import 'package:mornye/widgets/app_crash_banner.dart';
 
@@ -1187,10 +1183,7 @@ class _HomeTabState extends ConsumerState<HomeTab>
       title: widget.mode == HomeTabMode.search
           ? context.l10n.mornyeSearch
           : greeting ?? context.l10n.homeTitle,
-      // The desktop sidebar's account row already opens the profile.
-      actions: context.isMornye && _showsHome && !isDesktopPlatform
-          ? const [HomeProfileButton()]
-          : null,
+      actions: null,
     );
   }
 

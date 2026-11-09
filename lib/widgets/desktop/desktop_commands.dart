@@ -258,11 +258,9 @@ String desktopDestinationTooltip(
 /// by position. Mornye reaches Search from the sidebar search field.
 List<ShellTab> desktopDestinationTabs({
   required bool mornye,
-  required bool showStore,
 }) => [
   ShellTab.home,
   ShellTab.library,
-  if (showStore) ShellTab.repository,
   if (mornye) ShellTab.search,
   ShellTab.settings,
 ];

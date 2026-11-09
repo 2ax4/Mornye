@@ -11,7 +11,6 @@ import 'package:mornye/controllers/player_metadata_controller.dart';
 import 'package:mornye/controllers/player_track_navigation.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/library_collections_provider.dart';
-import 'package:mornye/providers/lyrics_translation_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
 import 'package:mornye/screens/equalizer_screen.dart';
 import 'package:mornye/theme/app_motion.dart';
@@ -21,7 +20,6 @@ import 'package:mornye/utils/playback_seek_preview.dart';
 import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/desktop/desktop_inspector.dart';
 import 'package:mornye/widgets/desktop/desktop_window.dart';
-import 'package:mornye/widgets/lyrics_options_button.dart';
 import 'package:mornye/widgets/material_player_backdrop.dart';
 import 'package:mornye/widgets/mornye_context_menu.dart';
 import 'package:mornye/widgets/mornye_playback_button.dart';
@@ -31,7 +29,6 @@ import 'package:mornye/widgets/mornye_player_queue.dart';
 import 'package:mornye/widgets/no_scrollbars.dart';
 import 'package:mornye/widgets/player_artwork.dart';
 import 'package:mornye/widgets/player_details_sheet.dart';
-import 'package:mornye/widgets/player_lyrics_section.dart';
 import 'package:mornye/widgets/player_metadata_title.dart';
 import 'package:mornye/widgets/playback_source_label.dart';
 import 'package:mornye/widgets/player_playback_controls.dart';
@@ -40,8 +37,8 @@ import 'package:mornye/widgets/playlist_picker_sheet.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Now Playing covers the desktop window: cover, title and transport on the
-/// leading side, lyrics or Up Next ([desktopInspectorPanel]) on the trailing
-/// side, the volume at the top and the panel toggles at the bottom. With no
+/// leading side, Up Next ([desktopInspectorPanel]) on the trailing
+/// side, the volume at the top and the panel toggle at the bottom. With no
 /// panel the cover column
 /// stands alone in the middle. Close or Escape return to the shell
 /// ([desktopNowPlayingOpen]).
@@ -59,7 +56,6 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
       widget.metadataControllerFactory?.call() ?? PlayerMetadataController();
   final _seekPreview = PlaybackSeekPreview();
   ProviderSubscription<AsyncValue<MediaItem?>>? _mediaItemSub;
-  late final LyricsTranslationController _lyricsTranslation;
 
   /// The panel on the trailing side, kept while it animates closed.
   DesktopInspectorPanel? _lastPanel;
@@ -67,7 +63,6 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
   @override
   void initState() {
     super.initState();
-    _lyricsTranslation = ref.read(lyricsTranslationProvider.notifier);
     _mediaItemSub = ref.listenManual<AsyncValue<MediaItem?>>(
       currentMediaItemProvider,
       (previous, next) {
@@ -84,7 +79,6 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
   @override
   void dispose() {
     _mediaItemSub?.close();
-    _lyricsTranslation.cancel(owner: this);
     _metadata.dispose();
     _seekPreview.dispose();
     super.dispose();
@@ -187,17 +181,6 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _RoundButton(
-                        tooltip: context.l10n.nowPlayingTabLyrics,
-                        icon: mornye
-                            ? CupertinoIcons.quote_bubble
-                            : Icons.lyrics_outlined,
-                        selected: panel == DesktopInspectorPanel.lyrics,
-                        onPressed: () => toggleDesktopInspector(
-                          DesktopInspectorPanel.lyrics,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      _RoundButton(
                         tooltip: context.l10n.nowPlayingUpNext,
                         icon: mornye
                             ? CupertinoIcons.list_bullet
@@ -268,8 +251,8 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
     final leading = width * 5 / 11;
     final centerX = lerpDouble(width / 2, leading / 2, progress)!;
     final rtl = Directionality.of(context) == TextDirection.rtl;
-    // Whole device pixels, so the fading lyrics never land between pixels
-    // and shimmer as they slide.
+    // Whole device pixels, so the sliding panel never lands between pixels
+    // and shimmers as it moves.
     final pixelRatio = MediaQuery.devicePixelRatioOf(context);
     final slide = ((1 - size) * 48 * pixelRatio).roundToDouble() / pixelRatio;
     final player = SizedBox(
@@ -286,7 +269,6 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
       ),
     );
     final panel = _lastPanel;
-    final showsLyrics = panel == DesktopInspectorPanel.lyrics;
     // Panels cross-fade only when one replaces another; a panel that opens
     // shows at once and fades with the panel side.
     final switchDuration = MediaQuery.disableAnimationsOf(context) || size < 0.5
@@ -326,33 +308,6 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Hidden lyrics follow line positions so they reopen
-                        // centered, without running word animations off screen.
-                        IgnorePointer(
-                          key: const ValueKey('desktop-now-playing-lyrics'),
-                          ignoring: !showsLyrics,
-                          child: ExcludeFocus(
-                            excluding: !showsLyrics,
-                            child: AnimatedOpacity(
-                              opacity: showsLyrics ? 1 : 0,
-                              duration: switchDuration,
-                              child: NoScrollbars(
-                                child: PlayerLyricsSection(
-                                  metadata: _metadata,
-                                  seekPreview: _seekPreview,
-                                  colorScheme: colorScheme,
-                                  isActive: true,
-                                  animateWords: showsLyrics,
-                                  options: LyricsOptionsButton(
-                                    metadata: _metadata,
-                                    colorScheme: colorScheme,
-                                    translationOwner: this,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
                         AnimatedSwitcher(
                           duration: switchDuration,
                           child: panel == DesktopInspectorPanel.upNext

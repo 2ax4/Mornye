@@ -89,7 +89,6 @@ extension _TrackMetadataCards on _TrackMetadataScreenState {
               _buildFileInfoCard(context, colorScheme, _fileExists, _fileSize),
             ];
             final media = [
-              _buildLyricsCard(context, colorScheme),
               if (_fileExists) ...[
                 const SizedBox(height: 16),
                 AudioAnalysisCard(

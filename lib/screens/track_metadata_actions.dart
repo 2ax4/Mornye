@@ -56,32 +56,8 @@ extension _TrackMetadataFileActions on _TrackMetadataScreenState {
       try {
         final refreshed = await readPlaybackFileMetadataWithRetry(sourcePath);
         if (!mounted || sourcePath != cleanFilePath) return;
-        final refreshedLyrics = refreshed['lyrics']?.toString().trim() ?? '';
-        final refreshedInstrumental = isInstrumentalLyricsMarker(
-          refreshedLyrics,
-        );
-        final refreshedDisplayLyrics = cleanLyricsForDisplay(refreshedLyrics);
         _setState(() {
           _editedMetadata = refreshed;
-          _lyricsError = null;
-          _isInstrumental = refreshedInstrumental;
-          _embeddedLyricsChecked = true;
-          if (refreshedDisplayLyrics.isNotEmpty) {
-            _lyrics = refreshedDisplayLyrics;
-            _rawLyrics = refreshedLyrics;
-            _lyricsSource = context.l10n.trackLyricsEmbeddedSource;
-            _lyricsEmbedded = true;
-          } else if (refreshedInstrumental) {
-            _lyrics = null;
-            _rawLyrics = null;
-            _lyricsSource = context.l10n.trackLyricsEmbeddedSource;
-            _lyricsEmbedded = true;
-          } else {
-            _lyrics = null;
-            _rawLyrics = null;
-            _lyricsSource = null;
-            _lyricsEmbedded = false;
-          }
         });
         if (_isNetworkItem) await _syncNetworkLibraryMetadata(refreshed);
       } catch (_) {

@@ -1538,11 +1538,6 @@ class _HomeShortcuts extends ConsumerWidget {
         icon: Icons.insights,
         onTap: () => open(const ListeningStatisticsScreen()),
       ),
-      (
-        label: l10n.networkStorage,
-        icon: Icons.lan_outlined,
-        onTap: () => open(const NetworkStorageScreen()),
-      ),
     ];
     final tiles = [
       for (final (index, shortcut) in shortcuts.indexed)

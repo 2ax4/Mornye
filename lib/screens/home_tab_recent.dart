@@ -475,14 +475,7 @@ extension _HomeTabRecentUI on _HomeTabState {
         return;
       case RecentAccessType.album:
         if (item.providerId == 'download') {
-          pushPage<void>(
-            context,
-            (context) => DownloadedAlbumScreen(
-              albumName: item.name,
-              artistName: item.subtitle ?? '',
-              coverUrl: item.imageUrl,
-            ),
-          );
+          return;
         } else if (_isEnabledMetadataExtension(item.providerId)) {
           pushPage<void>(
             context,

@@ -6,9 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/library_collections_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
-import 'package:mornye/providers/user_profile_provider.dart';
 import 'package:mornye/services/shell_navigation_service.dart';
-import 'package:mornye/services/user_profile_store.dart';
 import 'package:mornye/theme/app_motion.dart';
 import 'package:mornye/theme/material_expressive.dart';
 import 'package:mornye/theme/mornye_theme.dart';
@@ -20,7 +18,6 @@ import 'package:mornye/widgets/desktop/desktop_inspector.dart';
 import 'package:mornye/widgets/desktop/desktop_now_playing.dart';
 import 'package:mornye/widgets/desktop/desktop_player_bar.dart';
 import 'package:mornye/widgets/desktop/desktop_window.dart';
-import 'package:mornye/widgets/profile_avatar.dart';
 import 'package:mornye/widgets/no_scrollbars.dart';
 
 /// Window width at which the Material rail shows labels beside its icons.
@@ -72,11 +69,6 @@ final desktopSidebarPlaylistsProvider = Provider<List<UserPlaylistCollection>>(
   (ref) => ref.watch(libraryCollectionsProvider.select((s) => s.playlists)),
 );
 
-/// The profile in the Mornye sidebar's account row, once it has loaded.
-final desktopSidebarProfileProvider = Provider<UserProfile?>(
-  (ref) => ref.watch(userProfileProvider).value,
-);
-
 /// A top-level desktop destination.
 class DesktopDestination {
   const DesktopDestination({
@@ -120,7 +112,6 @@ class DesktopShellLayout extends ConsumerWidget {
     required this.body,
     this.libraryLinks = const [],
     this.onOpenLibraryLink,
-    this.onOpenProfile,
     this.playerBar = const DesktopPlayerBar(),
     this.nowPlaying = const DesktopNowPlaying(),
   });
@@ -138,9 +129,6 @@ class DesktopShellLayout extends ConsumerWidget {
   /// Opens a Library link or a playlist from the Mornye sidebar, or a
   /// playlist from the expanded Material rail.
   final ValueChanged<String>? onOpenLibraryLink;
-
-  /// Mornye: opens the profile from the sidebar's account row.
-  final VoidCallback? onOpenProfile;
   final Widget playerBar;
   final Widget nowPlaying;
 
@@ -281,7 +269,6 @@ class DesktopShellLayout extends ConsumerWidget {
               onSelected: onSelected,
               libraryLinks: libraryLinks,
               onOpenLibraryLink: onOpenLibraryLink,
-              onOpenProfile: onOpenProfile,
             ),
             Expanded(
               key: const ValueKey('desktop-content'),
@@ -1048,7 +1035,6 @@ class DesktopSidebar extends ConsumerWidget {
     required this.onSelected,
     this.libraryLinks = const [],
     this.onOpenLibraryLink,
-    this.onOpenProfile,
   });
 
   /// Width of the panel.
@@ -1064,10 +1050,6 @@ class DesktopSidebar extends ConsumerWidget {
 
   /// Opens a Library link, All Playlists or a playlist by its link id.
   final ValueChanged<String>? onOpenLibraryLink;
-
-  /// Opens the profile from the account row. Without it the row opens
-  /// Settings.
-  final VoidCallback? onOpenProfile;
 
   /// The panel fill: a step off the page background, tinted by the page's
   /// artwork color ([ShellNavigationService.chromeSurface]) when it has one.
@@ -1113,7 +1095,7 @@ class DesktopSidebar extends ConsumerWidget {
 
     // Search leads the list.
     final topLevel = [
-      for (final tab in [ShellTab.search, ShellTab.home, ShellTab.repository])
+      for (final tab in [ShellTab.search, ShellTab.home])
         ...destinations.where((destination) => destination.tab == tab),
       if (links.isEmpty)
         ...destinations.where(
@@ -1212,7 +1194,7 @@ class DesktopSidebar extends ConsumerWidget {
                 const _SidebarHeader(),
                 Expanded(child: list),
                 if (settings != null)
-                  _SidebarAccountRow(
+                  _SidebarSettingsRow(
                     settings: settings,
                     settingsSelected: selected == ShellTab.settings,
                     settingsTooltip: desktopDestinationTooltip(
@@ -1221,8 +1203,6 @@ class DesktopSidebar extends ConsumerWidget {
                       _positionOf(destinations, ShellTab.settings),
                     ),
                     onOpenSettings: () => onSelected(ShellTab.settings),
-                    onOpenProfile:
-                        onOpenProfile ?? () => onSelected(ShellTab.settings),
                   ),
               ],
             ),
@@ -1344,33 +1324,23 @@ class _SidebarArtwork extends StatelessWidget {
   }
 }
 
-/// The account row pinned under the sidebar's list: the
-/// profile picture and name, which open the profile, then Settings.
-class _SidebarAccountRow extends ConsumerWidget {
-  const _SidebarAccountRow({
+/// The Settings button pinned under the sidebar's list.
+class _SidebarSettingsRow extends StatelessWidget {
+  const _SidebarSettingsRow({
     required this.settings,
     required this.settingsSelected,
     required this.settingsTooltip,
     required this.onOpenSettings,
-    required this.onOpenProfile,
   });
 
   final DesktopDestination settings;
   final bool settingsSelected;
   final String settingsTooltip;
   final VoidCallback onOpenSettings;
-  final VoidCallback onOpenProfile;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final profile = ref.watch(desktopSidebarProfileProvider);
-    final name = profile?.name.trim() ?? '';
-    // The sidebar is too narrow for the full invitation in long languages,
-    // where it ellipsized mid-word; screen readers still hear all of it.
-    final label = name.isEmpty ? context.l10n.profileTitle : name;
-    final semanticLabel = name.isEmpty ? context.l10n.profileSetUp : name;
-    final radius = BorderRadius.circular(_SidebarRow.radius);
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border(
@@ -1384,48 +1354,6 @@ class _SidebarAccountRow extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
         child: Row(
           children: [
-            Expanded(
-              child: Semantics(
-                button: true,
-                label: semanticLabel,
-                excludeSemantics: true,
-                child: InkWell(
-                  key: const ValueKey('desktop-sidebar-account'),
-                  borderRadius: radius,
-                  hoverColor: _SidebarRow.hoverFill(context),
-                  onTap: onOpenProfile,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 40),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 8),
-                        SizedBox.square(
-                          dimension: 28,
-                          child: ProfileAvatar(
-                            name: name,
-                            photoPath: profile?.photoPath,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: colorScheme.onSurface,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
             Semantics(
               selected: settingsSelected,
               child: AppIconButton(

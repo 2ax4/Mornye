@@ -164,7 +164,7 @@ class _DesktopShortcutsState extends ConsumerState<DesktopShortcuts> {
           unawaited(leaveDesktopWindowMode());
         }
       case DesktopCommand.lyrics:
-        toggleDesktopInspector(DesktopInspectorPanel.lyrics);
+        break;
       case DesktopCommand.upNext:
         toggleDesktopInspector(DesktopInspectorPanel.upNext);
       case DesktopCommand.toggleSidebar:
@@ -190,10 +190,7 @@ class _DesktopShortcutsState extends ConsumerState<DesktopShortcuts> {
 
   void _selectDestination(int position) {
     final context = _rootNavigator?.context ?? this.context;
-    final tabs = desktopDestinationTabs(
-      mornye: context.isMornye,
-      showStore: ref.read(settingsProvider).showExtensionStore,
-    );
+    final tabs = desktopDestinationTabs(mornye: context.isMornye);
     if (position < 1 || position > tabs.length) return;
     final tab = tabs[position - 1];
     _closePages();
@@ -405,9 +402,6 @@ class _DesktopMenuBarState extends ConsumerState<_DesktopMenuBar> {
     final material = MaterialLocalizations.of(context);
     final mornye = context.isMornye;
     final showPlayer = ref.watch(playerUiEnabledProvider);
-    final showStore = ref.watch(
-      settingsProvider.select((s) => s.showExtensionStore),
-    );
     final fullScreen = desktopWindowFullScreen.value;
     final mode = desktopWindowMode.value;
     final shown = (
@@ -416,7 +410,6 @@ class _DesktopMenuBarState extends ConsumerState<_DesktopMenuBar> {
       material,
       mornye,
       showPlayer,
-      showStore,
       fullScreen,
       mode,
       desktopMiniPlayerSupported,
@@ -426,7 +419,7 @@ class _DesktopMenuBarState extends ConsumerState<_DesktopMenuBar> {
       _menus = _buildMenus(
         l10n: l10n,
         material: material,
-        tabs: desktopDestinationTabs(mornye: mornye, showStore: showStore),
+        tabs: desktopDestinationTabs(mornye: mornye),
         showPlayer: showPlayer,
         fullScreen: fullScreen,
         mode: mode,
@@ -533,8 +526,6 @@ class _DesktopMenuBarState extends ConsumerState<_DesktopMenuBar> {
               _command(material.backButtonTooltip, DesktopCommand.back),
               _command(l10n.desktopShortcutForward, DesktopCommand.forward),
               _command(l10n.desktopMenuRefresh, DesktopCommand.refresh),
-              if (showPlayer)
-                _command(l10n.nowPlayingTabLyrics, DesktopCommand.lyrics),
               if (showPlayer)
                 _command(l10n.nowPlayingUpNext, DesktopCommand.upNext),
             ],

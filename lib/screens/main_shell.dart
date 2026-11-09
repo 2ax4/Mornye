@@ -1,34 +1,26 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui' show ImageFilter;
 import 'package:mornye/controllers/open_audio_controller.dart';
 import 'package:mornye/services/audio_file_open_service.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:mornye/widgets/app_alert_dialog.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/l10n/l10n.dart';
-import 'package:mornye/services/saf_migration_prompt_store.dart';
 import 'package:mornye/providers/download_queue_provider.dart';
 import 'package:mornye/providers/extension_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
 import 'package:mornye/providers/network_upload_provider.dart';
 import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/providers/playback_notification_provider.dart';
-import 'package:mornye/providers/repo_provider.dart';
 import 'package:mornye/providers/runtime_profile_provider.dart';
 import 'package:mornye/providers/track_provider.dart';
-import 'package:mornye/providers/user_profile_provider.dart';
 import 'package:mornye/providers/preview_player_provider.dart';
 import 'package:mornye/screens/home_tab.dart';
 import 'package:mornye/screens/library_directory_screen.dart';
 import 'package:mornye/screens/library_tracks_folder_screen.dart';
 import 'package:mornye/screens/mornye_library_screen.dart';
-import 'package:mornye/screens/repo_tab.dart';
 import 'package:mornye/screens/queue_tab.dart';
-import 'package:mornye/screens/settings/profile_settings_page.dart';
 import 'package:mornye/screens/settings/settings_tab.dart';
 import 'package:mornye/screens/whats_new_screen.dart';
 import 'package:mornye/services/platform_bridge.dart';
@@ -39,11 +31,9 @@ import 'package:mornye/services/listening_statistics.dart';
 import 'package:mornye/services/discord_presence_service.dart';
 import 'package:mornye/services/notification_service.dart';
 import 'package:mornye/services/app_remote_config_service.dart';
-import 'package:mornye/services/update_checker.dart';
 import 'package:mornye/widgets/app_announcement_dialog.dart';
 import 'package:mornye/widgets/app_snack_bar.dart';
 import 'package:mornye/widgets/download_queue_feedback.dart';
-import 'package:mornye/widgets/update_dialog.dart';
 import 'package:mornye/widgets/animation_utils.dart';
 import 'package:mornye/widgets/nav_destination_icons.dart';
 import 'package:mornye/widgets/settings_group.dart';
@@ -54,7 +44,6 @@ import 'package:mornye/widgets/link/link_actions.dart';
 import 'package:mornye/widgets/expressive_navigation_bar.dart';
 import 'package:mornye/widgets/mornye_bottom_bar.dart';
 import 'package:mornye/widgets/app_icon.dart';
-import 'package:mornye/widgets/app_loading_indicator.dart';
 import 'package:mornye/widgets/mornye_chrome.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/theme/player_artwork_theme.dart';
@@ -67,32 +56,22 @@ import 'package:mornye/utils/logger.dart';
 import 'package:mornye/utils/adaptive_layout.dart';
 import 'package:mornye/utils/android_tv.dart';
 import 'package:mornye/utils/desktop_platform.dart';
-import 'package:mornye/utils/saf_download_tree.dart';
 
 part 'main_shell_startup_prompts.dart';
 
 final _log = AppLogger('MainShell');
 
-/// The badge counts on Library (queued downloads) and Store (extension
-/// updates). Only the navigation chrome watches them, so a finished
-/// download or an update check does not rebuild every tab.
+/// The badge count on Library (queued downloads). Only the navigation
+/// chrome watches it, so a finished download does not rebuild every tab.
 int _watchQueuedCount(WidgetRef ref) =>
     ref.watch(downloadQueueProvider.select((s) => s.queuedCount));
 
-int _watchRepoUpdatesCount(WidgetRef ref) =>
-    ref.watch(repoProvider.select((s) => s.updatesAvailableCount));
-
 /// The tab at [index] in a style's destination order.
 @visibleForTesting
-ShellTab shellTabAt(
-  int index, {
-  required bool mornye,
-  required bool showStore,
-}) {
+ShellTab shellTabAt(int index, {required bool mornye}) {
   if (index == 0) return ShellTab.home;
   if (index == 1) return ShellTab.library;
-  if (showStore && index == 2) return ShellTab.repository;
-  if (mornye && index == (showStore ? 3 : 2)) return ShellTab.search;
+  if (mornye && index == 2) return ShellTab.search;
   return ShellTab.settings;
 }
 
@@ -102,21 +81,14 @@ ShellTab shellTabAt(
 int? shellIndexOfTab(
   ShellTab tab, {
   required bool mornye,
-  required bool showStore,
   required bool desktop,
 }) => switch (tab) {
   ShellTab.home => 0,
   ShellTab.library => 1,
-  ShellTab.repository => showStore ? 2 : null,
   // Material searches from Home.
-  ShellTab.search => mornye ? (showStore ? 3 : 2) : 0,
+  ShellTab.search => mornye ? 2 : 0,
   // Mornye phones open Settings as a page, not a destination.
-  ShellTab.settings =>
-    !mornye
-        ? (showStore ? 3 : 2)
-        : desktop
-        ? (showStore ? 4 : 3)
-        : null,
+  ShellTab.settings => !mornye ? 2 : desktop ? 3 : null,
 };
 
 class MainShell extends ConsumerStatefulWidget {
@@ -145,10 +117,7 @@ class _MainShellState extends ConsumerState<MainShell>
     begin: 0.985,
     end: 1,
   ).animate(_tabJumpOpacity);
-  bool _hasCheckedUpdate = false;
   bool _hasCheckedAppAnnouncement = false;
-  bool _initialSafRepairComplete = false;
-  bool _safRepairDialogVisible = false;
   bool _usbVolumeWarningShown = false;
   StreamSubscription<String>? _shareSubscription;
   StreamSubscription<List<OpenAudioFile>>? _audioOpenSubscription;
@@ -157,14 +126,11 @@ class _MainShellState extends ConsumerState<MainShell>
       ShellNavigationService.homeTabNavigatorKey;
   final GlobalKey<NavigatorState> _libraryTabNavigatorKey =
       ShellNavigationService.libraryTabNavigatorKey;
-  final GlobalKey<NavigatorState> _repoTabNavigatorKey =
-      ShellNavigationService.repoTabNavigatorKey;
   final GlobalKey<NavigatorState> _searchTabNavigatorKey =
       ShellNavigationService.searchTabNavigatorKey;
 
   late final _PreviewStopNavigatorObserver _homePreviewStopObserver;
   late final _PreviewStopNavigatorObserver _libraryPreviewStopObserver;
-  late final _PreviewStopNavigatorObserver _repoPreviewStopObserver;
   late final _PreviewStopNavigatorObserver _searchPreviewStopObserver;
 
   /// Desktop: whether Library shows its root page, so the Mornye sidebar
@@ -184,19 +150,11 @@ class _MainShellState extends ConsumerState<MainShell>
     final previous = _indexStyleMornye;
     _indexStyleMornye = mornye;
     if (previous == null || previous == mornye) return;
-    final showStore = ref.read(
-      settingsProvider.select((s) => s.showExtensionStore),
-    );
-    final tab = shellTabAt(
-      _currentIndex,
-      mornye: previous,
-      showStore: showStore,
-    );
+    final tab = shellTabAt(_currentIndex, mornye: previous);
     final index =
         shellIndexOfTab(
           tab,
           mornye: mornye,
-          showStore: showStore,
           desktop: isDesktopPlatform || isAndroidTv,
         ) ??
         0;
@@ -256,9 +214,6 @@ class _MainShellState extends ConsumerState<MainShell>
     _libraryPreviewStopObserver = _PreviewStopNavigatorObserver(
       () => ref.read(previewPlayerProvider.notifier).stop(),
     );
-    _repoPreviewStopObserver = _PreviewStopNavigatorObserver(
-      () => ref.read(previewPlayerProvider.notifier).stop(),
-    );
     _searchPreviewStopObserver = _PreviewStopNavigatorObserver(
       () => ref.read(previewPlayerProvider.notifier).stop(),
     );
@@ -273,29 +228,16 @@ class _MainShellState extends ConsumerState<MainShell>
       handler: _onShellTabRequested,
       libraryLinkHandler: _requestDesktopLibraryLink,
     );
-    ShellNavigationService.syncState(
-      currentTabIndex: _currentIndex,
-      showRepoTab: false,
-    );
+    ShellNavigationService.syncState(currentTabIndex: _currentIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _repairSafAccessIfNeeded(
-        knownLost: ref.read(initialSafAccessLostProvider),
-      );
-      _initialSafRepairComplete = true;
-      if (!mounted) return;
       unawaited(_restorePlayback());
       // Library menus are built synchronously and offer an upload only once
       // the writable connections are known.
       ref.read(networkUploadConnectionsProvider);
       _setupShareListener();
-      await _checkSafMigration();
-      if (!mounted) return;
       await maybeShowWhatsNewDialog(context, ref);
       if (!mounted) return;
-      final updateDialogShown = await _checkForUpdates();
-      if (!updateDialogShown) {
-        await _checkAppAnnouncement();
-      }
+      await _checkAppAnnouncement();
     });
   }
 
@@ -337,9 +279,7 @@ class _MainShellState extends ConsumerState<MainShell>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _initialSafRepairComplete) {
-      unawaited(_repairSafAccessIfNeeded());
-    } else if (state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.paused) {
       unawaited(
         ref.read(musicPlayerRuntimeProvider).handler?.persistCurrentSession(),
       );
@@ -452,10 +392,7 @@ class _MainShellState extends ConsumerState<MainShell>
 
   void _resetHomeToMain() {
     ref.read(previewPlayerProvider.notifier).stop();
-    final showStore = ref.read(
-      settingsProvider.select((s) => s.showExtensionStore),
-    );
-    final homeNavigator = _navigatorForTab(0, showStore);
+    final homeNavigator = _navigatorForTab(0);
     homeNavigator?.popUntil((route) => route.isFirst);
     // Unfocus BEFORE clear so _onTrackStateChanged can properly
     // clear _urlController (it checks !_searchFocusNode.hasFocus)
@@ -468,8 +405,7 @@ class _MainShellState extends ConsumerState<MainShell>
   bool get _mornyeSettingsTab =>
       context.isMornye && (isDesktopPlatform || isAndroidTv);
 
-  int _settingsIndex(bool showStore) =>
-      context.isMornye ? (showStore ? 4 : 3) : (showStore ? 3 : 2);
+  int _settingsIndex() => context.isMornye ? 3 : 2;
 
   void _onShellTabRequested(ShellTab tab) {
     // Picking a destination returns from Now Playing to the content pane.
@@ -478,17 +414,13 @@ class _MainShellState extends ConsumerState<MainShell>
       unawaited(_openProfileSettings());
       return;
     }
-    final showStore = ref.read(
-      settingsProvider.select((s) => s.showExtensionStore),
-    );
     final index = switch (tab) {
       ShellTab.home => 0,
-      ShellTab.search => context.isMornye ? (showStore ? 3 : 2) : 0,
+      ShellTab.search => context.isMornye ? 2 : 0,
       ShellTab.library => 1,
-      ShellTab.repository => showStore ? 2 : null,
-      ShellTab.settings => _settingsIndex(showStore),
+      ShellTab.settings => _settingsIndex(),
     };
-    if (index != null) _onNavTap(index, resetHome: tab != ShellTab.search);
+    _onNavTap(index, resetHome: tab != ShellTab.search);
   }
 
   bool _settingsPageOpen = false;
@@ -510,9 +442,6 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   void _onNavTap(int index, {bool resetHome = true}) {
-    final showStore = ref.read(
-      settingsProvider.select((s) => s.showExtensionStore),
-    );
     _mornyeChrome.expand();
     if (index == 0 && resetHome && (context.isMornye || _currentIndex == 0)) {
       _resetHomeToMain();
@@ -531,7 +460,6 @@ class _MainShellState extends ConsumerState<MainShell>
       setState(() => _currentIndex = index);
       ShellNavigationService.syncState(
         currentTabIndex: _currentIndex,
-        showRepoTab: showStore,
         showSearchTab: context.isMornye,
       );
       if (!isAndroidTv) FocusManager.instance.primaryFocus?.unfocus();
@@ -560,12 +488,8 @@ class _MainShellState extends ConsumerState<MainShell>
     if (_currentIndex != index) {
       ref.read(previewPlayerProvider.notifier).stop();
       setState(() => _currentIndex = index);
-      final showStore = ref.read(
-        settingsProvider.select((s) => s.showExtensionStore),
-      );
       ShellNavigationService.syncState(
         currentTabIndex: _currentIndex,
-        showRepoTab: showStore,
         showSearchTab: context.isMornye,
       );
       FocusManager.instance.primaryFocus?.unfocus();
@@ -601,10 +525,7 @@ class _MainShellState extends ConsumerState<MainShell>
       return;
     }
 
-    final showStore = ref.read(
-      settingsProvider.select((s) => s.showExtensionStore),
-    );
-    final currentNavigator = _navigatorForTab(_currentIndex, showStore);
+    final currentNavigator = _navigatorForTab(_currentIndex);
     final handledByCurrentNavigator =
         await currentNavigator?.maybePop() ?? false;
     if (handledByCurrentNavigator) {
@@ -615,8 +536,7 @@ class _MainShellState extends ConsumerState<MainShell>
     if (!mounted) return;
 
     final trackState = ref.read(trackProvider);
-    final isSearchTab =
-        _currentIndex == (context.isMornye ? (showStore ? 3 : 2) : 0);
+    final isSearchTab = _currentIndex == (context.isMornye ? 2 : 0);
 
     if (isSearchTab &&
         trackState.isShowingRecentAccess &&
@@ -685,28 +605,20 @@ class _MainShellState extends ConsumerState<MainShell>
     }
   }
 
-  ShellTab _tabForIndex(int index, bool showStore) {
+  ShellTab _tabForIndex(int index) {
     if (index == 0) return ShellTab.home;
     if (index == 1) return ShellTab.library;
-    if (showStore && index == 2) return ShellTab.repository;
-    if (_mornyeSettingsTab && index == _settingsIndex(showStore)) {
+    if (_mornyeSettingsTab && index == _settingsIndex()) {
       return ShellTab.settings;
     }
     return context.isMornye ? ShellTab.search : ShellTab.settings;
   }
 
-  List<DesktopDestination> _desktopDestinations({
-    required bool showStore,
-    required int queueCount,
-    required int repoUpdatesCount,
-  }) {
+  List<DesktopDestination> _desktopDestinations({required int queueCount}) {
     final l10n = context.l10n;
     final mornye = context.isMornye;
     return [
-      for (final tab in desktopDestinationTabs(
-        mornye: mornye,
-        showStore: showStore,
-      ))
+      for (final tab in desktopDestinationTabs(mornye: mornye))
         switch (tab) {
           ShellTab.home => DesktopDestination(
             tab: tab,
@@ -724,17 +636,6 @@ class _MainShellState extends ConsumerState<MainShell>
                 : Icons.library_music,
             label: l10n.navLibrary,
             badgeCount: queueCount,
-          ),
-          ShellTab.repository => DesktopDestination(
-            tab: tab,
-            icon: mornye
-                ? CupertinoIcons.square_grid_2x2
-                : Icons.extension_outlined,
-            selectedIcon: mornye
-                ? CupertinoIcons.square_grid_2x2_fill
-                : Icons.extension,
-            label: l10n.navStore,
-            badgeCount: repoUpdatesCount,
           ),
           ShellTab.search => DesktopDestination(
             tab: tab,
@@ -872,36 +773,10 @@ class _MainShellState extends ConsumerState<MainShell>
     return true;
   }
 
-  /// Opens the profile from the Mornye desktop sidebar's account row: in
-  /// the Settings detail pane, or as a page when Settings shows only its
-  /// list.
-  void _openDesktopProfile() {
-    final profile = ref.read(userProfileProvider).value;
-    _onShellTabRequested(ShellTab.settings);
-    if (profile == null) return;
-    // Settings registers its detail pane once it has built.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final navigator =
-          ShellNavigationService.activeBackNavigator() ?? Navigator.of(context);
-      unawaited(
-        navigator.push(
-          MaterialPageRoute<void>(
-            builder: (_) => MornyeSettingsTheme(
-              child: ProfileSettingsPage(profile: profile),
-            ),
-          ),
-        ),
-      );
-    });
-    WidgetsBinding.instance.ensureVisualUpdate();
-  }
-
-  NavigatorState? _navigatorForTab(int index, bool showStore) {
+  NavigatorState? _navigatorForTab(int index) {
     if (index == 0) return _homeTabNavigatorKey.currentState;
     if (index == 1) return _libraryTabNavigatorKey.currentState;
-    if (showStore && index == 2) return _repoTabNavigatorKey.currentState;
-    if (context.isMornye && index == (showStore ? 3 : 2)) {
+    if (context.isMornye && index == 2) {
       return _searchTabNavigatorKey.currentState;
     }
     return null;
@@ -933,15 +808,11 @@ class _MainShellState extends ConsumerState<MainShell>
       settingsProvider.select((s) => s.listeningStatisticsEnabled),
       (_, enabled) => listeningRecorder.setEnabled(enabled),
     );
-    final showStore = ref.watch(
-      settingsProvider.select((s) => s.showExtensionStore),
-    );
     final heroAnimationsEnabled = ref.watch(
       settingsProvider.select((s) => s.heroAnimationsEnabled),
     );
     ShellNavigationService.syncState(
       currentTabIndex: _currentIndex,
-      showRepoTab: showStore,
       showSearchTab: context.isMornye,
     );
 
@@ -967,14 +838,6 @@ class _MainShellState extends ConsumerState<MainShell>
         heroAnimationsEnabled: heroAnimationsEnabled,
         child: _LibraryTabRoot(isTabActive: _currentIndex == 1),
       ),
-      if (showStore)
-        _TabNavigator(
-          key: const ValueKey('tab-repo'),
-          navigatorKey: _repoTabNavigatorKey,
-          observers: [_repoPreviewStopObserver],
-          heroAnimationsEnabled: heroAnimationsEnabled,
-          child: const RepoTab(),
-        ),
       if (!context.isMornye) const SettingsTab(),
       if (context.isMornye)
         _TabNavigator(
@@ -1071,8 +934,6 @@ class _MainShellState extends ConsumerState<MainShell>
               builder: (context, ref, body) => TvShell(
                 destinations: _navigationDestinations(
                   queuedCount: _watchQueuedCount(ref),
-                  repoUpdatesCount: _watchRepoUpdatesCount(ref),
-                  showStore: showStore,
                 ),
                 selectedIndex: selectedDestination,
                 onSelected: _onNavTap,
@@ -1088,7 +949,7 @@ class _MainShellState extends ConsumerState<MainShell>
       // Desktop windows: a rail (Material) or source-list sidebar (Mornye)
       // with a persistent player; no bottom tabs or touch gestures.
       final mornye = context.isMornye;
-      final selectedTab = _tabForIndex(selectedDestination, showStore);
+      final selectedTab = _tabForIndex(selectedDestination);
       return DownloadQueueFeedback(
         child: DesktopLinkTransferNotices(
           child: Scaffold(
@@ -1099,10 +960,8 @@ class _MainShellState extends ConsumerState<MainShell>
                 final queuedCount = _watchQueuedCount(ref);
                 return DesktopShellLayout(
                   destinations: _desktopDestinations(
-                    showStore: showStore,
                     // Mornye shows the queue on its Downloads link instead.
                     queueCount: mornye ? 0 : queuedCount,
-                    repoUpdatesCount: _watchRepoUpdatesCount(ref),
                   ),
                   selected: selectedTab,
                   onSelected: _onShellTabRequested,
@@ -1111,7 +970,6 @@ class _MainShellState extends ConsumerState<MainShell>
                       : const [],
                   // The Material rail opens playlists alone.
                   onOpenLibraryLink: _openDesktopLibraryLink,
-                  onOpenProfile: mornye ? _openDesktopProfile : null,
                   body: body!,
                 );
               },
@@ -1135,8 +993,6 @@ class _MainShellState extends ConsumerState<MainShell>
             pageView: pageView!,
             destinations: _navigationDestinations(
               queuedCount: _watchQueuedCount(ref),
-              repoUpdatesCount: _watchRepoUpdatesCount(ref),
-              showStore: showStore,
             ),
             selectedDestination: selectedDestination,
             maxIndex: maxIndex,
@@ -1150,8 +1006,6 @@ class _MainShellState extends ConsumerState<MainShell>
   /// Phone, tablet and TV destinations, with the download count on Library.
   List<NavigationDestination> _navigationDestinations({
     required int queuedCount,
-    required int repoUpdatesCount,
-    required bool showStore,
   }) {
     final l10n = context.l10n;
     return <NavigationDestination>[
@@ -1188,33 +1042,6 @@ class _MainShellState extends ConsumerState<MainShell>
         ),
         label: l10n.navLibrary,
       ),
-      if (showStore)
-        NavigationDestination(
-          icon: context.isMornye
-              ? MornyeNavigationIcon(
-                  icon: CupertinoIcons.square_grid_2x2,
-                  badgeCount: repoUpdatesCount,
-                )
-              : AnimatedBadge(
-                  count: repoUpdatesCount,
-                  child: Badge(
-                    isLabelVisible: repoUpdatesCount > 0,
-                    label: Text('$repoUpdatesCount'),
-                    child: const AppIcon(Icons.extension_outlined),
-                  ),
-                ),
-          selectedIcon: BouncingIcon(
-            child: AnimatedBadge(
-              count: repoUpdatesCount,
-              child: Badge(
-                isLabelVisible: repoUpdatesCount > 0,
-                label: Text('$repoUpdatesCount'),
-                child: const AppIcon(Icons.extension),
-              ),
-            ),
-          ),
-          label: l10n.navStore,
-        ),
       if (!context.isMornye)
         NavigationDestination(
           icon: const AppIcon(Icons.settings_outlined),

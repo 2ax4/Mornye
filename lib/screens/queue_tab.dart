@@ -79,7 +79,6 @@ import 'package:mornye/services/downloaded_embedded_cover_resolver.dart';
 import 'package:mornye/screens/track_metadata_screen.dart';
 import 'package:mornye/screens/listening_rewind_screen.dart';
 import 'package:mornye/screens/favorite_artists_screen.dart';
-import 'package:mornye/screens/downloaded_album_screen.dart';
 import 'package:mornye/widgets/cached_cover_image.dart';
 import 'package:mornye/screens/library_tracks_folder_screen.dart';
 import 'package:mornye/screens/local_album_screen.dart';

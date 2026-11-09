@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/controllers/clickable_metadata.dart';
 import 'package:mornye/l10n/l10n.dart';
-import 'package:mornye/providers/download_queue_provider.dart';
 import 'package:mornye/providers/library_browse_provider.dart';
 import 'package:mornye/providers/settings_provider.dart';
-import 'package:mornye/screens/downloaded_album_screen.dart';
 import 'package:mornye/screens/library_directory_screen.dart';
 import 'package:mornye/screens/listening_rewind_screen.dart';
 import 'package:mornye/screens/local_album_screen.dart';
@@ -120,17 +118,7 @@ class _MornyeLibraryScreenState extends ConsumerState<MornyeLibraryScreen> {
   }
 
   Future<void> _openAlbum(LibraryBrowseEntry entry) async {
-    if (entry.source != 'local') {
-      await pushPage<void>(
-        context,
-        (_) => DownloadedAlbumScreen(
-          albumName: entry.name,
-          artistName: entry.artist,
-          coverUrl: entry.cover,
-        ),
-      );
-      return;
-    }
+    if (entry.source != 'local') return;
     Future<List<LocalLibraryItem>> loadTracks() => _loadLocalAlbum(entry);
 
     await pushPage<void>(
@@ -330,26 +318,7 @@ class _MornyeLibraryScreenState extends ConsumerState<MornyeLibraryScreen> {
         icon: const Icon(Icons.search),
         onPressed: () => setState(() => _showSearch = !_showSearch),
       ),
-      if (_overview)
-        Consumer(
-          builder: (context, ref, _) {
-            final count = ref.watch(
-              downloadQueueLookupProvider.select(
-                (s) => s.notCompletedItemIds.length,
-              ),
-            );
-            return TextButton.icon(
-              onPressed: () => widget.onOpenSection('downloads'),
-              icon: Badge(
-                isLabelVisible: count > 0,
-                label: Text('$count'),
-                child: const Icon(Icons.downloading_outlined),
-              ),
-              label: Text(context.l10n.libraryDownloads),
-            );
-          },
-        )
-      else if (!_artists) ...[
+      if (!_artists) ...[
         Builder(
           builder: (buttonContext) => IconButton(
             tooltip: context.l10n.searchSortTitle,

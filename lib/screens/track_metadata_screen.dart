@@ -58,7 +58,6 @@ import 'package:mornye/utils/artist_utils.dart';
 import 'package:mornye/utils/cover_art_utils.dart';
 import 'package:mornye/utils/desktop_platform.dart';
 import 'package:mornye/utils/logger.dart';
-import 'package:mornye/utils/lyrics_metadata_helper.dart';
 import 'package:mornye/utils/mime_utils.dart';
 import 'package:mornye/utils/image_cache_utils.dart';
 
@@ -104,7 +103,6 @@ part 'track_metadata_screen_menu.dart';
 part 'track_metadata_mornye.dart';
 
 part 'track_metadata_cards.dart';
-part 'track_metadata_lyrics.dart';
 part 'track_metadata_convert.dart';
 part 'track_metadata_actions.dart';
 
@@ -201,15 +199,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
     FileAccessUnavailable() => context.l10n.trackFileUnavailable,
     _ => null,
   };
-  String? _lyrics;
-  String? _rawLyrics;
-  bool _lyricsLoading = false;
-  String? _lyricsError;
-  String? _lyricsSource;
-  bool _lyricsEmbedded = false;
-  bool _isEmbedding = false;
-  bool _isInstrumental = false;
-  bool _embeddedLyricsChecked = false;
   bool _isConverting = false;
   bool _hasMetadataChanges = false;
   bool _hasLoadedResolvedAudioMetadata = false;
@@ -230,9 +219,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
   static final RegExp _leadingOrTrailingDots = RegExp(r'^\.+|\.+$');
   String get _coverCacheKey => _itemId;
 
-  /// Shared by the lyrics box and its scrollbar.
-  final _lyricsScrollController = ScrollController();
-
   @override
   void initState() {
     super.initState();
@@ -247,11 +233,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
         _metadataLoadGeneration++;
         _hasLoadedResolvedAudioMetadata = false;
         _editedMetadata = null;
-        _embeddedLyricsChecked = false;
-        _lyrics = null;
-        _rawLyrics = null;
-        _lyricsError = null;
-        _lyricsLoading = false;
       });
       await _checkFile();
       if (mounted && source == cleanFilePath && !_isNetworkItem) {
@@ -275,7 +256,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
     _unsubscribeMetadata();
     _unsubscribeDeletion();
     unawaited(_cleanupTempFileAndParentIfNotCached(_embeddedCoverPreviewPath));
-    _lyricsScrollController.dispose();
     super.dispose();
   }
 
@@ -318,9 +298,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
     });
     if (!_fileExists) return;
 
-    if (_lyrics == null && !_lyricsLoading) {
-      unawaited(_checkEmbeddedLyrics());
-    }
     if (!_isCueVirtualTrack && !_hasLoadedResolvedAudioMetadata) {
       unawaited(_refreshResolvedAudioMetadataFromFile());
     }
@@ -443,19 +420,8 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
       final resolvedUPC = (metadata['upc'] ?? metadata['barcode'])?.toString();
       final resolvedComment = metadata['comment']?.toString();
       final resolvedExplicit = parseExplicitFlag(metadata['explicit']);
-      final hasResolvedLyricsValue =
-          metadata.containsKey('hasLyrics') || metadata.containsKey('lyrics');
-      final resolvedHasLyrics =
-          metadata['hasLyrics'] == true ||
-          hasUsableLyricsContent(metadata['lyrics']?.toString() ?? '');
       final needsExplicit =
           resolvedExplicit != null && resolvedExplicit != isExplicit;
-      final needsLyricsAvailability =
-          hasResolvedLyricsValue &&
-          (_isLocalItem
-              ? resolvedHasLyrics != _localLibraryItem?.hasLyrics
-              : resolvedHasLyrics != _downloadItem?.hasLyrics ||
-                    (_downloadItem?.lyricsMetadataScanVersion ?? 0) < 1);
       final resolvedHasReplayGain = metadataHasReplayGain(metadata);
       final hasResolvedReplayGainValue = replayGainMetadataWasRead(metadata);
       final needsReplayGainAvailability =
@@ -525,7 +491,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
               needsDuration ||
               needsComposer ||
               needsExplicit ||
-              needsLyricsAvailability ||
               needsReplayGainAvailability ||
               (isPlaceholderQualityLabel(_quality) && resolvedQuality != null));
       final localItem = _localLibraryItem;
@@ -538,7 +503,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
               (resolvedBitrate != null &&
                   resolvedBitrate != localItem.bitrate) ||
               needsExplicit ||
-              needsLyricsAvailability ||
               needsReplayGainAvailability ||
               needsDuration ||
               formatChanged);
@@ -622,8 +586,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
               duration: needsDuration ? resolvedDuration : null,
               composer: needsComposer ? resolvedComposer : null,
               explicit: needsExplicit ? resolvedExplicit : null,
-              hasLyrics: hasResolvedLyricsValue ? resolvedHasLyrics : null,
-              lyricsMetadataScanVersion: hasResolvedLyricsValue ? 1 : null,
               hasReplayGain: hasResolvedReplayGainValue
                   ? resolvedHasReplayGain
                   : null,
@@ -646,8 +608,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
               duration: needsDuration ? resolvedDuration : null,
               composer: needsComposer ? resolvedComposer : null,
               explicit: needsExplicit ? resolvedExplicit : null,
-              hasLyrics: hasResolvedLyricsValue ? resolvedHasLyrics : null,
-              lyricsMetadataScanVersion: hasResolvedLyricsValue ? 1 : null,
               hasReplayGain: hasResolvedReplayGainValue
                   ? resolvedHasReplayGain
                   : null,
@@ -665,7 +625,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
           sampleRate: resolvedSampleRate,
           bitrate: resolvedBitrate,
           explicit: needsExplicit ? resolvedExplicit : null,
-          hasLyrics: hasResolvedLyricsValue ? resolvedHasLyrics : null,
           hasReplayGain: hasResolvedReplayGainValue
               ? resolvedHasReplayGain
               : null,
@@ -681,7 +640,6 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
               sampleRate: resolvedSampleRate,
               bitrate: resolvedBitrate,
               explicit: needsExplicit ? resolvedExplicit : null,
-              hasLyrics: hasResolvedLyricsValue ? resolvedHasLyrics : null,
               hasReplayGain: hasResolvedReplayGainValue
                   ? resolvedHasReplayGain
                   : null,
@@ -738,15 +696,7 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
         }
         _fileAccess = null;
         _networkFileDeletable = false;
-        _lyrics = null;
-        _rawLyrics = null;
-        _lyricsLoading = false;
-        _lyricsError = null;
-        _lyricsSource = null;
         showTitleNotifier.value = false;
-        _lyricsEmbedded = false;
-        _isInstrumental = false;
-        _embeddedLyricsChecked = false;
         _hasLoadedResolvedAudioMetadata = false;
         _editedMetadata = null;
         _resolvedAudioFormat = null;

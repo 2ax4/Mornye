@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/l10n/l10n.dart';
-import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/services/shell_navigation_service.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/widgets/app_sliver_header.dart';
@@ -19,13 +18,7 @@ class KeyboardShortcutsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final showStore = ref.watch(
-      settingsProvider.select((s) => s.showExtensionStore),
-    );
-    final tabs = desktopDestinationTabs(
-      mornye: context.isMornye,
-      showStore: showStore,
-    );
+    final tabs = desktopDestinationTabs(mornye: context.isMornye);
 
     List<SingleActivator> keys(DesktopCommand command) =>
         desktopCommandShortcuts(command, platform);
@@ -40,7 +33,6 @@ class KeyboardShortcutsPage extends ConsumerWidget {
     String tabLabel(ShellTab tab) => switch (tab) {
       ShellTab.home => l10n.navHome,
       ShellTab.library => l10n.navLibrary,
-      ShellTab.repository => l10n.navStore,
       ShellTab.search => l10n.mornyeSearch,
       ShellTab.settings => l10n.navSettings,
     };
@@ -74,7 +66,6 @@ class KeyboardShortcutsPage extends ConsumerWidget {
       (
         l10n.desktopMenuView,
         [
-          (l10n.nowPlayingTabLyrics, keys(DesktopCommand.lyrics)),
           (l10n.nowPlayingUpNext, keys(DesktopCommand.upNext)),
           (
             l10n.desktopShortcutToggleSidebar,
