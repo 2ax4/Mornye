@@ -440,7 +440,6 @@ class _DesktopMenuBarState extends ConsumerState<_DesktopMenuBar> {
     String tabLabel(ShellTab tab) => switch (tab) {
       ShellTab.home => l10n.navHome,
       ShellTab.library => l10n.navLibrary,
-      ShellTab.repository => l10n.navStore,
       ShellTab.search => l10n.mornyeSearch,
       ShellTab.settings => l10n.navSettings,
     };

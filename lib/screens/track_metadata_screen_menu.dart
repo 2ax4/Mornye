@@ -45,13 +45,6 @@ extension _TrackMetadataMenu on _TrackMetadataScreenState {
             else if (downloadItem != null)
               UnifiedLibraryItem.fromDownloadHistory(downloadItem),
           ]);
-    final uploadItems = [
-      if (_fileExists && !_isNetworkItem)
-        if (localItem != null)
-          UnifiedLibraryItem.fromLocalLibrary(localItem)
-        else if (downloadItem != null)
-          UnifiedLibraryItem.fromDownloadHistory(downloadItem),
-    ];
     return <_MetadataOption>[
       if (canSaveNetworkOfflineSource(cleanFilePath) && desktopSongs.isEmpty)
         _MetadataOption(
@@ -88,15 +81,6 @@ extension _TrackMetadataMenu on _TrackMetadataScreenState {
           label: l10n.linkSendToDesktop(linkDesktopName(linkClient)),
           onTap: () => linkSendSongsToDesktop(screenContext, ref, phoneSongs),
         ),
-      if (networkUploadOffered(
-        ref.read(networkUploadConnectionsProvider).value,
-        uploadItems,
-      ))
-        _MetadataOption(
-          icon: Icons.cloud_upload_outlined,
-          label: l10n.networkUpload,
-          onTap: () => uploadToNetworkStorage(screenContext, ref, uploadItems),
-        ),
       if (albumName.trim().isNotEmpty)
         _MetadataOption(
           icon: Icons.album_outlined,
@@ -128,30 +112,9 @@ extension _TrackMetadataMenu on _TrackMetadataScreenState {
         )
       else if (remoteFile)
         remote(LinkLibraryAction.editMetadata),
-      if (remoteFile)
-        remote(LinkLibraryAction.saveCover)
-      else if (!_isNetworkItem && (_coverUrl != null || _fileExists))
-        _MetadataOption(
-          icon: Icons.image_outlined,
-          label: l10n.trackSaveCoverArt,
-          onTap: _saveCoverArt,
-        ),
-      if (remoteFile)
-        remote(LinkLibraryAction.saveLyrics)
-      else if (!_isNetworkItem && (_fileExists || !_isLocalItem))
-        _MetadataOption(
-          icon: Icons.lyrics_outlined,
-          label: l10n.trackSaveLyrics,
-          onTap: _saveLyrics,
-        ),
-      if (canEditFile)
-        _MetadataOption(
-          icon: Icons.travel_explore,
-          label: l10n.trackReEnrich,
-          onTap: _reEnrichMetadata,
-        )
-      else if (remoteFile)
-        remote(LinkLibraryAction.reEnrich),
+      if (remoteFile) remote(LinkLibraryAction.saveCover),
+      if (remoteFile) remote(LinkLibraryAction.saveLyrics),
+      if (remoteFile) remote(LinkLibraryAction.reEnrich),
       if (canEditFile && _isConvertibleFormat)
         _MetadataOption(
           icon: Icons.swap_horiz,

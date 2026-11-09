@@ -4,21 +4,13 @@ part of 'desktop_player_bar.dart';
 /// of the shell.
 final desktopMiniPlayerOpen = ValueNotifier<bool>(false);
 
-/// Whether the mini player shows the current lyric lines under the track.
-final desktopMiniPlayerLyrics = ValueNotifier<bool>(false);
-
 const double _miniPlayerWidth = 360;
 const double _miniPlayerHeight = 140;
-const double _miniPlayerLyricsHeight = 108;
 
-Size _miniPlayerSize({required bool lyrics}) => Size(
-  _miniPlayerWidth,
-  _miniPlayerHeight + (lyrics ? _miniPlayerLyricsHeight : 0),
-);
+Size _miniPlayerSize() => const Size(_miniPlayerWidth, _miniPlayerHeight);
 
 /// The content size requested from the native mini player window.
-Size get desktopMiniPlayerSize =>
-    _miniPlayerSize(lyrics: desktopMiniPlayerLyrics.value);
+Size get desktopMiniPlayerSize => _miniPlayerSize();
 
 bool _miniPlayerBusy = false;
 
@@ -52,27 +44,9 @@ Future<void> setDesktopMiniPlayer({required bool open}) async {
   }
 }
 
-/// Shows or hides the lyric lines, growing or shrinking the panel from its
-/// top edge.
-Future<void> _toggleMiniPlayerLyrics() async {
-  if (_miniPlayerBusy) return;
-  _miniPlayerBusy = true;
-  try {
-    final show = !desktopMiniPlayerLyrics.value;
-    if (show) desktopMiniPlayerLyrics.value = true;
-    final resized = await openDesktopMiniPlayerWindow(
-      _miniPlayerSize(lyrics: show),
-    );
-    desktopMiniPlayerLyrics.value = resized ? show : !show;
-  } finally {
-    _miniPlayerBusy = false;
-  }
-}
-
-/// The mini player: the track, the transport and a thin progress bar, with
-/// the current and next lyric lines below when they are on. The window
-/// floats above other apps while it shows; dragging anywhere but a control
-/// moves it.
+/// The mini player: the track, the transport and a thin progress bar. The
+/// window floats above other apps while it shows; dragging anywhere but a
+/// control moves it.
 ///
 /// Material takes the track's artwork scheme on `surfaceContainer`; Mornye
 /// uses the dark Now Playing background.
@@ -144,21 +118,9 @@ class _DesktopMiniPlayerState extends ConsumerState<DesktopMiniPlayer> {
             const Positioned.fill(
               child: DesktopWindowDragArea(frameless: true),
             ),
-            ValueListenableBuilder<bool>(
-              valueListenable: desktopMiniPlayerLyrics,
-              builder: (context, lyrics, _) => ClipRect(
-                child: OverflowBox(
-                  alignment: AlignmentDirectional.topStart,
-                  minWidth: _miniPlayerWidth,
-                  maxWidth: _miniPlayerWidth,
-                  minHeight: _miniPlayerSize(lyrics: lyrics).height,
-                  maxHeight: _miniPlayerSize(lyrics: lyrics).height,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: _content(context, mediaItem, lyrics: lyrics),
-                  ),
-                ),
-              ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: _content(context, mediaItem),
             ),
           ],
         ),
@@ -166,11 +128,7 @@ class _DesktopMiniPlayerState extends ConsumerState<DesktopMiniPlayer> {
     );
   }
 
-  Widget _content(
-    BuildContext context,
-    MediaItem? mediaItem, {
-    required bool lyrics,
-  }) {
+  Widget _content(BuildContext context, MediaItem? mediaItem) {
     final mornye = context.isMornye;
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = context.l10n;
@@ -228,22 +186,6 @@ class _DesktopMiniPlayerState extends ConsumerState<DesktopMiniPlayer> {
                     ),
                     onPressed: () => setDesktopMiniPlayer(open: false),
                   ),
-                  AppIconButton(
-                    key: const ValueKey('desktop-mini-player-lyrics'),
-                    tooltip: l10n.nowPlayingTabLyrics,
-                    iconSize: 20,
-                    style: buttonStyle,
-                    isSelected: lyrics,
-                    color: lyrics
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
-                    icon: AppIcon(
-                      mornye
-                          ? CupertinoIcons.quote_bubble
-                          : Icons.lyrics_outlined,
-                    ),
-                    onPressed: _toggleMiniPlayerLyrics,
-                  ),
                 ],
               ),
             ],
@@ -260,226 +202,7 @@ class _DesktopMiniPlayerState extends ConsumerState<DesktopMiniPlayer> {
             child: _SeekRow(mediaItem: mediaItem, dense: true),
           ),
         ),
-        if (lyrics) Expanded(child: _MiniPlayerLyrics(metadata: _metadata)),
       ],
     );
   }
-}
-
-/// The lyric line being sung and the one after it. Plain lyrics scroll;
-/// without lyrics it says so.
-class _MiniPlayerLyrics extends ConsumerStatefulWidget {
-  const _MiniPlayerLyrics({required this.metadata});
-
-  final PlayerMetadataController metadata;
-
-  @override
-  ConsumerState<_MiniPlayerLyrics> createState() => _MiniPlayerLyricsState();
-}
-
-class _MiniPlayerLyricsState extends ConsumerState<_MiniPlayerLyrics>
-    with WidgetsBindingObserver {
-  Timer? _nextLine;
-  final _seekPreview = ValueNotifier<Duration?>(null);
-  bool _tickerEnabled = true;
-
-  bool get _visible =>
-      _tickerEnabled &&
-      switch (WidgetsBinding.instance.lifecycleState) {
-        null || AppLifecycleState.resumed || AppLifecycleState.inactive => true,
-        _ => false,
-      };
-
-  PlayerMetadataController get metadata => widget.metadata;
-
-  List<LyricLine>? _shiftedSource;
-  int _shiftedOffsetMs = 0;
-  List<LyricLine> _shifted = const [];
-
-  /// [lines] with the lyrics timing setting applied, kept while neither
-  /// changes so word-timed lines keep their sweep across rebuilds.
-  List<LyricLine> _withOffset(List<LyricLine> lines, int offsetMs) {
-    if (!identical(lines, _shiftedSource) || offsetMs != _shiftedOffsetMs) {
-      _shiftedSource = lines;
-      _shiftedOffsetMs = offsetMs;
-      _shifted = lyricsShiftedBy(lines, Duration(milliseconds: offsetMs));
-    }
-    return _shifted;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _tickerEnabled = TickerMode.valuesOf(context).enabled;
-    if (!_visible) _nextLine?.cancel();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_visible) _nextLine?.cancel();
-    if (mounted) setState(() {});
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _nextLine?.cancel();
-    _seekPreview.dispose();
-    super.dispose();
-  }
-
-  /// The lead line playing now. Playback reports its position only when its
-  /// state changes, so a timer rebuilds the view when the next line starts.
-  int _followPlayback(WidgetRef ref, List<LyricLine> lines) {
-    _nextLine?.cancel();
-    final state =
-        (_visible
-                ? ref.watch(playbackStateProvider)
-                : ref.read(playbackStateProvider))
-            .value;
-    final position = state?.position ?? Duration.zero;
-    final current = _sungLineAt(lines, position);
-    final next = _leadLineAfter(lines, current);
-    if (_visible &&
-        state != null &&
-        state.playing &&
-        state.processingState == AudioProcessingState.ready &&
-        state.speed.isFinite &&
-        state.speed > 0 &&
-        next >= 0) {
-      final wait = lines[next].time - position;
-      _nextLine = Timer(
-        Duration(microseconds: (wait.inMicroseconds / state.speed).ceil()),
-        () {
-          if (mounted) setState(() {});
-        },
-      );
-    }
-    return current;
-  }
-
-  @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: metadata,
-    builder: (context, _) {
-      final colorScheme = Theme.of(context).colorScheme;
-      final textTheme = Theme.of(context).textTheme;
-      if (metadata.loading || metadata.searchingOnline) {
-        return const Center(child: AppLoadingIndicator(size: 20));
-      }
-      final lyrics = metadata.lyrics;
-      if (lyrics.isEmpty) {
-        return Center(
-          child: Text(
-            context.l10n.nowPlayingNoLyrics,
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        );
-      }
-      if (!lyrics.synced) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            lyrics.plainText,
-            style: textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        );
-      }
-      return Consumer(
-        builder: (context, ref, _) {
-          final lines = _withOffset(
-            lyrics.lines,
-            ref.watch(themeProvider.select((theme) => theme.lyricsOffsetMs)),
-          );
-          final current = _followPlayback(ref, lines);
-          final next = _leadLineAfter(lines, current);
-          return Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: SingleChildScrollView(
-              child: AnimatedSwitcher(
-                duration: MediaQuery.disableAnimationsOf(context)
-                    ? Duration.zero
-                    : const Duration(milliseconds: 220),
-                layoutBuilder: (current, previous) => Stack(
-                  alignment: AlignmentDirectional.topStart,
-                  children: [...previous, ?current],
-                ),
-                child: Column(
-                  key: ValueKey(current),
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (current >= 0)
-                      if (lines[current].hasWordTiming)
-                        WordTimedLyricLine(
-                          line: lines[current],
-                          initialPosition:
-                              ref.read(playbackStateProvider).value?.position ??
-                              Duration.zero,
-                          seekPreview: _seekPreview,
-                          style: textTheme.titleLarge!.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                          maxLines: 2,
-                        )
-                      else
-                        Text(
-                          lines[current].text,
-                          style: textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onSurface,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    if (next >= 0)
-                      Text(
-                        lines[next].text,
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
-bool _isLeadLine(LyricLine line) =>
-    !line.isBackground && line.text.trim().isNotEmpty;
-
-/// The last lead line that has started at [position], or -1 before the
-/// first one.
-int _sungLineAt(List<LyricLine> lines, Duration position) {
-  var sung = -1;
-  for (var index = 0; index < lines.length; index++) {
-    if (lines[index].time > position) break;
-    if (_isLeadLine(lines[index])) sung = index;
-  }
-  return sung;
-}
-
-/// The first lead line after [index], or -1 when none follows.
-int _leadLineAfter(List<LyricLine> lines, int index) {
-  for (var next = index + 1; next < lines.length; next++) {
-    if (_isLeadLine(lines[next])) return next;
-  }
-  return -1;
 }

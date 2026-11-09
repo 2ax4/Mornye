@@ -95,6 +95,7 @@ import 'package:mornye/widgets/preview_button.dart';
 import 'package:mornye/widgets/app_search_field.dart';
 import 'package:mornye/widgets/track_detail_actions.dart';
 import 'package:mornye/widgets/view_queue_snackbar_action.dart';
+import 'package:mornye/widgets/download_service_picker.dart';
 import 'package:mornye/widgets/downloadable_cover.dart';
 import 'package:mornye/widgets/app_crash_banner.dart';
 

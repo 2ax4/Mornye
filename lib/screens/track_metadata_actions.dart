@@ -67,7 +67,6 @@ extension _TrackMetadataFileActions on _TrackMetadataScreenState {
       if (!_isNetworkItem) await _refreshEmbeddedCoverPreview(force: true);
       if (!mounted || sourcePath != cleanFilePath) return;
       _markMetadataChanged();
-      await _syncDownloadHistoryMetadata();
     }
   }
 
