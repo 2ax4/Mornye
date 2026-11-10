@@ -10,6 +10,7 @@ import 'package:mornye/controllers/library_re_enrich_all.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/models/library_scan_failure.dart';
 import 'package:mornye/models/settings.dart';
+import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/providers/download_history_provider.dart';
 import 'package:mornye/providers/local_library_provider.dart';
@@ -424,6 +425,33 @@ class _LibrarySettingsPageState extends ConsumerState<LibrarySettingsPage> {
             ref.read(settingsProvider.notifier).setDefaultLibraryView(view),
       );
 
+  void _showStartupPagePicker(BuildContext context, String current) =>
+      showAppChoiceSheet(
+        context: context,
+        title: context.l10n.settingsStartupPage,
+        selected: current,
+        choices: [
+          for (final (value, icon) in [
+            ('home', Icons.home_outlined),
+            ('library', Icons.library_music_outlined),
+            // Material searches from Home, so only Mornye offers it.
+            if (context.isMornye) ('search', Icons.search),
+            ('settings', Icons.settings_outlined),
+          ])
+            AppChoice(value, icon, _getStartupPageLabel(context, value)),
+        ],
+        onSelected: (page) =>
+            ref.read(settingsProvider.notifier).setStartupPage(page),
+      );
+
+  String _getStartupPageLabel(BuildContext context, String value) =>
+      switch (value) {
+        'library' => context.l10n.navLibrary,
+        'search' => context.l10n.navSearch,
+        'settings' => context.l10n.navSettings,
+        _ => context.l10n.navHome,
+      };
+
   String _getQualityLabelModeLabel(BuildContext context, String mode) {
     if (mode == AppSettings.libraryQualityLabelFileFormat) {
       return context.l10n.libraryQualityLabelFileFormat;
@@ -538,6 +566,14 @@ class _LibrarySettingsPageState extends ConsumerState<LibrarySettingsPage> {
                   onChanged: ref
                       .read(settingsProvider.notifier)
                       .setLibrarySongClickOpensDetails,
+                ),
+                SettingsItem(
+                  key: const ValueKey('startup-page-item'),
+                  icon: Icons.exit_to_app_rounded,
+                  title: context.l10n.settingsStartupPage,
+                  subtitle: _getStartupPageLabel(context, settings.startupPage),
+                  onTap: () =>
+                      _showStartupPagePicker(context, settings.startupPage),
                 ),
                 SettingsSwitchItem(
                   key: const ValueKey('desktop-sidebar-toggle'),

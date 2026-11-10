@@ -7,11 +7,13 @@ import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/l10n/l10n.dart';
+import 'package:mornye/models/theme_settings.dart' show AppThemeStyle;
 import 'package:mornye/providers/download_queue_provider.dart';
 import 'package:mornye/providers/extension_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
 import 'package:mornye/providers/network_upload_provider.dart';
 import 'package:mornye/providers/settings_provider.dart';
+import 'package:mornye/providers/theme_provider.dart';
 import 'package:mornye/providers/playback_notification_provider.dart';
 import 'package:mornye/providers/runtime_profile_provider.dart';
 import 'package:mornye/providers/track_provider.dart';
@@ -94,6 +96,14 @@ int? shellIndexOfTab(
         : desktop
         ? 3
         : null,
+};
+
+/// The tab saved as the startup page, or Home for anything else.
+ShellTab _startupShellTab(String value) => switch (value) {
+  'library' => ShellTab.library,
+  'search' => ShellTab.search,
+  'settings' => ShellTab.settings,
+  _ => ShellTab.home,
 };
 
 class MainShell extends ConsumerStatefulWidget {
@@ -211,6 +221,17 @@ class _MainShellState extends ConsumerState<MainShell>
   @override
   void initState() {
     super.initState();
+    // The saved startup tab must exist before the page controller is built
+    // with it as its initial page.
+    _currentIndex =
+        shellIndexOfTab(
+          _startupShellTab(ref.read(settingsProvider).startupPage),
+          mornye:
+              ref.read(initialThemeSettingsProvider).style ==
+              AppThemeStyle.mornye,
+          desktop: isDesktopPlatform,
+        ) ??
+        0;
     WidgetsBinding.instance.addObserver(this);
     usbAudioStatus.addListener(_onUsbAudioStatusChanged);
     _homePreviewStopObserver = _PreviewStopNavigatorObserver(

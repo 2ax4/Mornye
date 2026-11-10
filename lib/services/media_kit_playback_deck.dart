@@ -241,6 +241,7 @@ class MediaKitPlaybackDeck
     playbackEqualizer.addListener(_equalizerChanged);
     playbackOutputVolume.addListener(_outputVolumeChanged);
     playbackPitch.addListener(_pitchChanged);
+    playbackTempo.addListener(_tempoChanged);
     playbackExclusiveOutput.addListener(_exclusiveChanged);
     playbackExclusiveDevice.addListener(_exclusiveChanged);
     _subscriptions.addAll([
@@ -324,6 +325,9 @@ class MediaKitPlaybackDeck
 
   /// The tempo this deck was asked for, via [setPlaybackRate].
   double _rate = 1;
+
+  /// The user's speed (tempo) multiplier, from [playbackTempo].
+  double _tempo = playbackTempo.value;
 
   /// The pitch multiplier in effect, from [playbackPitch].
   double _pitch = playbackPitch.value;
@@ -654,11 +658,17 @@ class MediaKitPlaybackDeck
     unawaited(_applyRatePitch());
   }
 
+  void _tempoChanged() {
+    if (_disposed) return;
+    _tempo = playbackTempo.value;
+    unawaited(_applyRatePitch());
+  }
+
   /// mpv keeps one `speed` value: with `audio-pitch-correction` off, it
   /// resamples, which shifts the pitch, and a leading `scaletempo` filter
   /// stretches time back, which leaves the requested tempo. Net tempo is
-  /// `speed × scale = rate`, and the pitch shift is `speed = pitch`. With the
-  /// pitch at 1 the properties stay at mpv's defaults, as before.
+  /// `speed × scale = rate × tempo`, and the pitch shift is `speed = pitch`.
+  /// With the pitch at 1 the properties stay at mpv's defaults, as before.
   Future<void> _applyRatePitch() {
     _equalizerWrite = _equalizerWrite.then((_) => _syncRatePitch());
     return _equalizerWrite;
@@ -666,13 +676,14 @@ class MediaKitPlaybackDeck
 
   Future<void> _syncRatePitch() async {
     if (_disposed) return;
+    final rate = _rate * _tempo;
     try {
       await _engine.setProperty(
         'audio-pitch-correction',
         _pitch == 1 ? 'yes' : 'no',
       );
-      await _engine.setSpeed(_pitch == 1 ? _rate : _pitch);
-      // Rebuilds the `af` chain, whose scaletempo scale follows the pitch.
+      await _engine.setSpeed(_pitch == 1 ? rate : _pitch);
+      // Rebuilds the `af` chain, whose scaletempo scale follows the tempo.
       _equalizerChanged();
     } catch (error) {
       _log.w('Rate and pitch: $error');
@@ -798,7 +809,7 @@ class MediaKitPlaybackDeck
   String _afSpecFor(EqualizerSettings settings) {
     final spec = _chainFor(settings).spec;
     if (_pitch == 1) return spec;
-    final scale = (_rate / _pitch).toStringAsFixed(8);
+    final scale = ((_rate * _tempo) / _pitch).toStringAsFixed(8);
     final tempo = 'scaletempo:scale=$scale';
     return spec.isEmpty ? tempo : '$tempo,$spec';
   }
@@ -881,6 +892,7 @@ class MediaKitPlaybackDeck
     playbackEqualizer.removeListener(_equalizerChanged);
     playbackOutputVolume.removeListener(_outputVolumeChanged);
     playbackPitch.removeListener(_pitchChanged);
+    playbackTempo.removeListener(_tempoChanged);
     playbackExclusiveOutput.removeListener(_exclusiveChanged);
     playbackExclusiveDevice.removeListener(_exclusiveChanged);
     _equalizerTimer?.cancel();

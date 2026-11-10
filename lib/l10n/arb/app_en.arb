@@ -384,6 +384,14 @@
   "@audioControlPitchReset": {
     "description": "Tooltip of the button that returns pitch to normal"
   },
+  "audioControlSpeed": "Speed",
+  "@audioControlSpeed": {
+    "description": "Title of the speed slider in the audio control panel"
+  },
+  "audioControlSpeedReset": "Reset speed",
+  "@audioControlSpeedReset": {
+    "description": "Tooltip of the button that returns speed to normal"
+  },
   "audioControlTitle": "Audio Control",
   "@audioControlTitle": {
     "description": "Title of the audio control panel opened from the volume button"
@@ -442,6 +450,14 @@
   "navSettings": "Settings",
   "@navSettings": {
     "description": "Bottom navigation - Settings tab"
+  },
+  "navSearch": "Search",
+  "@navSearch": {
+    "description": "Label of the Search destination"
+  },
+  "settingsStartupPage": "Startup page",
+  "@settingsStartupPage": {
+    "description": "Setting that picks the tab the app opens on"
   },
   "navStore": "Repo",
   "@navStore": {

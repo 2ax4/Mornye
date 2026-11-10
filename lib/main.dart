@@ -53,7 +53,7 @@ import 'package:mornye/utils/logger.dart';
 import 'package:mornye/widgets/desktop/desktop_commands.dart'
     show restoreDesktopSidebar;
 import 'package:mornye/widgets/desktop/audio_control_panel.dart'
-    show restorePlaybackPitch;
+    show restorePlaybackPitch, restorePlaybackTempo;
 import 'package:mornye/widgets/desktop/desktop_inspector.dart'
     show bindDesktopFullScreenLyrics;
 import 'package:mornye/widgets/desktop/track_table.dart'
@@ -176,6 +176,7 @@ void main() {
         restoreDesktopSidebar(prefs);
         restoreTrackListDensity(prefs);
         restorePlaybackPitch(prefs);
+        restorePlaybackTempo(prefs);
       }
       final bootstrapTheme = loadBootstrapThemeSettings(prefs);
       final initialSafAccessLost = await _detectInitialSafAccessLoss(

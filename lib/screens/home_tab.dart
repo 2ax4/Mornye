@@ -883,14 +883,17 @@ class _HomeTabState extends ConsumerState<HomeTab>
         (isSearchProviderLoading || (hasHomeFeedExtension && explorePending));
     final showFeedSurface = showExplore || showExploreLoading;
     // Only a surface with a search field asks for a search provider. The
-    // Mornye Home browses without one, so it never stops at this prompt.
+    // Mornye Home browses without one, so it never stops at this prompt,
+    // and the desktop Home opens on its local shelves and shortcuts even
+    // with no extension installed.
     final showEmptyHomeState =
         _showsSearch &&
         !isSearchProviderLoading &&
         !hasSearchProvider &&
         !hasHomeFeedExtension &&
         !hasExploreContent &&
-        !hasResults;
+        !hasResults &&
+        !(isDesktopPlatform && !context.isMornye);
     final searchToolbar = _offersLibraryScope;
     final showLibraryResults = _searchingLibrary && hasSearchInput;
     // The library scope waits for input before showing local matches.

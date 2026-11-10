@@ -868,7 +868,7 @@ class _TrailingControls extends ConsumerWidget {
   static const double _materialVolumeMinWidth = 140;
 
   /// Widest the Material bar's inline volume slider grows.
-  static const double _materialVolumeMaxWidth = 300;
+  static const double _materialVolumeMaxWidth = 240;
 
   final bool enabled;
 
@@ -952,7 +952,8 @@ class _TrailingControls extends ConsumerWidget {
             ),
           ),
         ],
-        if (canDismiss)
+        if (canDismiss) ...[
+          const SizedBox(width: 4),
           AppIconButton(
             key: const ValueKey('desktop-player-dismiss'),
             tooltip: l10n.actionDismiss,
@@ -965,6 +966,7 @@ class _TrailingControls extends ConsumerWidget {
               closeDesktopNowPlaying();
             },
           ),
+        ],
       ],
     );
   }

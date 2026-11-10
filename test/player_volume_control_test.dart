@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/services/playback_deck.dart';
 import 'package:mornye/services/playback_output_volume.dart';
@@ -171,7 +172,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         final icon = find.byIcon(
-          mornye ? CupertinoIcons.speaker_3_fill : Icons.volume_up_rounded,
+          mornye ? CupertinoIcons.speaker_3_fill : Symbols.volume_up_rounded,
         );
         final position = tester.getCenter(icon);
         void wheel(Offset delta) => tester.binding.handlePointerEvent(

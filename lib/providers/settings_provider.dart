@@ -123,6 +123,12 @@ class SettingsNotifier extends Notifier<AppSettings> {
     'playlists',
     'folders',
   };
+  static const Set<String> _startupPageValues = {
+    'home',
+    'library',
+    'search',
+    'settings',
+  };
   static const Set<String> _extensionVerificationBrowserModeValues = {
     'external_first',
     'in_app_first',
@@ -207,6 +213,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
           defaultLibraryView: _normalizeDefaultLibraryView(
             loaded.defaultLibraryView,
           ),
+          startupPage: _normalizeStartupPage(loaded.startupPage),
           libraryQualityLabelMode: normalizeLibraryQualityLabelMode(
             loaded.libraryQualityLabelMode,
           ),
@@ -496,6 +503,12 @@ class SettingsNotifier extends Notifier<AppSettings> {
     final normalized = value.trim().toLowerCase();
     if (_libraryViewValues.contains(normalized)) return normalized;
     return 'last';
+  }
+
+  String _normalizeStartupPage(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (_startupPageValues.contains(normalized)) return normalized;
+    return 'home';
   }
 
   String _normalizeExtensionVerificationBrowserMode(String value) {
@@ -954,6 +967,9 @@ class SettingsNotifier extends Notifier<AppSettings> {
 
   void setDesktopSidebarEnabled(bool enabled) =>
       _commit(state.copyWith(desktopSidebarEnabled: enabled));
+
+  void setStartupPage(String page) =>
+      _commit(state.copyWith(startupPage: _normalizeStartupPage(page)));
 
   void setLibraryQualityLabelMode(String mode) => _commit(
     state.copyWith(

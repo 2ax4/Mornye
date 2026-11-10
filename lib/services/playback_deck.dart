@@ -39,6 +39,11 @@ final playbackOutputVolume = ValueNotifier<double>(1);
 /// the recording's pitch. Shared by every deck that can pitch-shift (libmpv).
 final playbackPitch = ValueNotifier<double>(1);
 
+/// Live tempo (playback speed) multiplier; 1 plays at the recording's speed.
+/// Shared by the libmpv decks like [playbackPitch] and multiplies any AutoMix
+/// beat-match rate on the same deck.
+final playbackTempo = ValueNotifier<double>(1);
+
 /// A deck whose output can pitch-shift without changing tempo.
 abstract interface class PitchControl {
   /// Sets the pitch multiplier, 1 restoring the recording's pitch.

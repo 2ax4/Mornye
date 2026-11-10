@@ -370,6 +370,9 @@ final Map<IconData, IconData> _outlinedSymbols = {
   Icons.voice_over_off_outlined: Symbols.voice_over_off_rounded,
   Icons.volume_off_outlined: Symbols.volume_off_rounded,
   Icons.volume_up_outlined: Symbols.volume_up_rounded,
+  Icons.volume_down_rounded: Symbols.volume_down_rounded,
+  Icons.volume_off_rounded: Symbols.volume_off_rounded,
+  Icons.volume_up_rounded: Symbols.volume_up_rounded,
   Icons.vpn_key_outlined: Symbols.vpn_key_rounded,
   // Legacy amber warnings are drawn as an outline.
   Icons.warning_amber_outlined: Symbols.warning_rounded,

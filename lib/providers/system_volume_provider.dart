@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/services/music_playback_deck.dart';
 import 'package:mornye/services/playback_deck.dart';
@@ -40,3 +41,8 @@ final systemVolumeWriterProvider = Provider<Future<void> Function(double)>((
     return volume.setVolume(value.clamp(0, 1));
   };
 });
+
+/// The last audible level, so the mute toggle can bring it back. Kept in
+/// memory only; every volume control updates it while the level is above
+/// zero.
+final volumeBeforeMute = ValueNotifier<double>(1.0);

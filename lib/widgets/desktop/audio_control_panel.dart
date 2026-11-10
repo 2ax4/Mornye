@@ -11,6 +11,7 @@ import 'package:mornye/widgets/player_volume_control.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _playbackPitchPrefKey = 'playback.pitchSemitones';
+const _playbackTempoPrefKey = 'playback.tempo';
 
 /// Restores the saved pitch at startup, before any deck applies it.
 void restorePlaybackPitch(SharedPreferences prefs) {
@@ -19,16 +20,24 @@ void restorePlaybackPitch(SharedPreferences prefs) {
   playbackPitch.value = _pitchFromSemitones(semitones);
 }
 
+/// Restores the saved speed at startup, before any deck applies it.
+void restorePlaybackTempo(SharedPreferences prefs) {
+  final tempo = prefs.getDouble(_playbackTempoPrefKey);
+  if (tempo == null || tempo == 1) return;
+  playbackTempo.value = tempo.clamp(0.5, 2.0);
+}
+
 double _pitchFromSemitones(double semitones) =>
     math.pow(2, semitones / 12).toDouble();
 
 double _semitonesFromPitch(double pitch) =>
     (math.log(pitch <= 0 ? 1 : pitch) / math.log(2)) * 12;
 
-/// The audio control panel: the volume slider with the pitch slider under
-/// it. The player bar's volume button opens it as a popover, and the pitch
-/// shift reaches the libmpv decks through [playbackPitch]. Mornye draws the
-/// content over the host's glass panel; Material paints its own surface.
+/// The audio control panel: the volume slider with the pitch and speed
+/// sliders under it. The player bar's tune button opens it as a popover, and
+/// the pitch shift and tempo reach the libmpv decks through [playbackPitch]
+/// and [playbackTempo]. Mornye draws the content over the host's glass panel;
+/// Material paints its own surface.
 class AudioControlPanel extends StatefulWidget {
   const AudioControlPanel({super.key, this.width = 320, this.foreground});
 
@@ -44,6 +53,7 @@ class AudioControlPanel extends StatefulWidget {
 class _AudioControlPanelState extends State<AudioControlPanel> {
   /// The slider position while the gesture runs; null reads the notifier.
   double? _preview;
+  double? _speedPreview;
 
   void _commit(double semitones) {
     playbackPitch.value = _pitchFromSemitones(semitones);
@@ -56,6 +66,20 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
       await prefs.setDouble(_playbackPitchPrefKey, semitones);
     } catch (_) {
       // A failed save keeps the pitch for this session only.
+    }
+  }
+
+  void _commitTempo(double tempo) {
+    playbackTempo.value = tempo;
+    unawaited(_saveTempo(tempo));
+  }
+
+  Future<void> _saveTempo(double tempo) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_playbackTempoPrefKey, tempo);
+    } catch (_) {
+      // A failed save keeps the speed for this session only.
     }
   }
 
@@ -72,7 +96,10 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
           height: 48,
           child: PlayerVolumeControl(foreground: foreground),
         ),
-        if (playbackPitchSupported) _pitchRow(context, foreground),
+        if (playbackPitchSupported) ...[
+          _pitchRow(context, foreground),
+          _speedRow(context, foreground),
+        ],
       ],
     );
     if (!mornye) {
@@ -105,7 +132,7 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
       child: Row(
         children: [
           AppIcon(
-            Icons.tune,
+            Icons.graphic_eq,
             size: 18,
             color: foreground.withValues(alpha: 0.7),
           ),
@@ -143,6 +170,67 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
                 : () {
                     setState(() => _preview = null);
                     _commit(0);
+                  },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _speedRow(BuildContext context, Color foreground) {
+    final l10n = context.l10n;
+    final tempo = _speedPreview ?? playbackTempo.value;
+
+    // Every drag tick changes the speed at once; only the preference save
+    // waits for the gesture to end.
+    void drag(double value) {
+      setState(() => _speedPreview = value);
+      playbackTempo.value = value;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 8, 8),
+      child: Row(
+        children: [
+          AppIcon(
+            Icons.speed,
+            size: 18,
+            color: foreground.withValues(alpha: 0.7),
+          ),
+          Expanded(
+            child: Semantics(
+              label: l10n.audioControlSpeed,
+              child: Slider(
+                key: const ValueKey('audio-control-speed'),
+                value: tempo.clamp(0.5, 2.0),
+                min: 0.5,
+                max: 2.0,
+                divisions: 30,
+                label: '×${tempo.toStringAsFixed(2)}',
+                onChanged: drag,
+                onChangeEnd: (value) {
+                  setState(() => _speedPreview = null);
+                  unawaited(_saveTempo(value));
+                },
+              ),
+            ),
+          ),
+          Text(
+            '×${tempo.toStringAsFixed(2)}',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: foreground.withValues(alpha: 0.7),
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          IconButton(
+            tooltip: l10n.audioControlSpeedReset,
+            color: foreground.withValues(alpha: 0.7),
+            icon: const AppIcon(Icons.restart_alt),
+            onPressed: (tempo - 1).abs() < 0.005
+                ? null
+                : () {
+                    setState(() => _speedPreview = null);
+                    _commitTempo(1);
                   },
           ),
         ],

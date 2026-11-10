@@ -167,6 +167,9 @@ class AppSettings {
   /// sections sit at the top of the page instead.
   final bool desktopSidebarEnabled;
 
+  /// The tab the app opens on: 'home', 'library', 'search', or 'settings'.
+  final String startupPage;
+
   /// Library badge text: measured bitrate, file format, bit depth,
   /// bit depth/sample rate, or the combined bit depth/bitrate label.
   final String libraryQualityLabelMode;
@@ -353,6 +356,7 @@ class AppSettings {
     this.defaultLibraryView = 'last',
     this.librarySongClickOpensDetails = false,
     this.desktopSidebarEnabled = false,
+    this.startupPage = 'home',
     this.libraryQualityLabelMode = AppSettings.libraryQualityLabelBitDepthOnly,
     this.askQualityBeforeDownload = true,
     this.enableLogging = false,
@@ -508,6 +512,7 @@ class AppSettings {
     String? defaultLibraryView,
     bool? librarySongClickOpensDetails,
     bool? desktopSidebarEnabled,
+    String? startupPage,
     String? libraryQualityLabelMode,
     bool? askQualityBeforeDownload,
     bool? enableLogging,
@@ -660,6 +665,7 @@ class AppSettings {
           librarySongClickOpensDetails ?? this.librarySongClickOpensDetails,
       desktopSidebarEnabled:
           desktopSidebarEnabled ?? this.desktopSidebarEnabled,
+      startupPage: startupPage ?? this.startupPage,
       libraryQualityLabelMode:
           libraryQualityLabelMode ?? this.libraryQualityLabelMode,
       askQualityBeforeDownload:

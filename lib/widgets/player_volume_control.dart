@@ -29,8 +29,8 @@ class PlayerVolumeControl extends ConsumerStatefulWidget {
   /// Mornye only: the tint of the slider and glyphs over the player artwork.
   final Color foreground;
 
-  /// Called when either speaker glyph is tapped, opening the audio control
-  /// panel where one is available. Null leaves the glyphs inert.
+  /// Called when the trailing tune glyph is tapped, opening the audio
+  /// control panel where one is available. Null leaves it inert.
   final void Function()? onSpeakerTap;
 
   @override
@@ -45,9 +45,21 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
   bool _writing = false;
 
   void _setVolume(double value) {
+    if (value > 0) volumeBeforeMute.value = value;
     setState(() => _preview = value);
     _pendingVolume = value;
     if (!_writing) unawaited(_flushVolume());
+  }
+
+  /// The leading volume glyph mutes: it remembers the level it muted from
+  /// and restores it on the next tap.
+  void _toggleMute(double value) {
+    if (value > 0) {
+      volumeBeforeMute.value = value;
+      _setVolume(0);
+    } else {
+      _setVolume(volumeBeforeMute.value.clamp(0.05, 1.0));
+    }
   }
 
   Future<void> _flushVolume() async {
@@ -117,7 +129,7 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
           ? null
           : () => _setVolume((value - 0.05).clamp(0, 1)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: !context.isMornye
             ? _materialSlider(context, value, enabled: volume != null)
             : Row(
@@ -183,14 +195,24 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
     return Row(
       children: [
         GestureDetector(
-          onTap: widget.onSpeakerTap,
-          child: AppIcon(
-            value <= 0 ? Icons.volume_mute_rounded : Icons.volume_down_rounded,
-            size: 20,
-            color: colors.onSurfaceVariant,
+          onTap: enabled ? () => _toggleMute(value) : null,
+          child: Tooltip(
+            message: context.l10n.nowPlayingVolume,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: AppIcon(
+                value <= 0
+                    ? Icons.volume_off_rounded
+                    : value < 0.5
+                    ? Icons.volume_down_rounded
+                    : Icons.volume_up_rounded,
+                size: 22,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         Expanded(
           child: IgnorePointer(
             ignoring: !enabled,
@@ -213,15 +235,24 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: widget.onSpeakerTap,
-          child: AppIcon(
-            Icons.volume_up_rounded,
-            size: 20,
-            color: colors.onSurfaceVariant,
+        const SizedBox(width: 4),
+        // The tune glyph opens the audio control panel where one is
+        // available; without one, the slider keeps the room to itself.
+        if (widget.onSpeakerTap != null)
+          GestureDetector(
+            onTap: widget.onSpeakerTap,
+            child: Tooltip(
+              message: context.l10n.audioControlTitle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                child: AppIcon(
+                  Icons.tune,
+                  size: 22,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
