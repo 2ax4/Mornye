@@ -271,28 +271,42 @@ class DesktopShellLayout extends ConsumerWidget {
       final showSidebar =
           ref.watch(settingsProvider.select((s) => s.desktopSidebarEnabled)) ||
           desktopTitleBarInContentFor(context);
-      // The sidebar shows against the window's edges when enabled.
+      // The sidebar shows against the window's edges when enabled; while
+      // it is off, a compact strip at the top keeps every destination in
+      // reach, including Settings, which brings the sidebar back.
       return ColoredBox(
         color: Theme.of(context).colorScheme.surface,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
           children: [
-            if (showSidebar)
-              DesktopSidebar(
+            if (!showSidebar)
+              DesktopTopNavigation(
                 destinations: destinations,
                 selected: selected,
                 onSelected: onSelected,
-                libraryLinks: libraryLinks,
-                onOpenLibraryLink: onOpenLibraryLink,
               ),
             Expanded(
-              key: const ValueKey('desktop-content'),
-              child: _DesktopContentArea(
-                windowWidth: width,
-                body: body,
-                floatingPlayer: showPlayer ? playerBar : null,
-                showPlayer: showPlayer,
-                titleBarDrag: true,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (showSidebar)
+                    DesktopSidebar(
+                      destinations: destinations,
+                      selected: selected,
+                      onSelected: onSelected,
+                      libraryLinks: libraryLinks,
+                      onOpenLibraryLink: onOpenLibraryLink,
+                    ),
+                  Expanded(
+                    key: const ValueKey('desktop-content'),
+                    child: _DesktopContentArea(
+                      windowWidth: width,
+                      body: body,
+                      floatingPlayer: showPlayer ? playerBar : null,
+                      showPlayer: showPlayer,
+                      titleBarDrag: true,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -308,52 +322,68 @@ class DesktopShellLayout extends ConsumerWidget {
     return Column(
       children: [
         Expanded(
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (showRail)
-                ColoredBox(
-                  color: railBackground,
-                  child: Column(
-                    children: [
-                      // The traffic lights sit above the rail.
-                      if (desktopTitleBarInContentFor(context))
-                        const SizedBox(
-                          height: desktopTitleBarHeight,
-                          width: desktopWindowControlsWidth,
-                          child: DesktopWindowDragArea(zoomOnDoubleClick: true),
-                        ),
-                      // Expanded by default and always collapsed below
-                      // [desktopExpandedRailBreakpoint]; the rail's menu
-                      // button and the sidebar shortcut toggle it in wider
-                      // windows.
-                      Expanded(
-                        child: ValueListenableBuilder<bool>(
-                          valueListenable: desktopSidebarCollapsed,
-                          builder: (context, collapsed, _) {
-                            final wide = width >= desktopExpandedRailBreakpoint;
-                            return DesktopNavigationRail(
-                              destinations: destinations,
-                              selected: selected,
-                              onSelected: onSelected,
-                              extended: !collapsed && wide,
-                              onToggleExtended: wide
-                                  ? toggleDesktopSidebar
-                                  : null,
-                              onOpenLibraryLink: onOpenLibraryLink,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+              if (!showRail)
+                DesktopTopNavigation(
+                  destinations: destinations,
+                  selected: selected,
+                  onSelected: onSelected,
                 ),
               Expanded(
-                child: _DesktopContentArea(
-                  windowWidth: width,
-                  body: body,
-                  showPlayer: showPlayer,
-                  titleBarDrag: true,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (showRail)
+                      ColoredBox(
+                        color: railBackground,
+                        child: Column(
+                          children: [
+                            // The traffic lights sit above the rail.
+                            if (desktopTitleBarInContentFor(context))
+                              const SizedBox(
+                                height: desktopTitleBarHeight,
+                                width: desktopWindowControlsWidth,
+                                child: DesktopWindowDragArea(
+                                  zoomOnDoubleClick: true,
+                                ),
+                              ),
+                            // Expanded by default and always collapsed below
+                            // [desktopExpandedRailBreakpoint]; the rail's
+                            // menu button and the sidebar shortcut toggle it
+                            // in wider windows.
+                            Expanded(
+                              child: ValueListenableBuilder<bool>(
+                                valueListenable: desktopSidebarCollapsed,
+                                builder: (context, collapsed, _) {
+                                  final wide =
+                                      width >= desktopExpandedRailBreakpoint;
+                                  return DesktopNavigationRail(
+                                    destinations: destinations,
+                                    selected: selected,
+                                    onSelected: onSelected,
+                                    extended: !collapsed && wide,
+                                    onToggleExtended: wide
+                                        ? toggleDesktopSidebar
+                                        : null,
+                                    onOpenLibraryLink: onOpenLibraryLink,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    Expanded(
+                      child: _DesktopContentArea(
+                        windowWidth: width,
+                        body: body,
+                        showPlayer: showPlayer,
+                        titleBarDrag: true,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -547,6 +577,134 @@ class _DesktopContentArea extends StatelessWidget {
 
 int _positionOf(List<DesktopDestination> destinations, ShellTab tab) =>
     destinations.indexWhere((destination) => destination.tab == tab) + 1;
+
+/// The compact strip that keeps the app reachable while the sidebar is off:
+/// the destinations as pills in a row at the top of the window, in both
+/// styles, including Settings, which brings the sidebar back.
+class DesktopTopNavigation extends StatelessWidget {
+  const DesktopTopNavigation({
+    super.key,
+    required this.destinations,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<DesktopDestination> destinations;
+  final ShellTab? selected;
+  final ValueChanged<ShellTab> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final mornye = context.isMornye;
+    return ColoredBox(
+      color: mornye
+          ? DesktopSidebar.panelColor(context, null)
+          : Theme.of(context).colorScheme.surfaceContainer,
+      child: SizedBox(
+        height: 48,
+        child: Row(
+          children: [
+            // Keep the traffic lights clear where the title bar lives in
+            // the content.
+            if (desktopTitleBarInContentFor(context))
+              const SizedBox(width: desktopWindowControlsWidth),
+            const SizedBox(width: 10),
+            for (final destination in destinations)
+              _TopDestination(
+                key: ValueKey('desktop-top-nav:${destination.tab.name}'),
+                destination: destination,
+                selected: destination.tab == selected,
+                onTap: destination.tab == ShellTab.search
+                    ? ShellNavigationService.requestSearch
+                    : () => onSelected(destination.tab),
+                tooltip: destination.tab == ShellTab.search
+                    ? desktopTooltip(
+                        context,
+                        destination.label,
+                        DesktopCommand.search,
+                      )
+                    : desktopDestinationTooltip(
+                        context,
+                        destination.label,
+                        _positionOf(destinations, destination.tab),
+                      ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One pill of [DesktopTopNavigation]: icon, label, and a fill while
+/// selected.
+class _TopDestination extends StatelessWidget {
+  const _TopDestination({
+    super.key,
+    required this.destination,
+    required this.selected,
+    required this.onTap,
+    required this.tooltip,
+  });
+
+  final DesktopDestination destination;
+  final bool selected;
+  final VoidCallback onTap;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final mornye = context.isMornye;
+    final colorScheme = Theme.of(context).colorScheme;
+    final foreground = selected
+        ? (mornye ? colorScheme.onSurface : colorScheme.onSecondaryContainer)
+        : colorScheme.onSurfaceVariant;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: selected
+                  ? (mornye
+                        ? colorScheme.onSurface.withValues(alpha: 0.14)
+                        : colorScheme.secondaryContainer)
+                  : null,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Badge(
+                  isLabelVisible: destination.badgeCount > 0,
+                  label: Text('${destination.badgeCount}'),
+                  child: AppIcon(
+                    selected ? destination.selectedIcon : destination.icon,
+                    size: 18,
+                    color: foreground,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  destination.label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: foreground),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Material 3 Expressive navigation rail for desktop windows: collapsed, or
 /// expanded to [desktopSidebarWidth] when [extended], with Settings anchored

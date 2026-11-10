@@ -284,7 +284,8 @@ void main() {
       expect(find.byType(DesktopPlayerBar), findsNothing);
       expect(desktopInspectorPanel.value, isNull);
       expect(desktopNowPlayingOpen.value, isFalse);
-      expect(tester.getSize(contentPage()).height, 800);
+      // The top navigation strip takes the sidebar's place above the page.
+      expect(tester.getSize(contentPage()).height, 800 - 48);
       expect(
         MediaQuery.paddingOf(tester.element(find.text('content'))).bottom,
         0,
@@ -336,7 +337,8 @@ void main() {
       expect(find.byKey(const ValueKey('desktop-now-playing')), findsNothing);
       expect(find.byType(DesktopInspector), findsNothing);
       expect(find.text('A song'), findsNothing);
-      expect(tester.getSize(contentPage()).height, 800);
+      // The top navigation strip takes the sidebar's place above the page.
+      expect(tester.getSize(contentPage()).height, 800 - 48);
       expect(
         MediaQuery.paddingOf(tester.element(find.text('content'))).bottom,
         0,
@@ -396,10 +398,17 @@ void main() {
       await pumpShell(tester, mornye: false, width: 1400);
 
       // The rail follows the Library's sidebar switch, like the Mornye
-      // sidebar; the Library page's top sections take its place.
+      // sidebar; the Library page's top sections take its place and a
+      // compact strip keeps every destination in reach.
       expect(find.byType(DesktopNavigationRail), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
+      expect(find.byType(DesktopTopNavigation), findsOneWidget);
       expect(find.byType(DesktopPlayerBar), findsOneWidget);
+
+      // The strip still navigates: Settings opens from it, which brings
+      // the sidebar back.
+      await tester.tap(find.text('settings'));
+      expect(selections, [ShellTab.settings]);
     });
 
     testWidgets('collapses the rail at 900 and shows the player bar', (
@@ -475,7 +484,7 @@ void main() {
     testWidgets('pages start at the top with no shell search bar', (
       tester,
     ) async {
-      await pumpShell(tester, mornye: false, width: 1400);
+      await pumpShell(tester, mornye: false, width: 1400, sidebar: true);
 
       // Home and Library bring their own search fields, so the shell adds
       // no second one above them.
@@ -686,10 +695,15 @@ void main() {
           await pumpShell(tester, mornye: true, width: width);
 
           // The sidebar is off by default; the Library page's top sections
-          // take its place.
+          // and the top navigation strip take its place.
           expect(find.byType(DesktopSidebar), findsNothing);
+          expect(find.byType(DesktopTopNavigation), findsOneWidget);
           expect(find.byType(DesktopPlayerBar), findsOneWidget);
           expectNoTouchNavigation();
+
+          await tester.tap(find.text('settings'));
+          expect(selections, [ShellTab.settings]);
+          selections.clear();
         },
       );
 

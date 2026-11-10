@@ -404,11 +404,24 @@ class PlayerPlaybackModeButton extends ConsumerWidget {
     required this.mode,
     required this.colorScheme,
     this.secondary = false,
+    this.plain = false,
+    this.compact = false,
+    this.iconSize = 20,
   });
 
   final PlayerPlaybackMode mode;
   final ColorScheme colorScheme;
   final bool secondary;
+
+  /// The desktop's quiet take: a bare glyph with no fill, bright while the
+  /// mode is on and dimmed gray while it is off.
+  final bool plain;
+
+  /// Tightens [plain]'s tap target, as the mini player asks.
+  final bool compact;
+
+  /// Glyph size in [plain] mode.
+  final double iconSize;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -417,6 +430,22 @@ class PlayerPlaybackModeButton extends ConsumerWidget {
       ref,
       mode,
     );
+    if (plain) {
+      return Semantics(
+        toggled: selected,
+        child: IconButton(
+          tooltip: tooltip,
+          iconSize: iconSize,
+          visualDensity: compact ? VisualDensity.compact : null,
+          padding: EdgeInsets.all(compact ? 6 : 10),
+          color: selected
+              ? colorScheme.onSurface
+              : colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+          icon: AppIcon(icon),
+          onPressed: onPressed,
+        ),
+      );
+    }
     if (context.isMornye) {
       // Plain over the player's backdrop; a fill marks the active mode, as
       // on the capsule.

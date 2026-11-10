@@ -506,11 +506,13 @@ class _Transport extends ConsumerWidget {
             PlayerPlaybackModeButton(
               mode: PlayerPlaybackMode.shuffle,
               colorScheme: colorScheme,
+              plain: true,
             ),
             transport,
             PlayerPlaybackModeButton(
               mode: PlayerPlaybackMode.repeat,
               colorScheme: colorScheme,
+              plain: true,
             ),
           ],
         ),
@@ -523,6 +525,7 @@ class _Transport extends ConsumerWidget {
           PlayerPlaybackModeButton(
             mode: PlayerPlaybackMode.shuffle,
             colorScheme: colorScheme,
+            plain: true,
           ),
           const SizedBox(width: 8),
         ],
@@ -558,6 +561,7 @@ class _Transport extends ConsumerWidget {
           PlayerPlaybackModeButton(
             mode: PlayerPlaybackMode.repeat,
             colorScheme: colorScheme,
+            plain: true,
           ),
         ],
       ],
@@ -568,14 +572,23 @@ class _Transport extends ConsumerWidget {
 }
 
 /// Elapsed time, seek track and duration. Watches the playback position on
-/// its own so the rest of the bar does not rebuild every tick.
+/// its own so the rest of the bar does not rebuild every tick. [dense]
+/// keeps the thin bar alone unless [showTimes] asks for the clocks beside
+/// it, as the mini player does.
 class _SeekRow extends ConsumerWidget {
-  const _SeekRow({required this.mediaItem, this.dense = false});
+  const _SeekRow({
+    required this.mediaItem,
+    this.dense = false,
+    this.showTimes = false,
+  });
 
   final MediaItem? mediaItem;
 
   /// The Mornye LCD's thin bar with a small thumb.
   final bool dense;
+
+  /// Shows the elapsed and duration clocks beside the thin bar.
+  final bool showTimes;
 
   // Time runs left to right in right-to-left layouts too.
   @override
@@ -622,8 +635,9 @@ class _SeekRow extends ConsumerWidget {
         onSeek: ref.read(musicPlayerControllerProvider).seek,
       ),
     );
-    // The LCD has room for the bar alone; Now Playing shows the times.
-    if (dense) return slider;
+    // The LCD has room for the bar alone; Now Playing and the mini player
+    // with [showTimes] show the times.
+    if (dense && !showTimes) return slider;
     return Row(
       children: [
         Text(formatClock(elapsed), style: timeStyle),

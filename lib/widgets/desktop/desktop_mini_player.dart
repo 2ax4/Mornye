@@ -201,10 +201,16 @@ class _DesktopMiniPlayerState extends ConsumerState<DesktopMiniPlayer> {
                         PlayerPlaybackModeButton(
                           mode: PlayerPlaybackMode.shuffle,
                           colorScheme: colorScheme,
+                          plain: true,
+                          compact: true,
+                          iconSize: 18,
                         ),
                         PlayerPlaybackModeButton(
                           mode: PlayerPlaybackMode.repeat,
                           colorScheme: colorScheme,
+                          plain: true,
+                          compact: true,
+                          iconSize: 18,
                         ),
                       ],
                     ),
@@ -215,13 +221,17 @@ class _DesktopMiniPlayerState extends ConsumerState<DesktopMiniPlayer> {
         ),
         const SizedBox(height: 8),
         // The Material slider keeps its full height for dragging, centered
-        // on a thin row.
+        // on a thin row, with the elapsed and remaining time beside it.
         SizedBox(
           height: 16,
           child: OverflowBox(
             minHeight: 0,
             maxHeight: mornye ? 10 : 48,
-            child: _SeekRow(mediaItem: mediaItem, dense: true),
+            child: _SeekRow(
+              mediaItem: mediaItem,
+              dense: true,
+              showTimes: !mornye,
+            ),
           ),
         ),
       ],
