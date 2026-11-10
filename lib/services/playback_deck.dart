@@ -35,6 +35,16 @@ PlaybackEngine get playbackEngine {
 /// (normalization, AutoMix fades) by this value. Mobile keeps it at 1.
 final playbackOutputVolume = ValueNotifier<double>(1);
 
+/// Live pitch shift as a rate multiplier, `pow(2, semitones / 12)`; 1 plays at
+/// the recording's pitch. Shared by every deck that can pitch-shift (libmpv).
+final playbackPitch = ValueNotifier<double>(1);
+
+/// A deck whose output can pitch-shift without changing tempo.
+abstract interface class PitchControl {
+  /// Sets the pitch multiplier, 1 restoring the recording's pitch.
+  Future<void> setPitch(double pitch);
+}
+
 /// [playbackOutputVolume] as a stream: the current value, then each change.
 Stream<double> playbackOutputVolumeChanges() =>
     Stream<double>.multi((listener) {

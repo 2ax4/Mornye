@@ -20,10 +20,18 @@ export 'package:mornye/providers/system_volume_provider.dart';
 /// Mornye draws its glass slider between speaker glyphs; Material draws the
 /// expressive slider between volume icons.
 class PlayerVolumeControl extends ConsumerStatefulWidget {
-  const PlayerVolumeControl({super.key, this.foreground = Colors.white});
+  const PlayerVolumeControl({
+    super.key,
+    this.foreground = Colors.white,
+    this.onSpeakerTap,
+  });
 
   /// Mornye only: the tint of the slider and glyphs over the player artwork.
   final Color foreground;
+
+  /// Called when either speaker glyph is tapped, opening the audio control
+  /// panel where one is available. Null leaves the glyphs inert.
+  final void Function()? onSpeakerTap;
 
   @override
   ConsumerState<PlayerVolumeControl> createState() =>
@@ -174,10 +182,13 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
 
     return Row(
       children: [
-        AppIcon(
-          value <= 0 ? Icons.volume_mute_rounded : Icons.volume_down_rounded,
-          size: 20,
-          color: colors.onSurfaceVariant,
+        GestureDetector(
+          onTap: widget.onSpeakerTap,
+          child: AppIcon(
+            value <= 0 ? Icons.volume_mute_rounded : Icons.volume_down_rounded,
+            size: 20,
+            color: colors.onSurfaceVariant,
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -203,10 +214,13 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
           ),
         ),
         const SizedBox(width: 8),
-        AppIcon(
-          Icons.volume_up_rounded,
-          size: 20,
-          color: colors.onSurfaceVariant,
+        GestureDetector(
+          onTap: widget.onSpeakerTap,
+          child: AppIcon(
+            Icons.volume_up_rounded,
+            size: 20,
+            color: colors.onSurfaceVariant,
+          ),
         ),
       ],
     );

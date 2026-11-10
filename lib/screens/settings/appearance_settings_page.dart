@@ -17,6 +17,7 @@ import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/app_sliver_header.dart';
 import 'package:mornye/widgets/custom_font_setting.dart';
 import 'package:mornye/widgets/desktop/desktop_window_controls.dart';
+import 'package:mornye/widgets/desktop/track_table.dart';
 
 part 'appearance_settings_page_widgets.dart';
 
@@ -104,6 +105,47 @@ class AppearanceSettingsPage extends ConsumerWidget {
                 child: _ThemePreviewCard(),
               ),
             ),
+
+            if (isDesktopPlatform)
+              SliverToBoxAdapter(
+                child: ValueListenableBuilder<TrackListDensity>(
+                  valueListenable: trackListDensity,
+                  builder: (context, density, _) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SettingsSectionHeader(
+                        title: context.l10n.appearanceSongListDensity,
+                      ),
+                      SettingsGroup(
+                        children: [
+                          for (final choice in TrackListDensity.values)
+                            ListTile(
+                              title: Text(switch (choice) {
+                                TrackListDensity.compact =>
+                                  context.l10n.appearanceDensityCompact,
+                                TrackListDensity.comfortable =>
+                                  context.l10n.appearanceDensityComfortable,
+                                TrackListDensity.spacious =>
+                                  context.l10n.appearanceDensitySpacious,
+                              }),
+                              trailing: density == choice
+                                  ? AppIcon(
+                                      Icons.check_circle,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    )
+                                  : null,
+                              selected: density == choice,
+                              onTap: () => setTrackListDensity(choice),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
             if (themeSettings.style == AppThemeStyle.mornye)
               ...settingsSectionSlivers(

@@ -17,6 +17,7 @@ import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/app_icon_button.dart';
 import 'package:mornye/widgets/app_loading_indicator.dart';
 import 'package:mornye/widgets/audio_quality_badges.dart';
+import 'package:mornye/widgets/desktop/audio_control_panel.dart';
 import 'package:mornye/widgets/desktop/desktop_commands.dart';
 import 'package:mornye/widgets/desktop/desktop_inspector.dart';
 import 'package:mornye/widgets/desktop/desktop_link_devices_button.dart';
@@ -890,7 +891,7 @@ class _TrailingControls extends ConsumerWidget {
                 // intrinsic thumb size inside the loose flexible.
                 return SizedBox(
                   width: room.clamp(0.0, _materialVolumeMaxWidth),
-                  child: PlayerVolumeControl(foreground: colorScheme.onSurface),
+                  child: const _MaterialAudioPanelAnchor(),
                 );
               },
             ),
@@ -954,16 +955,9 @@ class _MornyeVolumeButtonState extends ConsumerState<_MornyeVolumeButton> {
         _MornyePopoverEntrance(
           child: MornyeGlassPanel.overlay(
             radius: 14,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  key: const ValueKey('desktop-player-volume-popover'),
-                  width: 320,
-                  height: 52,
-                  child: PlayerVolumeControl(foreground: colorScheme.onSurface),
-                ),
-              ],
+            child: AudioControlPanel(
+              width: 340,
+              foreground: colorScheme.onSurface,
             ),
           ),
         ),
@@ -976,6 +970,41 @@ class _MornyeVolumeButtonState extends ConsumerState<_MornyeVolumeButton> {
           icon: AppIcon(icon),
           onPressed: () => _menu.isOpen ? _menu.close() : _menu.open(),
         ),
+      ),
+    );
+  }
+}
+
+/// The Material bar's inline volume. Tapping either speaker glyph opens the
+/// audio control panel above the bar, with the pitch slider under volume.
+class _MaterialAudioPanelAnchor extends ConsumerStatefulWidget {
+  const _MaterialAudioPanelAnchor();
+
+  @override
+  ConsumerState<_MaterialAudioPanelAnchor> createState() =>
+      _MaterialAudioPanelAnchorState();
+}
+
+class _MaterialAudioPanelAnchorState
+    extends ConsumerState<_MaterialAudioPanelAnchor> {
+  final _menu = MenuController();
+
+  @override
+  Widget build(BuildContext context) {
+    return MenuAnchor(
+      controller: _menu,
+      consumeOutsideTap: true,
+      style: const MenuStyle(
+        padding: WidgetStatePropertyAll(EdgeInsets.zero),
+        backgroundColor: WidgetStatePropertyAll(Colors.transparent),
+        surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+        shadowColor: WidgetStatePropertyAll(Colors.transparent),
+        elevation: WidgetStatePropertyAll(0),
+      ),
+      menuChildren: [AudioControlPanel(width: 320)],
+      child: PlayerVolumeControl(
+        foreground: Theme.of(context).colorScheme.onSurface,
+        onSpeakerTap: () => _menu.isOpen ? _menu.close() : _menu.open(),
       ),
     );
   }

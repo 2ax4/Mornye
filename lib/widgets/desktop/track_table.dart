@@ -10,6 +10,7 @@ import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/desktop/context_menu.dart';
 import 'package:mornye/widgets/desktop/desktop_selection.dart';
 import 'package:mornye/widgets/now_playing_indicator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// A column of a [SliverTrackTable], in display order.
 enum TrackTableColumn { number, title, artist, album, quality, duration }
@@ -389,6 +390,44 @@ String _formatDuration(Duration duration) {
       : '$minutes:$seconds';
 }
 
+/// The height of desktop song list rows, chosen in appearance settings.
+enum TrackListDensity {
+  /// The original compact rows, about 10 songs per screen.
+  compact,
+
+  /// The default tall rows, about 5-6 songs per screen.
+  comfortable,
+
+  /// The tallest rows, about 4-5 songs per screen.
+  spacious,
+}
+
+/// The current song list row density. Shared by every track table.
+final trackListDensity = ValueNotifier<TrackListDensity>(
+  TrackListDensity.comfortable,
+);
+
+const _trackListDensityPrefKey = 'desktop.trackListDensity';
+
+/// Restores the saved song list density at startup.
+void restoreTrackListDensity(SharedPreferences prefs) {
+  final name = prefs.getString(_trackListDensityPrefKey);
+  if (name == null) return;
+  final density = TrackListDensity.values.asNameMap()[name];
+  if (density != null) trackListDensity.value = density;
+}
+
+/// Applies [density] to every track table and saves the choice.
+Future<void> setTrackListDensity(TrackListDensity density) async {
+  trackListDensity.value = density;
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_trackListDensityPrefKey, density.name);
+  } catch (_) {
+    // A failed save keeps the choice for this session only.
+  }
+}
+
 /// Shared geometry for loaded tables and their loading placeholders.
 class TrackTableLayout {
   const TrackTableLayout._();
@@ -403,9 +442,16 @@ class TrackTableLayout {
   static const double albumTitleGap = 14;
 
   // Pointer rows: 40pt for Mornye, and the M3 compact list density for Material
-  // instead of the 48dp touch row.
-  static double rowMinHeightFor(BuildContext context) =>
-      context.isMornye ? 40 : 44;
+  // instead of the 48dp touch row. The density setting scales them so fewer
+  // songs fill a screen at once.
+  static double rowMinHeightFor(BuildContext context) {
+    final base = context.isMornye ? 40.0 : 44.0;
+    return switch (trackListDensity.value) {
+      TrackListDensity.compact => base,
+      TrackListDensity.comfortable => base * 2,
+      TrackListDensity.spacious => base * 2.5,
+    };
+  }
 
   static double headerHeightFor(BuildContext context) =>
       MediaQuery.textScalerOf(context).scale(20) + 16;
@@ -756,18 +802,21 @@ class _TrackTableRowViewState extends State<_TrackTableRowView> {
       hoverColor: material
           ? (content ?? colorScheme.onSurface).withValues(alpha: 0.08)
           : null,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: TrackTableLayout.rowMinHeightFor(context),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: tokens.gapXs),
-          child: Row(
-            children: TrackTableLayout.layout(
-              columns: columns,
-              cell: cell,
-              hasTrailing: hasTrailing,
-              trailing: trailing,
+      child: ValueListenableBuilder<TrackListDensity>(
+        valueListenable: trackListDensity,
+        builder: (context, _, _) => ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: TrackTableLayout.rowMinHeightFor(context),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: tokens.gapXs),
+            child: Row(
+              children: TrackTableLayout.layout(
+                columns: columns,
+                cell: cell,
+                hasTrailing: hasTrailing,
+                trailing: trailing,
+              ),
             ),
           ),
         ),

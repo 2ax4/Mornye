@@ -50,6 +50,9 @@ void main() {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    // The base row heights, with the density setting at its smallest.
+    trackListDensity.value = TrackListDensity.compact;
+    addTearDown(() => trackListDensity.value = TrackListDensity.comfortable);
     for (final mornye in [false, true]) {
       late double inset;
       late double rowHeight;

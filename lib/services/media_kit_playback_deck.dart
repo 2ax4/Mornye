@@ -14,6 +14,13 @@ import 'package:mornye/utils/logger.dart';
 
 final _log = AppLogger('MediaKitDeck');
 
+/// Whether this platform's player pitch-shifts: the libmpv deck does, through
+/// its `scaletempo` filter; the audioplayers and cast decks keep the
+/// recording's pitch, so the panel hides the pitch slider there.
+bool get playbackPitchSupported =>
+    playbackEngine == PlaybackEngine.mediaKit &&
+    MediaKitPlaybackDeck.isAvailable;
+
 /// An error-level line from libmpv's log.
 typedef MpvLogError = ({String prefix, String text});
 
@@ -227,11 +234,13 @@ class MediaKitSourceException implements Exception {
 ///
 /// Gapless uses the native playlist on this same output, including exclusive
 /// mode. AutoMix still owns separate decks while it is enabled.
-class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
+class MediaKitPlaybackDeck
+    implements PlaybackDeck, QueuedPlaybackDeck, PitchControl {
   MediaKitPlaybackDeck({required this.playerId, MpvEngine? engine})
     : _engine = engine ?? debugEngineFactory?.call() ?? MediaKitEngine() {
     playbackEqualizer.addListener(_equalizerChanged);
     playbackOutputVolume.addListener(_outputVolumeChanged);
+    playbackPitch.addListener(_pitchChanged);
     playbackExclusiveOutput.addListener(_exclusiveChanged);
     playbackExclusiveDevice.addListener(_exclusiveChanged);
     _subscriptions.addAll([
@@ -260,6 +269,8 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
       _engine.errors.listen(_onError),
     ]);
     _equalizerChanged();
+    // A pitch restored at startup must reach mpv before the first source.
+    if (_pitch != 1) _applyRatePitch();
   }
 
   final String playerId;
@@ -310,6 +321,12 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
   int _token = 0;
   bool _disposed = false;
   double _gain = 1;
+
+  /// The tempo this deck was asked for, via [setPlaybackRate].
+  double _rate = 1;
+
+  /// The pitch multiplier in effect, from [playbackPitch].
+  double _pitch = playbackPitch.value;
 
   /// The source last opened, for reopening it when exclusive output fails.
   String? _source;
@@ -620,7 +637,47 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
   }
 
   @override
-  Future<void> setPlaybackRate(double rate) => _engine.setSpeed(rate);
+  Future<void> setPlaybackRate(double rate) {
+    _rate = rate;
+    return _applyRatePitch();
+  }
+
+  @override
+  Future<void> setPitch(double pitch) {
+    _pitch = pitch;
+    return _applyRatePitch();
+  }
+
+  void _pitchChanged() {
+    if (_disposed) return;
+    _pitch = playbackPitch.value;
+    unawaited(_applyRatePitch());
+  }
+
+  /// mpv keeps one `speed` value: with `audio-pitch-correction` off, it
+  /// resamples, which shifts the pitch, and a leading `scaletempo` filter
+  /// stretches time back, which leaves the requested tempo. Net tempo is
+  /// `speed × scale = rate`, and the pitch shift is `speed = pitch`. With the
+  /// pitch at 1 the properties stay at mpv's defaults, as before.
+  Future<void> _applyRatePitch() {
+    _equalizerWrite = _equalizerWrite.then((_) => _syncRatePitch());
+    return _equalizerWrite;
+  }
+
+  Future<void> _syncRatePitch() async {
+    if (_disposed) return;
+    try {
+      await _engine.setProperty(
+        'audio-pitch-correction',
+        _pitch == 1 ? 'yes' : 'no',
+      );
+      await _engine.setSpeed(_pitch == 1 ? _rate : _pitch);
+      // Rebuilds the `af` chain, whose scaletempo scale follows the pitch.
+      _equalizerChanged();
+    } catch (error) {
+      _log.w('Rate and pitch: $error');
+    }
+  }
 
   @override
   Future<void> setNetworkSource(String url, {bool arriving = false}) =>
@@ -735,6 +792,17 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
         unavailable: _missingFilters,
       );
 
+  /// The `af` value for the equalizer chain and, while a pitch shift is on,
+  /// a leading native `scaletempo` filter. `scaletempo` is a libaf filter,
+  /// so it stays outside the chain's lavfi graph.
+  String _afSpecFor(EqualizerSettings settings) {
+    final spec = _chainFor(settings).spec;
+    if (_pitch == 1) return spec;
+    final scale = (_rate / _pitch).toStringAsFixed(8);
+    final tempo = 'scaletempo:scale=$scale';
+    return spec.isEmpty ? tempo : '$tempo,$spec';
+  }
+
   /// Learns which optional filters libmpv lacks. mpv checks `lavfi-NAME`
   /// when the property is set, before any audio flows through it, so the
   /// first deck probes once while it has no source.
@@ -776,10 +844,11 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
       if (settings.enabled) await _probeFilters();
       if (_disposed) return;
       final chain = _chainFor(settings);
+      final spec = _afSpecFor(settings);
       // mpv keeps filters whose settings did not change and recreates the
       // graph, which also applies changes during playback.
-      if (chain.spec != _appliedSpec) {
-        final code = await _engine.setProperty('af', chain.spec);
+      if (spec != _appliedSpec) {
+        final code = await _engine.setProperty('af', spec);
         if (_disposed) return;
         if (code < 0) {
           _appliedSpec = null;
@@ -791,7 +860,7 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
           );
           return;
         }
-        _appliedSpec = chain.spec;
+        _appliedSpec = spec;
       }
       await _applyChainGain(chain);
       reportEqualizerError(playerId, _missingFeatures(settings));
@@ -811,6 +880,7 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
     if (_disposed) return;
     playbackEqualizer.removeListener(_equalizerChanged);
     playbackOutputVolume.removeListener(_outputVolumeChanged);
+    playbackPitch.removeListener(_pitchChanged);
     playbackExclusiveOutput.removeListener(_exclusiveChanged);
     playbackExclusiveDevice.removeListener(_exclusiveChanged);
     _equalizerTimer?.cancel();

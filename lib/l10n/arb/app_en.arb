@@ -355,6 +355,43 @@
     "description": "System volume control label in the Mornye player"
   },
   "appearanceStyle": "App Style",
+  "appearanceSongListDensity": "Song List Density",
+  "@appearanceSongListDensity": {
+    "description": "Settings section title for the height of desktop song list rows"
+  },
+  "appearanceDensityCompact": "Compact",
+  "@appearanceDensityCompact": {
+    "description": "Song list density option that keeps rows at their smallest size"
+  },
+  "appearanceDensityComfortable": "Comfortable",
+  "@appearanceDensityComfortable": {
+    "description": "Default song list density option with taller rows"
+  },
+  "appearanceDensitySpacious": "Spacious",
+  "@appearanceDensitySpacious": {
+    "description": "Song list density option with the tallest rows"
+  },
+  "audioControlPitch": "Pitch",
+  "@audioControlPitch": {
+    "description": "Title of the pitch slider in the audio control panel"
+  },
+  "audioControlPitchSemitones": "{value} st",
+  "@audioControlPitchSemitones": {
+    "description": "Pitch value in semitones, for example +3 st",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "audioControlPitchReset": "Reset pitch",
+  "@audioControlPitchReset": {
+    "description": "Tooltip of the button that returns pitch to normal"
+  },
+  "audioControlTitle": "Audio Control",
+  "@audioControlTitle": {
+    "description": "Title of the audio control panel opened from the volume button"
+  },
   "appearanceAccentRed": "Red (default)",
   "appearanceAccentOrange": "Orange",
   "appearanceAccentGreen": "Green",
