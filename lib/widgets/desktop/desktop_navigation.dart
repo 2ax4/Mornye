@@ -299,6 +299,11 @@ class DesktopShellLayout extends ConsumerWidget {
         ),
       );
     }
+    // The rail follows the Library's sidebar switch, like the Mornye
+    // sidebar; it stays where the window's controls are anchored to it.
+    final showRail =
+        ref.watch(settingsProvider.select((s) => s.desktopSidebarEnabled)) ||
+        desktopTitleBarInContentFor(context);
     final railBackground = Theme.of(context).colorScheme.surfaceContainer;
     return Column(
       children: [
@@ -306,42 +311,43 @@ class DesktopShellLayout extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ColoredBox(
-                color: railBackground,
-                child: Column(
-                  children: [
-                    // The traffic lights sit above the rail.
-                    if (desktopTitleBarInContentFor(context))
-                      const SizedBox(
-                        height: desktopTitleBarHeight,
-                        width: desktopWindowControlsWidth,
-                        child: DesktopWindowDragArea(zoomOnDoubleClick: true),
+              if (showRail)
+                ColoredBox(
+                  color: railBackground,
+                  child: Column(
+                    children: [
+                      // The traffic lights sit above the rail.
+                      if (desktopTitleBarInContentFor(context))
+                        const SizedBox(
+                          height: desktopTitleBarHeight,
+                          width: desktopWindowControlsWidth,
+                          child: DesktopWindowDragArea(zoomOnDoubleClick: true),
+                        ),
+                      // Expanded by default and always collapsed below
+                      // [desktopExpandedRailBreakpoint]; the rail's menu
+                      // button and the sidebar shortcut toggle it in wider
+                      // windows.
+                      Expanded(
+                        child: ValueListenableBuilder<bool>(
+                          valueListenable: desktopSidebarCollapsed,
+                          builder: (context, collapsed, _) {
+                            final wide = width >= desktopExpandedRailBreakpoint;
+                            return DesktopNavigationRail(
+                              destinations: destinations,
+                              selected: selected,
+                              onSelected: onSelected,
+                              extended: !collapsed && wide,
+                              onToggleExtended: wide
+                                  ? toggleDesktopSidebar
+                                  : null,
+                              onOpenLibraryLink: onOpenLibraryLink,
+                            );
+                          },
+                        ),
                       ),
-                    // Expanded by default and always collapsed below
-                    // [desktopExpandedRailBreakpoint]; the rail's menu
-                    // button and the sidebar shortcut toggle it in wider
-                    // windows.
-                    Expanded(
-                      child: ValueListenableBuilder<bool>(
-                        valueListenable: desktopSidebarCollapsed,
-                        builder: (context, collapsed, _) {
-                          final wide = width >= desktopExpandedRailBreakpoint;
-                          return DesktopNavigationRail(
-                            destinations: destinations,
-                            selected: selected,
-                            onSelected: onSelected,
-                            extended: !collapsed && wide,
-                            onToggleExtended: wide
-                                ? toggleDesktopSidebar
-                                : null,
-                            onOpenLibraryLink: onOpenLibraryLink,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
               Expanded(
                 child: _DesktopContentArea(
                   windowWidth: width,

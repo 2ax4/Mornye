@@ -390,10 +390,22 @@ void main() {
       }
     }
 
+    testWidgets('hides the rail while the sidebar setting is off', (
+      tester,
+    ) async {
+      await pumpShell(tester, mornye: false, width: 1400);
+
+      // The rail follows the Library's sidebar switch, like the Mornye
+      // sidebar; the Library page's top sections take its place.
+      expect(find.byType(DesktopNavigationRail), findsNothing);
+      expect(find.byType(DesktopSidebar), findsNothing);
+      expect(find.byType(DesktopPlayerBar), findsOneWidget);
+    });
+
     testWidgets('collapses the rail at 900 and shows the player bar', (
       tester,
     ) async {
-      await pumpShell(tester, mornye: false, width: 900);
+      await pumpShell(tester, mornye: false, width: 900, sidebar: true);
 
       expect(find.byType(DesktopNavigationRail), findsOneWidget);
       // Narrow windows keep the rail collapsed even when it was expanded.
@@ -415,7 +427,7 @@ void main() {
     testWidgets('expanded rail at 1400 keeps Settings at the bottom', (
       tester,
     ) async {
-      await pumpShell(tester, mornye: false, width: 1400);
+      await pumpShell(tester, mornye: false, width: 1400, sidebar: true);
 
       expect(
         tester.getSize(find.byType(DesktopNavigationRail)).width,
@@ -489,7 +501,7 @@ void main() {
     });
 
     testWidgets('expanded rail keeps a gap between indicators', (tester) async {
-      await pumpShell(tester, mornye: false, width: 1400);
+      await pumpShell(tester, mornye: false, width: 1400, sidebar: true);
 
       final home = tester.getRect(find.text('home'));
       final library = tester.getRect(find.text('library'));
@@ -501,7 +513,7 @@ void main() {
       tester,
     ) async {
       desktopSidebarCollapsed.value = true;
-      await pumpShell(tester, mornye: false, width: 1400);
+      await pumpShell(tester, mornye: false, width: 1400, sidebar: true);
       double railWidth() =>
           tester.getSize(find.byType(DesktopNavigationRail)).width;
       expect(railWidth(), closeTo(desktopCollapsedRailWidth, 0.5));
@@ -547,7 +559,7 @@ void main() {
     });
 
     testWidgets('narrow windows hide the rail menu button', (tester) async {
-      await pumpShell(tester, mornye: false, width: 900);
+      await pumpShell(tester, mornye: false, width: 900, sidebar: true);
 
       expect(find.byKey(const ValueKey('desktop-rail-menu')), findsNothing);
     });
@@ -560,6 +572,7 @@ void main() {
         tester,
         mornye: false,
         width: 1400,
+        sidebar: true,
         onOpenLibraryLink: opened.add,
       );
 
@@ -594,6 +607,7 @@ void main() {
         tester,
         mornye: false,
         width: 1400,
+        sidebar: true,
         selected: ShellTab.library,
         onOpenLibraryLink: opened.add,
       );
@@ -625,6 +639,7 @@ void main() {
         tester,
         mornye: false,
         width: 1400,
+        sidebar: true,
         onOpenLibraryLink: opened.add,
       );
 
@@ -645,7 +660,7 @@ void main() {
     testWidgets('expanded rail pills span the rail and take the clicks', (
       tester,
     ) async {
-      await pumpShell(tester, mornye: false, width: 1400);
+      await pumpShell(tester, mornye: false, width: 1400, sidebar: true);
 
       final library = tester.getRect(find.text('library'));
       final settings = tester.getRect(find.text('settings'));

@@ -30,6 +30,7 @@ import 'package:mornye/widgets/mornye_playback_button.dart';
 import 'package:mornye/widgets/mornye_player_background.dart';
 import 'package:mornye/widgets/overflow_marquee.dart';
 import 'package:mornye/widgets/player_artwork.dart';
+import 'package:mornye/widgets/player_playback_controls.dart';
 import 'package:mornye/widgets/player_volume_control.dart';
 import 'package:mornye/widgets/playback_seek_slider.dart';
 
@@ -141,7 +142,7 @@ class _MaterialPlayerBar extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _Transport(enabled: loaded),
+                          _Transport(enabled: loaded, showModes: true),
                           SizedBox(
                             height: 24,
                             child: _SeekRow(mediaItem: mediaItem),
@@ -399,11 +400,15 @@ class _Artwork extends StatelessWidget {
 }
 
 /// Previous, play/pause and next. Material keeps the mini player's filled
-/// play button, round while paused and square while playing.
+/// play button, round while paused and square while playing. With
+/// [showModes], shuffle leads and repeat trails the transport, as on the
+/// Mornye capsule.
 class _Transport extends ConsumerWidget {
-  const _Transport({required this.enabled});
+  const _Transport({required this.enabled, this.showModes = false});
 
   final bool enabled;
+
+  final bool showModes;
 
   // Media controls keep their order in right-to-left layouts.
   @override
@@ -475,7 +480,7 @@ class _Transport extends ConsumerWidget {
       );
     }
     if (materialExpressiveEnabled(context)) {
-      return SizedBox(
+      final transport = SizedBox(
         width: 192,
         child: ExpressivePlaybackTransport(
           colorScheme: colorScheme,
@@ -490,10 +495,37 @@ class _Transport extends ConsumerWidget {
           onNext: enabled ? controller.next : null,
         ),
       );
+      if (!showModes) return transport;
+      // A narrow pane squeezes the modes beside the transport; scale the
+      // group instead of overflowing it.
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PlayerPlaybackModeButton(
+              mode: PlayerPlaybackMode.shuffle,
+              colorScheme: colorScheme,
+            ),
+            transport,
+            PlayerPlaybackModeButton(
+              mode: PlayerPlaybackMode.repeat,
+              colorScheme: colorScheme,
+            ),
+          ],
+        ),
+      );
     }
-    return Row(
+    final controls = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (showModes) ...[
+          PlayerPlaybackModeButton(
+            mode: PlayerPlaybackMode.shuffle,
+            colorScheme: colorScheme,
+          ),
+          const SizedBox(width: 8),
+        ],
         AppIconButton(
           tooltip: previousTooltip,
           icon: const AppIcon(Icons.skip_previous),
@@ -521,8 +553,17 @@ class _Transport extends ConsumerWidget {
           icon: const AppIcon(Icons.skip_next),
           onPressed: enabled ? controller.next : null,
         ),
+        if (showModes) ...[
+          const SizedBox(width: 8),
+          PlayerPlaybackModeButton(
+            mode: PlayerPlaybackMode.repeat,
+            colorScheme: colorScheme,
+          ),
+        ],
       ],
     );
+    if (!showModes) return controls;
+    return FittedBox(fit: BoxFit.scaleDown, child: controls);
   }
 }
 
@@ -1012,56 +1053,29 @@ class _MaterialAudioPanelAnchorState
   }
 }
 
-/// The popover entrance: a quick fade with a small pop from the button's
-/// corner. Runs on its own controller, so the motion is always visible even
-/// where the platform asks for reduced animations.
-class _MornyePopoverEntrance extends StatefulWidget {
+/// Music's popover entrance: 250ms of fade with a short rise.
+class _MornyePopoverEntrance extends StatelessWidget {
   const _MornyePopoverEntrance({required this.child});
 
   final Widget child;
 
   @override
-  State<_MornyePopoverEntrance> createState() => _MornyePopoverEntranceState();
-}
-
-class _MornyePopoverEntranceState extends State<_MornyePopoverEntrance>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 180),
-  );
-
-  late final CurvedAnimation _curve = CurvedAnimation(
-    parent: _controller,
-    curve: Curves.easeOutCubic,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _curve.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _curve,
-      builder: (context, child) => Opacity(
-        opacity: _curve.value,
-        child: Transform.scale(
-          scale: 0.92 + 0.08 * _curve.value,
-          alignment: Alignment.bottomRight,
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+      builder: (context, progress, child) => Opacity(
+        opacity: progress,
+        child: Transform.translate(
+          offset: Offset(0, 6 * (1 - progress)),
           child: child,
         ),
       ),
-      child: widget.child,
+      child: child,
     );
   }
 }

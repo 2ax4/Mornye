@@ -162,7 +162,13 @@ class _DesktopMiniPlayerState extends ConsumerState<DesktopMiniPlayer> {
                       )
                     else
                       _TitleAndArtist(mediaItem: mediaItem),
-                    _Transport(enabled: mediaItem != null),
+                    // The modes beside the expanded button can leave less
+                    // room than the transport's intrinsic width; scale it
+                    // instead of overflowing.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: _Transport(enabled: mediaItem != null),
+                    ),
                   ],
                 ),
               ),
@@ -186,6 +192,22 @@ class _DesktopMiniPlayerState extends ConsumerState<DesktopMiniPlayer> {
                     ),
                     onPressed: () => setDesktopMiniPlayer(open: false),
                   ),
+                  // Shuffle and repeat fill the idle side under the expand
+                  // button, as the capsule and the Material bar offer them.
+                  if (!mornye)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PlayerPlaybackModeButton(
+                          mode: PlayerPlaybackMode.shuffle,
+                          colorScheme: colorScheme,
+                        ),
+                        PlayerPlaybackModeButton(
+                          mode: PlayerPlaybackMode.repeat,
+                          colorScheme: colorScheme,
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ],
