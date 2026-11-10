@@ -101,11 +101,9 @@ SingleActivator? desktopCommandShortcut(
     DesktopCommand.settings => _primary(LogicalKeyboardKey.comma, target),
     DesktopCommand.back => _primary(LogicalKeyboardKey.bracketLeft, target),
     DesktopCommand.forward => _primary(LogicalKeyboardKey.bracketRight, target),
-    DesktopCommand.lyrics => _primary(
-      LogicalKeyboardKey.keyL,
-      target,
-      shift: true,
-    ),
+    // Lyrics live inside the metadata editor now; the command stays for the
+    // enum's callers but has no shortcut.
+    DesktopCommand.lyrics => null,
     DesktopCommand.upNext => _primary(
       LogicalKeyboardKey.keyU,
       target,
@@ -256,9 +254,7 @@ String desktopDestinationTooltip(
 
 /// Desktop destinations in rail or sidebar order. Cmd/Ctrl+1..5 select them
 /// by position. Mornye reaches Search from the sidebar search field.
-List<ShellTab> desktopDestinationTabs({
-  required bool mornye,
-}) => [
+List<ShellTab> desktopDestinationTabs({required bool mornye}) => [
   ShellTab.home,
   ShellTab.library,
   if (mornye) ShellTab.search,

@@ -42,7 +42,7 @@ void main() {
     (tester) async {
       final key = ShellNavigationService.homeTabNavigatorKey;
       final observer = ShellChromeObserver(key);
-      ShellNavigationService.syncState(currentTabIndex: 0, showRepoTab: true);
+      ShellNavigationService.syncState(currentTabIndex: 0);
       addTearDown(observer.detach);
       await tester.pumpWidget(
         MaterialApp(
@@ -98,11 +98,11 @@ void main() {
       expect(ShellNavigationService.chromeBrightness.value, Brightness.dark);
       expect(ShellNavigationService.chromeSurface.value, artistSurface);
 
-      ShellNavigationService.syncState(currentTabIndex: 3, showRepoTab: true);
+      ShellNavigationService.syncState(currentTabIndex: 3);
       await tester.pumpAndSettle();
       expect(ShellNavigationService.chromeBrightness.value, isNull);
       expect(ShellNavigationService.chromeSurface.value, isNull);
-      ShellNavigationService.syncState(currentTabIndex: 0, showRepoTab: true);
+      ShellNavigationService.syncState(currentTabIndex: 0);
       await tester.pumpAndSettle();
       expect(ShellNavigationService.chromeBrightness.value, Brightness.dark);
       key.currentState!.pop();

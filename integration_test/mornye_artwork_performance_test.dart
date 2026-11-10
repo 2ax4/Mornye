@@ -139,14 +139,6 @@ void runArtworkPerformanceTests({required bool mornye}) {
                         metadata: metadata,
                         seekPreview: seek,
                         colorScheme: theme.colorScheme,
-                        showLyrics: value == 1,
-                        lyricsBuilder: (_) => ListView.builder(
-                          itemCount: 200,
-                          itemBuilder: (_, index) => Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Text('Lyric line $index'),
-                          ),
-                        ),
                         onOpenQueue: () {},
                       )
                     : MornyePlayerLayout(
@@ -160,16 +152,6 @@ void runArtworkPerformanceTests({required bool mornye}) {
                         artworkTopInset: 0,
                         artworkKeys: keys,
                         artworkForeground: foreground,
-                        lyricsControlsHidden: false,
-                        lyricsOptionsOpen: false,
-                        lyricsBuilder: (_) => ListView.builder(
-                          itemCount: 200,
-                          itemBuilder: (_, index) => Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Text('Lyric line $index'),
-                          ),
-                        ),
-                        lyricsOptions: null,
                         onPageChanged: (value) => page.value = value,
                         onTrackNavigation: (_, _) async {},
                         onMoreActions: (_, _, _) async {},

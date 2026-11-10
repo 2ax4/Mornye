@@ -225,6 +225,9 @@ void main() {
           backend: (call) async {
             if (call.method != 'getProviderMetadata') return null;
             final args = call.arguments as Map<Object?, Object?>;
+            // The featured album card preloads its own metadata; only the
+            // artist pages belong in the paging record.
+            if (args['resource_type'] != 'artist') return const {};
             final id = args['resource_id'] as String;
             calls.add(id);
             final albums = id == artistId

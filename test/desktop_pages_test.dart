@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mornye/l10n/app_localizations.dart';
 import 'package:mornye/models/download_item.dart';
@@ -14,7 +12,6 @@ import 'package:mornye/providers/download_queue_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
 import 'package:mornye/providers/system_volume_provider.dart';
 import 'package:mornye/screens/settings/settings_tab.dart';
-import 'package:mornye/services/app_remote_config_service.dart';
 import 'package:mornye/services/shell_navigation_service.dart';
 import 'package:mornye/theme/app_theme.dart';
 import 'package:mornye/theme/mornye_theme.dart';
@@ -155,13 +152,7 @@ void main() {
         await tester.pumpWidget(
           app(
             mornye: mornye,
-            home: Scaffold(
-              body: SettingsTab(
-                remoteConfigService: AppRemoteConfigService(
-                  client: MockClient((_) async => http.Response('{}', 200)),
-                ),
-              ),
-            ),
+            home: Scaffold(body: SettingsTab()),
           ),
         );
         await tester.pumpAndSettle();
@@ -199,13 +190,7 @@ void main() {
         await tester.pumpWidget(
           app(
             mornye: mornye,
-            home: Scaffold(
-              body: SettingsTab(
-                remoteConfigService: AppRemoteConfigService(
-                  client: MockClient((_) async => http.Response('{}', 200)),
-                ),
-              ),
-            ),
+            home: Scaffold(body: SettingsTab()),
           ),
         );
         await tester.pumpAndSettle();
@@ -284,14 +269,14 @@ void main() {
         tester,
       ) async {
         await pumpShell(tester, 1400);
-        final lyrics = find.byKey(const ValueKey('desktop-inspector-lyrics'));
-        expect(lyrics, findsNothing);
+        final upNext = find.byKey(const ValueKey('desktop-inspector-upNext'));
+        expect(upNext, findsNothing);
 
-        await tester.tap(find.byKey(const ValueKey('desktop-player-lyrics')));
+        await tester.tap(find.byKey(const ValueKey('desktop-player-up-next')));
         await tester.pumpAndSettle();
-        expect(lyrics, findsOneWidget);
+        expect(upNext, findsOneWidget);
         expect(
-          tester.getSize(lyrics).width,
+          tester.getSize(upNext).width,
           mornye ? mornyeGlassInspectorWidth : desktopInspectorWidth,
         );
         final content = tester.getRect(
@@ -303,15 +288,11 @@ void main() {
         if (mornye) {
           // The glass runs the window's height over a pane that stays put.
           expect(content.right, 1400);
-          expect(tester.getRect(lyrics).height, 800);
+          expect(tester.getRect(upNext).height, 800);
         } else {
-          expect(content.right, tester.getRect(lyrics).left);
+          expect(content.right, tester.getRect(upNext).left);
         }
 
-        await pressShortcut(tester, LogicalKeyboardKey.keyU);
-        expect(lyrics, findsNothing);
-        final upNext = find.byKey(const ValueKey('desktop-inspector-upNext'));
-        expect(upNext, findsOneWidget);
         // Escape closes a floating inspector and leaves one beside the
         // content open.
         await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -345,9 +326,9 @@ void main() {
 
       testWidgets('floats over the content at 1000', (tester) async {
         await pumpShell(tester, 1000);
-        await pressShortcut(tester, LogicalKeyboardKey.keyL);
-        final lyrics = find.byKey(const ValueKey('desktop-inspector-lyrics'));
-        expect(lyrics, findsOneWidget);
+        await pressShortcut(tester, LogicalKeyboardKey.keyU);
+        final upNext = find.byKey(const ValueKey('desktop-inspector-upNext'));
+        expect(upNext, findsOneWidget);
         final content = tester.getRect(
           find.ancestor(
             of: find.text('content'),
@@ -355,12 +336,12 @@ void main() {
           ),
         );
         expect(content.right, 1000);
-        expect(tester.getRect(lyrics).right, 1000);
-        expect(tester.getRect(lyrics).left, lessThan(content.right));
+        expect(tester.getRect(upNext).right, 1000);
+        expect(tester.getRect(upNext).left, lessThan(content.right));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.escape);
         await tester.pumpAndSettle();
-        expect(lyrics, findsNothing);
+        expect(upNext, findsNothing);
         expect(tester.takeException(), isNull);
       });
 
@@ -401,52 +382,40 @@ void main() {
         expect(timeline.right, cover.right);
       });
 
-      testWidgets('full screen opens lyrics in Now Playing', (tester) async {
-        bindDesktopFullScreenLyrics();
+      testWidgets('full screen shows Up Next in Now Playing', (tester) async {
         await pumpShell(tester, 1400, nowPlaying: const DesktopNowPlaying());
         final player = find.byKey(const ValueKey('desktop-now-playing'));
-        final inspectorLyrics = find.byKey(
-          const ValueKey('desktop-inspector-lyrics'),
+        final inspectorUpNext = find.byKey(
+          const ValueKey('desktop-inspector-upNext'),
         );
 
-        // A window that is not full screen shows lyrics in the panel.
-        await tester.tap(find.byKey(const ValueKey('desktop-player-lyrics')));
+        // A window that is not full screen shows Up Next beside the content.
+        await tester.tap(find.byKey(const ValueKey('desktop-player-up-next')));
         await tester.pumpAndSettle();
         expect(player, findsNothing);
-        expect(inspectorLyrics, findsOneWidget);
+        expect(inspectorUpNext, findsOneWidget);
         desktopInspectorPanel.value = null;
-
-        desktopWindowFullScreen.value = true;
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const ValueKey('desktop-player-lyrics')));
+
+        // Full screen with Now Playing open puts the panel in the player.
+        desktopWindowFullScreen.value = true;
+        addTearDown(() => desktopWindowFullScreen.value = false);
+        desktopNowPlayingOpen.value = true;
         await tester.pumpAndSettle();
         expect(player, findsOneWidget);
+        expect(find.text('content'), findsNothing);
+        toggleDesktopInspector(DesktopInspectorPanel.upNext);
+        await tester.pumpAndSettle();
         expect(
-          find.byKey(const ValueKey('desktop-now-playing-lyrics')),
+          find.byKey(const ValueKey('desktop-now-playing-upNext')),
           findsOneWidget,
         );
-        expect(find.text('content'), findsNothing);
 
         await tester.sendKeyEvent(LogicalKeyboardKey.escape);
         await tester.pumpAndSettle();
         expect(player, findsNothing);
         expect(desktopInspectorPanel.value, isNull);
         expect(find.text('content'), findsOneWidget);
-
-        // Entering full screen with lyrics open moves them into the player.
-        desktopWindowFullScreen.value = false;
-        desktopInspectorPanel.value = DesktopInspectorPanel.lyrics;
-        await tester.pumpAndSettle();
-        expect(inspectorLyrics, findsOneWidget);
-        desktopWindowFullScreen.value = true;
-        await tester.pumpAndSettle();
-        expect(player, findsOneWidget);
-
-        await tester.tap(
-          find.byKey(const ValueKey('desktop-now-playing-close')),
-        );
-        await tester.pumpAndSettle();
-        expect(player, findsNothing);
         expect(tester.takeException(), isNull);
       });
 

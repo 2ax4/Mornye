@@ -132,14 +132,14 @@ void main() {
     final last = tester.getRect(
       find
           .ancestor(
-            of: find.text('Network storage'),
+            of: find.text('Listening statistics'),
             matching: find.byType(InkWell),
           )
           .first,
     );
-    expect(first.left, last.left);
+    expect(first.left, moreOrLessEquals(last.left, epsilon: 0.01));
     expect(first.top, card.top);
-    expect(last.bottom, card.bottom);
+    expect(last.bottom, moreOrLessEquals(card.bottom, epsilon: 0.01));
     expect(first.height, greaterThanOrEqualTo(48));
   });
 
@@ -154,7 +154,7 @@ void main() {
     );
     // One row of shortcuts.
     expect(
-      tester.getRect(find.text('Network storage')).top,
+      tester.getRect(find.text('Listening statistics')).top,
       tester.getRect(find.text('Shuffle library')).top,
     );
   });
@@ -171,7 +171,6 @@ void main() {
         'Shuffle library',
         'Equalizer',
         'Listening statistics',
-        'Network storage',
       ])
         tester.getRect(
           find

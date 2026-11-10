@@ -1,19 +1,12 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mornye/l10n/app_localizations.dart';
 import 'package:mornye/screens/settings/about_page.dart';
 import 'package:mornye/screens/settings/settings_tab.dart';
-import 'package:mornye/services/app_remote_config_service.dart';
 import 'package:mornye/theme/app_theme.dart';
 import 'package:mornye/theme/mornye_theme.dart';
-import 'package:mornye/widgets/app_progress_indicator.dart';
 import 'package:mornye/widgets/settings_group.dart';
 
 void main() {
@@ -21,125 +14,29 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  Future<void> pumpSettings(
-    WidgetTester tester, {
-    AppRemoteConfigService? service,
-    ThemeData? theme,
-  }) async {
+  Future<void> pumpSettings(WidgetTester tester, {ThemeData? theme}) async {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
           theme: theme ?? AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: SettingsTab(
-              remoteConfigService:
-                  service ??
-                  AppRemoteConfigService(
-                    client: MockClient((_) async => http.Response('{}', 200)),
-                  ),
-            ),
-          ),
+          home: Scaffold(body: SettingsTab()),
         ),
       ),
     );
     await tester.pumpAndSettle();
   }
 
-  Map<String, Object?> goalConfig({
-    double progress = 0.09,
-    bool active = true,
-    bool percentage = true,
-  }) => {
-    'donate': {
-      'monthly_goal': {
-        'enabled': true,
-        'active': active,
-        'progress_ratio': progress,
-        'progress_percent': progress * 100,
-        'display': {'percentage': percentage},
-      },
-    },
-  };
-
-  for (final mornye in [false, true]) {
-    testWidgets('support row updates cached progress after refresh ($mornye)', (
-      tester,
-    ) async {
-      SharedPreferences.setMockInitialValues({
-        'app_remote_config_cached_json': jsonEncode(goalConfig()),
-      });
-      final response = Completer<http.Response>();
-      final service = AppRemoteConfigService(
-        client: MockClient((_) => response.future),
-      );
-      await pumpSettings(
-        tester,
-        service: service,
-        theme: mornye ? MornyeTheme.build(Brightness.dark) : AppTheme.light(),
-      );
-      final support = find.byWidgetPredicate(
-        (widget) =>
-            widget is SettingsItem && widget.title == 'Support Development',
-      );
-      final progress = find.descendant(
-        of: support,
-        matching: find.byType(AppProgressIndicator),
-      );
-      expect(
-        find.descendant(of: support, matching: find.text('9%')),
-        findsOneWidget,
-      );
-      expect(tester.widget<AppProgressIndicator>(progress).value, 0.09);
-
-      response.complete(
-        http.Response(jsonEncode(goalConfig(progress: 0.27)), 200),
-      );
-      await tester.pumpAndSettle();
-      expect(
-        find.descendant(of: support, matching: find.text('27%')),
-        findsOneWidget,
-      );
-      expect(tester.widget<AppProgressIndicator>(progress).value, 0.27);
-      expect(find.text('9%'), findsNothing);
-      expect(tester.takeException(), isNull);
-    });
-  }
-
-  for (final active in [false, true]) {
-    testWidgets('support row respects active and percentage flags ($active)', (
-      tester,
-    ) async {
-      final service = AppRemoteConfigService(
-        client: MockClient(
-          (_) async => http.Response(
-            jsonEncode(goalConfig(active: active, percentage: false)),
-            200,
-          ),
-        ),
-      );
-      await pumpSettings(tester, service: service);
-      expect(find.text('9%'), findsNothing);
-      expect(
-        find.byType(AppProgressIndicator),
-        active ? findsOneWidget : findsNothing,
-      );
-    });
-  }
-
   testWidgets('finds controls nested inside a settings page', (tester) async {
     await pumpSettings(tester);
 
-    await tester.enterText(find.byType(TextField), 'parallel downloads');
+    await tester.enterText(find.byType(TextField), 'gapless');
     await tester.pump();
 
-    expect(find.text('Concurrent downloads'), findsOneWidget);
-    expect(find.text('Download'), findsOneWidget);
-    expect(
-      find.text('No settings found for "parallel downloads"'),
-      findsNothing,
-    );
+    expect(find.text('Gapless playback'), findsOneWidget);
+    expect(find.text('Playback'), findsOneWidget);
+    expect(find.text('No settings found for "gapless"'), findsNothing);
   });
 
   for (final mornye in [false, true]) {
@@ -170,14 +67,17 @@ void main() {
     });
   }
 
-  testWidgets('network protocols are discoverable from Settings', (
-    tester,
-  ) async {
+  testWidgets('audio controls are discoverable from Settings', (tester) async {
     await pumpSettings(tester);
-    for (final query in ['SMB', 'WebDAV', 'NAS']) {
+    const queries = {
+      'equalizer': 'Equalizer',
+      'gapless': 'Gapless playback',
+      'automix': 'AutoMix',
+    };
+    for (final MapEntry(key: query, value: title) in queries.entries) {
       await tester.enterText(find.byType(TextField), query);
       await tester.pump();
-      expect(find.text('Network storage'), findsOneWidget);
+      expect(find.text(title), findsOneWidget);
     }
   });
 

@@ -197,7 +197,7 @@ void main() {
       expect(viewport.position.pixels, greaterThan(0));
       await tester.tap(destination('Settings'));
       await settleFrames();
-      expect(tester.widget<ExpressiveNavigationBar>(bar).selectedIndex, 3);
+      expect(tester.widget<ExpressiveNavigationBar>(bar).selectedIndex, 2);
       await tester.tap(destination('Home'));
       await settleFrames();
       expect(tester.widget<ExpressiveNavigationBar>(bar).selectedIndex, 0);

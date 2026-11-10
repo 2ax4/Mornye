@@ -5,21 +5,12 @@ import 'package:mornye/services/shell_navigation_service.dart';
 import 'package:mornye/widgets/view_queue_snackbar_action.dart';
 
 void main() {
-  for (final (separateSearch, showRepo) in [
-    (false, false),
-    (true, false),
-    (true, true),
-  ]) {
+  for (final separateSearch in [false, true]) {
     testWidgets(
-      'first search request reaches the lazy page (separate=$separateSearch, repo=$showRepo)',
+      'first search request reaches the lazy page (separate=$separateSearch)',
       (tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SearchShell(
-              separateSearch: separateSearch,
-              showRepo: showRepo,
-            ),
-          ),
+          MaterialApp(home: _SearchShell(separateSearch: separateSearch)),
         );
         await tester.pumpAndSettle();
         expect(find.byType(TextField), findsNothing);
@@ -33,15 +24,10 @@ void main() {
     );
 
     testWidgets(
-      'search returns from an album to its own tab (separate=$separateSearch, repo=$showRepo)',
+      'search returns from an album to its own tab (separate=$separateSearch)',
       (tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SearchShell(
-              separateSearch: separateSearch,
-              showRepo: showRepo,
-            ),
-          ),
+          MaterialApp(home: _SearchShell(separateSearch: separateSearch)),
         );
         await tester.tap(find.text('Search'));
         await tester.pumpAndSettle();
@@ -71,7 +57,7 @@ void main() {
     'search selects its tab before requesting focus and stops when shell is absent',
     (tester) async {
       final owner = Object();
-      ShellNavigationService.syncState(currentTabIndex: 0, showRepoTab: false);
+      ShellNavigationService.syncState(currentTabIndex: 0);
       var selectedSearch = false;
       var focusRequests = 0;
       void onSearch() {
@@ -183,10 +169,9 @@ void main() {
 }
 
 class _SearchShell extends StatefulWidget {
-  const _SearchShell({required this.separateSearch, required this.showRepo});
+  const _SearchShell({required this.separateSearch});
 
   final bool separateSearch;
-  final bool showRepo;
 
   @override
   State<_SearchShell> createState() => _SearchShellState();
@@ -197,7 +182,7 @@ class _SearchShellState extends State<_SearchShell> {
   GlobalKey<NavigatorState> get _navigatorKey => widget.separateSearch
       ? ShellNavigationService.searchTabNavigatorKey
       : ShellNavigationService.homeTabNavigatorKey;
-  int get _searchIndex => widget.separateSearch ? (widget.showRepo ? 3 : 2) : 0;
+  int get _searchIndex => widget.separateSearch ? 2 : 0;
   late final _observer = ShellChromeObserver(_navigatorKey);
 
   @override
@@ -205,7 +190,6 @@ class _SearchShellState extends State<_SearchShell> {
     super.initState();
     ShellNavigationService.syncState(
       currentTabIndex: 1,
-      showRepoTab: widget.showRepo,
       showSearchTab: widget.separateSearch,
     );
     ShellNavigationService.registerTabSelectionHandler(
@@ -213,7 +197,6 @@ class _SearchShellState extends State<_SearchShell> {
       handler: (_) {
         ShellNavigationService.syncState(
           currentTabIndex: _searchIndex,
-          showRepoTab: widget.showRepo,
           showSearchTab: widget.separateSearch,
         );
         _pages.jumpToPage(_searchIndex);

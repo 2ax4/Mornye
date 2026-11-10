@@ -77,9 +77,7 @@ class _AudioOutputButtonState extends State<AudioOutputButton> {
     }
     if (mounted && !opened) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.nowPlayingAudioOutputUnavailable),
-        ),
+        SnackBar(content: Text(context.l10n.nowPlayingAudioOutputUnavailable)),
       );
     }
   }

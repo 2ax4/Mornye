@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:mornye/providers/extension_provider.dart';
-import 'package:mornye/providers/repo_provider.dart';
 import 'package:mornye/services/platform_bridge.dart';
 import 'package:mornye/services/secure_storage_options.dart';
 
@@ -78,17 +77,6 @@ void main() {
           contains('message authentication failed'),
         );
       }
-      await container
-          .read(repoProvider.notifier)
-          .initialize('${root.path}/cache');
-      expect(container.read(repoProvider).isInitialized, isTrue);
-      await PlatformBridge.setRepoRegistryUrl(
-        'https://example.com/registry.json',
-      );
-      expect(
-        await PlatformBridge.getRepoRegistryUrl(),
-        'https://example.com/registry.json',
-      );
       for (final id in ids) {
         expect(
           await File('${data.path}/$id/settings.enc').readAsBytes(),
@@ -112,7 +100,6 @@ void main() {
       }
       binding.reportData = {
         'unreadable_extensions_visible': 2,
-        'repository_initialized': true,
         'encrypted_files_preserved': true,
         'correct_key_reopens_settings': true,
       };

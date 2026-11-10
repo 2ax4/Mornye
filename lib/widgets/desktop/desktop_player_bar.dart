@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/controllers/player_metadata_controller.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/music_player_provider.dart';
-import 'package:mornye/providers/theme_provider.dart';
 import 'package:mornye/theme/app_tokens.dart';
 import 'package:mornye/theme/material_expressive.dart';
 import 'package:mornye/theme/mornye_theme.dart';
@@ -888,8 +887,7 @@ class _TrailingControls extends ConsumerWidget {
           Flexible(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final slider =
-                    constraints.maxWidth >= _materialVolumeMinWidth;
+                final slider = constraints.maxWidth >= _materialVolumeMinWidth;
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

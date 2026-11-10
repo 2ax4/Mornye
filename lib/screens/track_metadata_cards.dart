@@ -936,9 +936,17 @@ extension _TrackMetadataCards on _TrackMetadataScreenState {
   }
 
   String _sanitizeFileNameSegment(String value) {
-    var sanitized = value.replaceAll(_invalidFileNameChars, '_').trim();
-    sanitized = sanitized.replaceAll(_leadingOrTrailingDots, '');
-    sanitized = sanitized.replaceAll(_multiUnderscore, '_');
+    var sanitized = value
+        .replaceAll(_TrackMetadataScreenState._invalidFileNameChars, '_')
+        .trim();
+    sanitized = sanitized.replaceAll(
+      _TrackMetadataScreenState._leadingOrTrailingDots,
+      '',
+    );
+    sanitized = sanitized.replaceAll(
+      _TrackMetadataScreenState._multiUnderscore,
+      '_',
+    );
     if (sanitized.isEmpty) {
       return 'untitled';
     }

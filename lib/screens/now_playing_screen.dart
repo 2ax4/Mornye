@@ -23,7 +23,6 @@ import 'package:mornye/widgets/app_bottom_sheet.dart';
 import 'package:mornye/widgets/app_snack_bar.dart';
 import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/app_icon_button.dart';
-import 'package:mornye/widgets/expressive_icon_button.dart';
 import 'package:mornye/widgets/audio_output_button.dart';
 import 'package:mornye/widgets/desktop/desktop_commands.dart'
     show DesktopCommand, desktopTooltip;
@@ -133,9 +132,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(
-        _trackMetadata.load(ref.read(currentMediaItemProvider).value),
-      );
+      unawaited(_trackMetadata.load(ref.read(currentMediaItemProvider).value));
     });
   }
 
@@ -496,8 +493,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                             _showMoreActions(
                               context: buttonContext,
                               mediaItem: item,
-                              source:
-                                  item.extras?['source']?.toString() ?? '',
+                              source: item.extras?['source']?.toString() ?? '',
                               colorScheme: colorScheme,
                               anchor: anchor,
                             ),
@@ -552,9 +548,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                           children: [
                             // Filled pills like the shuffle and repeat
                             // segments between them.
-                            PlayerPlaybackModeToolbar(
-                              colorScheme: colorScheme,
-                            ),
+                            PlayerPlaybackModeToolbar(colorScheme: colorScheme),
                             AudioOutputButton(
                               color: colorScheme.onSurfaceVariant,
                               backgroundColor: colorScheme.surfaceContainerHigh,
@@ -568,9 +562,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                     if (MediaQuery.orientationOf(context) ==
                         Orientation.portrait) ...[
                       if (!reservesPlayingOnRow) ...[
-                        LinkPlayingOnLabel(
-                          color: mornye ? Colors.white : null,
-                        ),
+                        LinkPlayingOnLabel(color: mornye ? Colors.white : null),
                         const SizedBox(height: 8),
                       ] else
                         SizedBox(

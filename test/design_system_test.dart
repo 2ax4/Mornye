@@ -972,7 +972,6 @@ void main() {
         'album_screen.dart',
         'playlist_screen.dart',
         'local_album_screen.dart',
-        'downloaded_album_screen.dart',
         'library_tracks_folder_screen.dart',
       ];
       final offenders = <String>[];

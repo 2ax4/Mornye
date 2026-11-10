@@ -1601,7 +1601,11 @@ class _HomeShortcuts extends ConsumerWidget {
               children: [
                 Expanded(child: tiles[row]),
                 const SizedBox(width: 8),
-                Expanded(child: tiles[row + 1]),
+                // An odd tile count leaves the last row without a neighbor.
+                if (row + 1 < tiles.length)
+                  Expanded(child: tiles[row + 1])
+                else
+                  const Spacer(),
               ],
             ),
           ),

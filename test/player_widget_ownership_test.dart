@@ -56,7 +56,6 @@ void main() {
     addTearDown(playback.close);
     final item = _item('First');
     final pending = metadata.load(item);
-    var visualBuilds = 0;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -82,11 +81,6 @@ void main() {
                 metadata: metadata,
                 seekPreview: seekPreview,
                 colorScheme: Theme.of(context).colorScheme,
-                showLyrics: true,
-                lyricsBuilder: (_) {
-                  visualBuilds++;
-                  return const SizedBox.expand();
-                },
                 onOpenQueue: () {},
               ),
             ),
@@ -95,7 +89,6 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final beforeMetadata = visualBuilds;
     read.complete({
       'explicit': true,
       'format': 'FLAC',
@@ -104,7 +97,6 @@ void main() {
     });
     await pending;
     await tester.pumpAndSettle();
-    expect(visualBuilds, beforeMetadata);
     expect(
       tester
           .widget<ExplicitTrackTitle>(find.byType(ExplicitTrackTitle))
@@ -124,7 +116,6 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
-    expect(visualBuilds, beforeMetadata);
     expect(find.text('0:45'), findsOneWidget);
     expect(
       identical(tester.widget<Text>(find.text(quality)), qualityWidget),

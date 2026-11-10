@@ -9,7 +9,6 @@ import 'package:mornye/constants/app_info.dart';
 import 'package:mornye/controllers/open_audio_controller.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/music_player_provider.dart';
-import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/providers/system_volume_provider.dart';
 import 'package:mornye/services/app_navigation_service.dart';
 import 'package:mornye/services/music_playback_deck.dart'

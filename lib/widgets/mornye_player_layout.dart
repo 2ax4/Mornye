@@ -98,8 +98,6 @@ class MornyePlayerLayout extends ConsumerWidget {
     final showVolume = ref.watch(
       settingsProvider.select((s) => s.playerShowVolume),
     );
-    final landscape =
-        MediaQuery.sizeOf(context).width > MediaQuery.sizeOf(context).height;
     // Any rebuild below this builder, such as a position tick, lays it out
     // and so repaints its parent; what it returns keeps its own layer (the
     // scroll viewport has one already).
@@ -119,8 +117,7 @@ class MornyePlayerLayout extends ConsumerWidget {
         }) => LayoutBuilder(
           builder: (context, stage) {
             final compact = showQueue && !artworkOnly;
-            final expandedArtwork =
-                artworkOnly || (!showQueue && insetArtwork);
+            final expandedArtwork = artworkOnly || (!showQueue && insetArtwork);
             final artSize = (stage.maxWidth - (artworkOnly ? 56 : 48)).clamp(
               0.0,
               (stage.maxHeight - (artworkOnly ? 24 : 8)).clamp(0.0, 360.0),

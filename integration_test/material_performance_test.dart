@@ -5,12 +5,10 @@ import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/widgets/playback_seek_slider.dart';
 
 import 'mornye_artwork_performance_test.dart' as artwork;
-import 'mornye_lyrics_performance_test.dart' as lyrics;
 import 'performance_probe.dart';
 
 void main() {
   final binding = PerformanceTestBinding.ensureInitialized();
-  lyrics.runLyricsPerformanceTests(mornye: false);
   artwork.runArtworkPerformanceTests(mornye: false);
   for (final mornye in [false, true]) {
     final style = mornye ? 'mornye' : 'material';

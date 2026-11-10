@@ -18,7 +18,6 @@ import 'package:mornye/services/playback_deck.dart';
 import 'package:mornye/services/link/desktop/link_desktop_host.dart';
 import 'package:mornye/services/remote_playback.dart';
 import 'package:mornye/services/shell_navigation_service.dart';
-import 'package:mornye/services/user_profile_store.dart';
 import 'package:mornye/theme/app_theme.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/utils/desktop_platform.dart';
@@ -103,7 +102,7 @@ const _libraryLinks = [
 ];
 
 List<DesktopDestination> _destinations({required bool mornye}) => [
-  for (final tab in desktopDestinationTabs(mornye: mornye, showStore: true))
+  for (final tab in desktopDestinationTabs(mornye: mornye))
     DesktopDestination(
       tab: tab,
       icon: Icons.circle_outlined,
@@ -147,7 +146,6 @@ void main() {
     bool linkAvailable = false,
     RemotePlayback? remote,
     String playerMode = 'internal',
-    UserProfile profile = const UserProfile(name: 'Ada Lovelace'),
   }) => [
     settingsProvider.overrideWith(
       () => FixedSettingsNotifier(AppSettings(playerMode: playerMode)),
@@ -173,7 +171,6 @@ void main() {
       volumeWrites.add(value);
     }),
     desktopSidebarPlaylistsProvider.overrideWithValue([_playlist]),
-    desktopSidebarProfileProvider.overrideWithValue(profile),
   ];
 
   Future<void> pumpShell(
@@ -190,8 +187,6 @@ void main() {
     String playerMode = 'internal',
     List<DesktopSidebarLink> libraryLinks = const [],
     ValueChanged<String>? onOpenLibraryLink,
-    VoidCallback? onOpenProfile,
-    UserProfile profile = const UserProfile(name: 'Ada Lovelace'),
   }) async {
     tester.view.physicalSize = Size(width, 800);
     tester.view.devicePixelRatio = 1;
@@ -206,7 +201,6 @@ void main() {
           loading: loading,
           linkAvailable: linkAvailable,
           remote: remote,
-          profile: profile,
           playerMode: playerMode,
         ),
         child: MaterialApp(
@@ -222,7 +216,6 @@ void main() {
               onSelected: selections.add,
               libraryLinks: libraryLinks,
               onOpenLibraryLink: onOpenLibraryLink,
-              onOpenProfile: onOpenProfile,
               body: const Center(child: Text('content')),
             ),
           ),
@@ -312,10 +305,8 @@ void main() {
       tester,
     ) async {
       desktopNowPlayingOpen.value = true;
-      desktopInspectorPanel.value = DesktopInspectorPanel.lyrics;
       addTearDown(() {
         desktopNowPlayingOpen.value = false;
-        desktopInspectorPanel.value = null;
       });
       await pumpShell(
         tester,
@@ -353,7 +344,6 @@ void main() {
               expect(tester.takeException(), isNull);
               final bar = tester.getRect(find.byType(DesktopPlayerBar));
               for (final key in [
-                'desktop-player-lyrics',
                 'desktop-player-up-next',
                 'desktop-player-mini',
                 if (link) 'desktop-link-devices-button',
@@ -435,7 +425,6 @@ void main() {
       expect(find.byTooltip('Next track (Ctrl+Right)'), findsOneWidget);
       expect(find.byTooltip('Previous track (Ctrl+Left)'), findsOneWidget);
       expect(find.byTooltip('Play (Space)'), findsOneWidget);
-      expect(find.byTooltip('Lyrics (Ctrl+Shift+L)'), findsOneWidget);
       expect(find.byTooltip('Up next (Ctrl+Shift+U)'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Next track (Ctrl+Right)'));
@@ -564,7 +553,7 @@ void main() {
       expect(find.text('Playlists'), findsOneWidget);
       expect(
         allPlaylists.top,
-        greaterThan(tester.getRect(find.text('repository')).bottom),
+        greaterThan(tester.getRect(find.text('library')).bottom),
       );
       expect(playlist.top, greaterThan(allPlaylists.bottom));
       expect(settings.top, greaterThan(playlist.bottom));
@@ -776,7 +765,7 @@ void main() {
       await pumpShell(tester, mornye: true, width: 1400);
 
       expect(find.byTooltip('library (Ctrl+2)'), findsOneWidget);
-      expect(find.byTooltip('settings (Ctrl+5)'), findsOneWidget);
+      expect(find.byTooltip('settings (Ctrl+4)'), findsOneWidget);
       await tester.tap(find.text('library'));
       await tester.tap(find.byKey(const ValueKey('desktop-sidebar-settings')));
       expect(selections, [ShellTab.library, ShellTab.settings]);
@@ -865,43 +854,6 @@ void main() {
         DesktopSidebarLink.allPlaylistsId,
         DesktopSidebarLink.playlistId('mix'),
       ]);
-    });
-
-    testWidgets('account row opens the profile', (tester) async {
-      var profileOpened = 0;
-      await pumpShell(
-        tester,
-        mornye: true,
-        width: 1400,
-        onOpenProfile: () => profileOpened++,
-      );
-
-      expect(find.text('Ada Lovelace'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('desktop-sidebar-account')));
-      expect(profileOpened, 1);
-      expect(selections, isEmpty);
-    });
-
-    testWidgets('an unnamed account row shows a label that fits', (
-      tester,
-    ) async {
-      final semantics = tester.ensureSemantics();
-      await pumpShell(
-        tester,
-        mornye: true,
-        width: 1400,
-        profile: const UserProfile(),
-      );
-
-      expect(find.text('Profile'), findsOneWidget);
-      expect(find.text('Set up your profile'), findsNothing);
-      expect(
-        tester.getSemantics(
-          find.byKey(const ValueKey('desktop-sidebar-account')),
-        ),
-        matchesSemantics(label: 'Set up your profile', isButton: true),
-      );
-      semantics.dispose();
     });
 
     testWidgets('sidebar stays in narrow windows and ignores the shortcut', (
@@ -1086,12 +1038,10 @@ void main() {
     )!;
     expect(next.meta, isTrue);
     expect(desktopShortcutLabel(next, TargetPlatform.macOS), '⌘→');
+    // The lyrics command has no shortcut; lyrics moved into the editor.
     expect(
-      desktopShortcutLabel(
-        desktopCommandShortcut(DesktopCommand.lyrics, TargetPlatform.windows)!,
-        TargetPlatform.windows,
-      ),
-      'Ctrl+Shift+L',
+      desktopCommandShortcut(DesktopCommand.lyrics, TargetPlatform.windows),
+      isNull,
     );
     expect(
       desktopShortcutLabel(

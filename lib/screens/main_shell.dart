@@ -88,7 +88,12 @@ int? shellIndexOfTab(
   // Material searches from Home.
   ShellTab.search => mornye ? 2 : 0,
   // Mornye phones open Settings as a page, not a destination.
-  ShellTab.settings => !mornye ? 2 : desktop ? 3 : null,
+  ShellTab.settings =>
+    !mornye
+        ? 2
+        : desktop
+        ? 3
+        : null,
 };
 
 class MainShell extends ConsumerStatefulWidget {

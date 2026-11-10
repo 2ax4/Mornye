@@ -43,10 +43,7 @@ void main() {
             .widgetList<Text>(find.byType(Text))
             .map((text) => text.data ?? '')
             .join('\n');
-        final destinations = desktopDestinationTabs(
-          mornye: mornye,
-          showStore: const AppSettings().showExtensionStore,
-        ).length;
+        final destinations = desktopDestinationTabs(mornye: mornye).length;
         final bound = desktopShortcutBindings(platform).keys;
         for (final activator in bound.cast<SingleActivator>()) {
           // Unused destination numbers have no page to describe.

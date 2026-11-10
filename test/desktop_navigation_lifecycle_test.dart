@@ -139,10 +139,7 @@ void main() {
 
     test('Destination changes reported by the shell enter the history', () {
       addTearDown(() {
-        ShellNavigationService.syncState(
-          currentTabIndex: 0,
-          showRepoTab: false,
-        );
+        ShellNavigationService.syncState(currentTabIndex: 0);
         ShellNavigationService.resetHistory();
       });
       final requested = <ShellTab>[];
@@ -153,14 +150,13 @@ void main() {
       addTearDown(
         () => ShellNavigationService.unregisterTabSelectionHandler('test-sync'),
       );
-      ShellNavigationService.syncState(currentTabIndex: 0, showRepoTab: true);
+      ShellNavigationService.syncState(currentTabIndex: 0);
       ShellNavigationService.resetHistory();
 
-      // Mornye with the Store: Home, Library, Store, Search, Settings.
-      for (final index in [1, 2, 3]) {
+      // Mornye: Home, Library, Search, Settings.
+      for (final index in [1, 2]) {
         ShellNavigationService.syncState(
           currentTabIndex: index,
-          showRepoTab: true,
           showSearchTab: true,
         );
       }
@@ -168,23 +164,17 @@ void main() {
       expect(ShellNavigationService.backHistoryForTesting, [
         ShellTab.home,
         ShellTab.library,
-        ShellTab.repository,
       ]);
 
-      // Hiding the Store moves Search to index 2; it is the same destination.
-      ShellNavigationService.syncState(
-        currentTabIndex: 2,
-        showRepoTab: false,
-        showSearchTab: true,
-      );
+      // Returning to Library records a new visit.
+      ShellNavigationService.syncState(currentTabIndex: 1, showSearchTab: true);
       expect(ShellNavigationService.backHistoryForTesting, hasLength(3));
 
-      // Back skips the Store, which is no longer shown.
       expect(ShellNavigationService.navigateBack(), isTrue);
-      expect(requested, [ShellTab.library]);
-      expect(ShellNavigationService.currentTabForTesting, ShellTab.library);
+      expect(requested, [ShellTab.search]);
+      expect(ShellNavigationService.currentTabForTesting, ShellTab.search);
       expect(ShellNavigationService.forwardHistoryForTesting, [
-        ShellTab.search,
+        ShellTab.library,
       ]);
     });
 
