@@ -1001,7 +1001,9 @@ class _MaterialAudioPanelAnchorState
         shadowColor: WidgetStatePropertyAll(Colors.transparent),
         elevation: WidgetStatePropertyAll(0),
       ),
-      menuChildren: [AudioControlPanel(width: 320)],
+      menuChildren: [
+        _MornyePopoverEntrance(child: AudioControlPanel(width: 320)),
+      ],
       child: PlayerVolumeControl(
         foreground: Theme.of(context).colorScheme.onSurface,
         onSpeakerTap: () => _menu.isOpen ? _menu.close() : _menu.open(),
@@ -1010,29 +1012,56 @@ class _MaterialAudioPanelAnchorState
   }
 }
 
-/// The popover entrance: 250ms of fade with a short rise.
-class _MornyePopoverEntrance extends StatelessWidget {
+/// The popover entrance: a quick fade with a small pop from the button's
+/// corner. Runs on its own controller, so the motion is always visible even
+/// where the platform asks for reduced animations.
+class _MornyePopoverEntrance extends StatefulWidget {
   const _MornyePopoverEntrance({required this.child});
 
   final Widget child;
 
   @override
+  State<_MornyePopoverEntrance> createState() => _MornyePopoverEntranceState();
+}
+
+class _MornyePopoverEntranceState extends State<_MornyePopoverEntrance>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 180),
+  );
+
+  late final CurvedAnimation _curve = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutCubic,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: reduceMotion
-          ? Duration.zero
-          : const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-      builder: (context, progress, child) => Opacity(
-        opacity: progress,
-        child: Transform.translate(
-          offset: Offset(0, 6 * (1 - progress)),
+    return AnimatedBuilder(
+      animation: _curve,
+      builder: (context, child) => Opacity(
+        opacity: _curve.value,
+        child: Transform.scale(
+          scale: 0.92 + 0.08 * _curve.value,
+          alignment: Alignment.bottomRight,
           child: child,
         ),
       ),
-      child: child,
+      child: widget.child,
     );
   }
 }

@@ -105,6 +105,9 @@ AppSettings _$AppSettingsFromJson(Map<String, dynamic> json) => AppSettings(
       ? 'latest'
       : librarySortModeFromJson(json['historySortMode']),
   defaultLibraryView: json['defaultLibraryView'] as String? ?? 'last',
+  librarySongClickOpensDetails:
+      json['librarySongClickOpensDetails'] as bool? ?? false,
+  desktopSidebarEnabled: json['desktopSidebarEnabled'] as bool? ?? false,
   libraryQualityLabelMode:
       json['libraryQualityLabelMode'] as String? ??
       AppSettings.libraryQualityLabelBitDepthOnly,
@@ -258,6 +261,8 @@ Map<String, dynamic> _$AppSettingsToJson(
   'historyFilterMode': instance.historyFilterMode,
   'historySortMode': instance.historySortMode,
   'defaultLibraryView': instance.defaultLibraryView,
+  'librarySongClickOpensDetails': instance.librarySongClickOpensDetails,
+  'desktopSidebarEnabled': instance.desktopSidebarEnabled,
   'libraryQualityLabelMode': instance.libraryQualityLabelMode,
   'askQualityBeforeDownload': instance.askQualityBeforeDownload,
   'enableLogging': instance.enableLogging,

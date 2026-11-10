@@ -10536,5 +10536,17 @@
   "lyricsEditLineActions": "Line actions",
   "lyricsEditSaved": "Lyrics saved",
   "lyricsEditSaveFailed": "Couldn't save the lyrics to this file",
-  "lyricsEditReadOnly": "Lyrics can't be saved to this song's file"
+  "@lyricsEditSaveFailed": {"description": "Shown when saving the lyrics failed"},
+  "lyricsEditReadOnly": "Lyrics can't be saved to this song's file",
+  "@lyricsEditReadOnly": {"description": "Shown when the song's file cannot hold lyrics"},
+  "librarySongClickOpensDetails": "Open song details on click",
+  "@librarySongClickOpensDetails": {"description": "Library setting: clicking a song opens its details screen"},
+  "librarySongClickOpensDetailsSubtitle": "When off, clicking a song in the Library plays it right away",
+  "@librarySongClickOpensDetailsSubtitle": {"description": "Library setting subtitle explaining the click behavior"},
+  "desktopSidebar": "Show the sidebar",
+  "@desktopSidebar": {"description": "Appearance setting: shows the desktop sidebar"},
+  "desktopSidebarSubtitle": "Off by default: the Library sections sit at the top of the page",
+  "@desktopSidebarSubtitle": {"description": "Appearance setting subtitle for the sidebar toggle"},
+  "librarySections": "Library sections",
+  "@librarySections": {"description": "Heading above the Library section chips at the top of the Library page"}
 }

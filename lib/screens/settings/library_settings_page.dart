@@ -528,6 +528,26 @@ class _LibrarySettingsPageState extends ConsumerState<LibrarySettingsPage> {
                     context,
                     settings.libraryQualityLabelMode,
                   ),
+                ),
+                SettingsSwitchItem(
+                  key: const ValueKey('library-song-click-details'),
+                  icon: Icons.touch_app_rounded,
+                  title: context.l10n.librarySongClickOpensDetails,
+                  subtitle: context.l10n.librarySongClickOpensDetailsSubtitle,
+                  value: settings.librarySongClickOpensDetails,
+                  onChanged: ref
+                      .read(settingsProvider.notifier)
+                      .setLibrarySongClickOpensDetails,
+                ),
+                SettingsSwitchItem(
+                  key: const ValueKey('desktop-sidebar-toggle'),
+                  icon: Icons.view_sidebar_rounded,
+                  title: context.l10n.desktopSidebar,
+                  subtitle: context.l10n.desktopSidebarSubtitle,
+                  value: settings.desktopSidebarEnabled,
+                  onChanged: ref
+                      .read(settingsProvider.notifier)
+                      .setDesktopSidebarEnabled,
                   showDivider: false,
                 ),
               ],

@@ -159,6 +159,14 @@ class AppSettings {
   /// 'last' (keep last used), 'all', 'albums', 'singles', or 'playlists'.
   final String defaultLibraryView;
 
+  /// Whether clicking a Library song opens its details screen. Off by
+  /// default: a click plays the song at once.
+  final bool librarySongClickOpensDetails;
+
+  /// Whether the Mornye desktop sidebar shows. Off by default: the Library
+  /// sections sit at the top of the page instead.
+  final bool desktopSidebarEnabled;
+
   /// Library badge text: measured bitrate, file format, bit depth,
   /// bit depth/sample rate, or the combined bit depth/bitrate label.
   final String libraryQualityLabelMode;
@@ -343,6 +351,8 @@ class AppSettings {
     this.historyFilterMode = 'all',
     this.historySortMode = 'latest',
     this.defaultLibraryView = 'last',
+    this.librarySongClickOpensDetails = false,
+    this.desktopSidebarEnabled = false,
     this.libraryQualityLabelMode = AppSettings.libraryQualityLabelBitDepthOnly,
     this.askQualityBeforeDownload = true,
     this.enableLogging = false,
@@ -496,6 +506,8 @@ class AppSettings {
     String? historyFilterMode,
     String? historySortMode,
     String? defaultLibraryView,
+    bool? librarySongClickOpensDetails,
+    bool? desktopSidebarEnabled,
     String? libraryQualityLabelMode,
     bool? askQualityBeforeDownload,
     bool? enableLogging,
@@ -644,6 +656,10 @@ class AppSettings {
       historyFilterMode: historyFilterMode ?? this.historyFilterMode,
       historySortMode: historySortMode ?? this.historySortMode,
       defaultLibraryView: defaultLibraryView ?? this.defaultLibraryView,
+      librarySongClickOpensDetails:
+          librarySongClickOpensDetails ?? this.librarySongClickOpensDetails,
+      desktopSidebarEnabled:
+          desktopSidebarEnabled ?? this.desktopSidebarEnabled,
       libraryQualityLabelMode:
           libraryQualityLabelMode ?? this.libraryQualityLabelMode,
       askQualityBeforeDownload:

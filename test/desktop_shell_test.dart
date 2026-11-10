@@ -145,9 +145,12 @@ void main() {
     bool linkAvailable = false,
     RemotePlayback? remote,
     String playerMode = 'internal',
+    bool sidebar = false,
   }) => [
     settingsProvider.overrideWith(
-      () => FixedSettingsNotifier(AppSettings(playerMode: playerMode)),
+      () => FixedSettingsNotifier(
+        AppSettings(playerMode: playerMode, desktopSidebarEnabled: sidebar),
+      ),
     ),
     currentMediaItemProvider.overrideWithBuild(
       (ref, notifier) => mediaItems ?? Stream.value(item),
@@ -184,6 +187,7 @@ void main() {
     bool linkAvailable = false,
     RemotePlayback? remote,
     String playerMode = 'internal',
+    bool sidebar = false,
     List<DesktopSidebarLink> libraryLinks = const [],
     ValueChanged<String>? onOpenLibraryLink,
   }) async {
@@ -201,6 +205,7 @@ void main() {
           linkAvailable: linkAvailable,
           remote: remote,
           playerMode: playerMode,
+          sidebar: sidebar,
         ),
         child: MaterialApp(
           theme: mornye
@@ -660,8 +665,21 @@ void main() {
 
   group('Mornye shell', () {
     for (final width in [900.0, 1400.0]) {
+      testWidgets(
+        'hides the sidebar by default and shows the player at $width',
+        (tester) async {
+          await pumpShell(tester, mornye: true, width: width);
+
+          // The sidebar is off by default; the Library page's top sections
+          // take its place.
+          expect(find.byType(DesktopSidebar), findsNothing);
+          expect(find.byType(DesktopPlayerBar), findsOneWidget);
+          expectNoTouchNavigation();
+        },
+      );
+
       testWidgets('shows the sidebar and player bar at $width', (tester) async {
-        await pumpShell(tester, mornye: true, width: width);
+        await pumpShell(tester, mornye: true, width: width, sidebar: true);
 
         expect(find.byType(DesktopSidebar), findsOneWidget);
         expect(
@@ -682,7 +700,8 @@ void main() {
     testWidgets('player capsule floats centered over the content pane', (
       tester,
     ) async {
-      await pumpShell(tester, mornye: true, width: 1235);
+      // The wide capsule geometry below assumes the sidebar's pane width.
+      await pumpShell(tester, mornye: true, width: 1235, sidebar: true);
 
       final player = tester.getRect(find.byType(DesktopPlayerBar));
       final pane = tester.getRect(
@@ -773,7 +792,7 @@ void main() {
     testWidgets('sidebar rows select destinations and name shortcuts', (
       tester,
     ) async {
-      await pumpShell(tester, mornye: true, width: 1400);
+      await pumpShell(tester, mornye: true, width: 1400, sidebar: true);
 
       expect(find.byTooltip('library (Ctrl+2)'), findsOneWidget);
       expect(find.byTooltip('settings (Ctrl+4)'), findsOneWidget);
@@ -790,7 +809,7 @@ void main() {
     });
 
     testWidgets('the sidebar is one piece with the window', (tester) async {
-      await pumpShell(tester, mornye: true, width: 1400);
+      await pumpShell(tester, mornye: true, width: 1400, sidebar: true);
 
       final window = tester.getRect(find.byType(MaterialApp));
       final sidebar = tester.getRect(find.byType(DesktopSidebar));
@@ -823,7 +842,7 @@ void main() {
       tester,
     ) async {
       addTearDown(() => ShellNavigationService.chromeBackdrop.value = null);
-      await pumpShell(tester, mornye: true, width: 1400);
+      await pumpShell(tester, mornye: true, width: 1400, sidebar: true);
       const backdrop = ValueKey('desktop-sidebar-backdrop');
       expect(find.byKey(backdrop), findsNothing);
 
@@ -848,6 +867,7 @@ void main() {
         tester,
         mornye: true,
         width: 1400,
+        sidebar: true,
         libraryLinks: _libraryLinks,
         onOpenLibraryLink: opened.add,
       );
@@ -870,7 +890,7 @@ void main() {
     testWidgets('sidebar stays in narrow windows and ignores the shortcut', (
       tester,
     ) async {
-      await pumpShell(tester, mornye: true, width: 820);
+      await pumpShell(tester, mornye: true, width: 820, sidebar: true);
       desktopSidebarCollapsed.value = true;
       await tester.pumpAndSettle();
 

@@ -171,7 +171,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Recently Added'), findsOneWidget);
-      expect(find.text('1'), findsOneWidget);
+      // The Library sections sit at the top as chips, Downloads included.
+      expect(find.text('Downloads'), findsOneWidget);
       expect(find.text('Playlists'), findsOneWidget);
       expect(find.text('Songs'), findsOneWidget);
       final grid = tester.widget<SliverGrid>(find.byType(SliverGrid));

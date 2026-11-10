@@ -2396,8 +2396,45 @@ class MusicPlayerHandler extends BaseAudioHandler
     await super.stop();
   }
 
+  /// A queue holding a lone track cannot skip anywhere. Extends it with the
+  /// Library's songs around the current one, so a manual skip reaches other
+  /// music instead of restarting the same track: the songs after it in
+  /// Library order follow, then the ones before it. Returns true when the
+  /// queue grew.
+  Future<bool> _extendQueueFromLibrary() async {
+    if (_disposed || _media.length != 1 || _index != 0) return false;
+    final List<PlayableMedia> library;
+    try {
+      library = await _runtime.browser.librarySongs();
+    } catch (_) {
+      return false;
+    }
+    if (_disposed || library.length <= 1) return false;
+    final current = _media[0];
+    // The current song may have left the Library since it started; a miss
+    // keeps the whole Library as the skip context.
+    final at = library.indexWhere((m) => m.id == current.id);
+    final rest = <PlayableMedia>[
+      for (var i = at + 1; i < library.length; i++) library[i],
+      for (var i = 0; i < at; i++) library[i],
+    ];
+    if (rest.isEmpty) return false;
+    if (_shuffle) rest.shuffle();
+    _media.addAll(rest);
+    _queueItems.addAll(rest.map(_toMediaItem));
+    _markSessionQueueChanged();
+    queue.add(List<MediaItem>.unmodifiable(_queueItems));
+    unawaited(_persistSession(position: playbackState.value.position));
+    return true;
+  }
+
   @override
   Future<void> skipToNext() async {
+    if (_index >= 0 && _media.length == 1) {
+      // A lone track has no next: bring in the Library context so the
+      // button reaches another song instead of restarting this one.
+      await _extendQueueFromLibrary();
+    }
     if (_index >= 0 && _index == _media.length - 1) {
       final generation = _playRequestGeneration;
       await _autoplay.fill();
@@ -2422,6 +2459,11 @@ class MusicPlayerHandler extends BaseAudioHandler
       _broadcastPosition(Duration.zero, force: true);
       _runtime.personalization.replayed();
       return;
+    }
+    if (_index >= 0 && _media.length == 1) {
+      // A lone track has no previous: bring in the Library context so the
+      // button reaches another song instead of restarting this one.
+      await _extendQueueFromLibrary();
     }
     if (_shuffle) {
       if (_playHistory.length >= 2) {

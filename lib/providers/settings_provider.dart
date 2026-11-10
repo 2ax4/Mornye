@@ -949,6 +949,12 @@ class SettingsNotifier extends Notifier<AppSettings> {
     state.copyWith(defaultLibraryView: _normalizeDefaultLibraryView(view)),
   );
 
+  void setLibrarySongClickOpensDetails(bool enabled) =>
+      _commit(state.copyWith(librarySongClickOpensDetails: enabled));
+
+  void setDesktopSidebarEnabled(bool enabled) =>
+      _commit(state.copyWith(desktopSidebarEnabled: enabled));
+
   void setLibraryQualityLabelMode(String mode) => _commit(
     state.copyWith(
       libraryQualityLabelMode: normalizeLibraryQualityLabelMode(mode),

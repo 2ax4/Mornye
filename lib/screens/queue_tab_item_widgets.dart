@@ -944,10 +944,16 @@ extension _QueueTabItemWidgets on _QueueTabState {
             ],
             selectedIds: _selectedIds,
             onSelect: _applyDesktopClick,
-            // A click opens the song's details, as a tap does on a phone.
+            // A click plays the song at once; the details screen stays a
+            // setting (and a right-click menu item) away.
             onActivate: (id) {
               final item = byId[id];
-              if (item != null) openAction(item)();
+              if (item == null) return;
+              if (ref.read(settingsProvider).librarySongClickOpensDetails) {
+                openAction(item)();
+              } else {
+                unawaited(_playLibraryItem(item, items));
+              }
             },
             onContextMenu: (id, position) {
               final item = byId[id];

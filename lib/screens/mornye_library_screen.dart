@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/controllers/clickable_metadata.dart';
@@ -12,6 +13,7 @@ import 'package:mornye/screens/local_album_screen.dart';
 import 'package:mornye/services/album_completeness.dart';
 import 'package:mornye/services/downloaded_embedded_cover_resolver.dart';
 import 'package:mornye/services/library_database.dart';
+import 'package:mornye/services/shell_navigation_service.dart';
 import 'package:mornye/utils/adaptive_layout.dart';
 import 'package:mornye/utils/nav_bar_inset.dart';
 import 'package:mornye/widgets/app_bottom_sheet.dart';
@@ -312,7 +314,15 @@ class _MornyeLibraryScreenState extends ConsumerState<MornyeLibraryScreen> {
             ? context.l10n.searchArtists
             : context.l10n.searchAlbums);
     final actions = <Widget>[
-      if (_overview) const OpenAudioButton(),
+      if (_overview) ...[
+        const OpenAudioButton(),
+        IconButton(
+          key: const ValueKey('library-settings-button'),
+          tooltip: context.l10n.navSettings,
+          icon: const Icon(CupertinoIcons.gear_alt),
+          onPressed: () => ShellNavigationService.requestTab(ShellTab.settings),
+        ),
+      ],
       IconButton(
         tooltip: context.l10n.librarySearchHint,
         icon: const Icon(Icons.search),
@@ -387,72 +397,69 @@ class _MornyeLibraryScreenState extends ConsumerState<MornyeLibraryScreen> {
             ),
           if (!searchingLibrary) ...[
             if (_overview && _query.isEmpty)
-              SliverPadding(
-                // Rows center at the reading width on tablets.
-                padding: EdgeInsets.fromLTRB(
-                  24 + listInset,
-                  0,
-                  24 + listInset,
-                  20,
-                ),
-                sliver: SliverList.list(
-                  children: [
-                    for (final category in [
-                      (
-                        Icons.queue_music,
-                        context.l10n.searchPlaylists,
-                        () => widget.onOpenSection('playlists'),
-                      ),
-                      (
-                        Icons.mic_none,
-                        context.l10n.searchArtists,
-                        () => _openPage(MornyeLibraryPage.artists),
-                      ),
-                      (
-                        Icons.album_outlined,
-                        context.l10n.searchAlbums,
-                        () => _openPage(MornyeLibraryPage.albums),
-                      ),
-                      (
-                        Icons.music_note_outlined,
-                        context.l10n.searchSongs,
-                        () => widget.onOpenSection('all'),
-                      ),
-                      (
-                        Icons.folder_outlined,
-                        context.l10n.libraryFolders,
-                        () => pushPage<void>(
-                          context,
-                          (_) => const LibraryDirectoryScreen(),
-                        ),
-                      ),
-                    ]) ...[
-                      // The desktop shell paints its background without a
-                      // Material, which would hide the row's ink.
-                      Material(
-                        type: MaterialType.transparency,
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          minVerticalPadding: 12,
-                          leading: Icon(
-                            category.$1,
-                            color: colors.primary,
-                            size: 28,
+              SliverToBoxAdapter(
+                // The sections the sidebar used to list, now at the top of
+                // the page where the sidebar is off by default.
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    24 + listInset,
+                    4,
+                    24 + listInset,
+                    20,
+                  ),
+                  child: Semantics(
+                    header: true,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final (icon, label, open) in [
+                          (
+                            Icons.music_note_outlined,
+                            context.l10n.searchSongs,
+                            () => widget.onOpenSection('all'),
                           ),
-                          title: Text(
-                            category.$2,
-                            style: const TextStyle(fontSize: 22),
+                          (
+                            Icons.album_outlined,
+                            context.l10n.searchAlbums,
+                            () => _openPage(MornyeLibraryPage.albums),
                           ),
-                          trailing: Icon(
-                            Icons.chevron_right,
-                            color: colors.onSurfaceVariant,
+                          (
+                            Icons.mic_none,
+                            context.l10n.searchArtists,
+                            () => _openPage(MornyeLibraryPage.artists),
                           ),
-                          onTap: category.$3,
-                        ),
-                      ),
-                      const Divider(height: 1, indent: 48),
-                    ],
-                  ],
+                          (
+                            Icons.queue_music,
+                            context.l10n.searchPlaylists,
+                            () => widget.onOpenSection('playlists'),
+                          ),
+                          (
+                            Icons.folder_outlined,
+                            context.l10n.libraryFolders,
+                            () => pushPage<void>(
+                              context,
+                              (_) => const LibraryDirectoryScreen(),
+                            ),
+                          ),
+                          (
+                            Icons.download_outlined,
+                            context.l10n.libraryDownloads,
+                            () => widget.onOpenSection('downloads'),
+                          ),
+                        ])
+                          ActionChip(
+                            key: ValueKey('library-section-$label'),
+                            avatar: Icon(icon, size: 18, color: colors.primary),
+                            label: Text(label),
+                            side: BorderSide(
+                              color: colors.onSurface.withValues(alpha: 0.12),
+                            ),
+                            onPressed: open,
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             // The seasonal Rewind, beside the listening history it replays.

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/library_collections_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
+import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/services/shell_navigation_service.dart';
 import 'package:mornye/theme/app_motion.dart';
 import 'package:mornye/theme/material_expressive.dart';
@@ -145,131 +146,145 @@ class DesktopShellLayout extends ConsumerWidget {
     return ValueListenableBuilder<bool>(
       valueListenable: desktopPlayerDismissed,
       builder: (context, dismissed, _) =>
-          _window(enabled && (!dismissed || hasTrack)),
+          _window(context, ref, enabled && (!dismissed || hasTrack)),
     );
   }
 
-  Widget _window(bool show) => ValueListenableBuilder<bool>(
-    valueListenable: desktopMiniPlayerOpen,
-    builder: (context, mini, window) {
-      mini = mini && show;
-      final mediaQuery = MediaQuery.of(context);
-      if (!mini) _fullWindowSize = mediaQuery.size;
-      final full = mini ? _fullWindowSize : null;
-      // Follow native resize frames instead of running a second animation
-      // clock that could finish before AppKit or a slow Flutter frame.
-      final span = full == null
-          ? 0.0
-          : full.width - desktopMiniPlayerSize.width;
-      final progress = !mini
-          ? 0.0
-          : span <= 0
-          ? 1.0
-          : ((full!.width - mediaQuery.size.width) / span).clamp(0.0, 1.0);
-      final fade = Curves.easeInOut.transform(progress);
-      return ClipRect(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Visibility(
-              visible: progress < 1,
-              maintainState: true,
-              child: IgnorePointer(
-                ignoring: mini,
-                child: ExcludeSemantics(
-                  excluding: mini,
-                  child: Opacity(
-                    key: const ValueKey('desktop-mini-player-shell-fade'),
-                    opacity: 1 - fade,
-                    child: RepaintBoundary(
-                      child: OverflowBox(
-                        alignment: Alignment.topLeft,
-                        minWidth: full?.width,
-                        maxWidth: full?.width,
-                        minHeight: full?.height,
-                        maxHeight: full?.height,
-                        child: MediaQuery(
-                          data: full == null
-                              ? mediaQuery
-                              : mediaQuery.copyWith(size: full),
-                          child: window!,
+  Widget _window(BuildContext context, WidgetRef ref, bool show) =>
+      ValueListenableBuilder<bool>(
+        valueListenable: desktopMiniPlayerOpen,
+        builder: (context, mini, window) {
+          mini = mini && show;
+          final mediaQuery = MediaQuery.of(context);
+          if (!mini) _fullWindowSize = mediaQuery.size;
+          final full = mini ? _fullWindowSize : null;
+          // Follow native resize frames instead of running a second animation
+          // clock that could finish before AppKit or a slow Flutter frame.
+          final span = full == null
+              ? 0.0
+              : full.width - desktopMiniPlayerSize.width;
+          final progress = !mini
+              ? 0.0
+              : span <= 0
+              ? 1.0
+              : ((full!.width - mediaQuery.size.width) / span).clamp(0.0, 1.0);
+          final fade = Curves.easeInOut.transform(progress);
+          return ClipRect(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Visibility(
+                  visible: progress < 1,
+                  maintainState: true,
+                  child: IgnorePointer(
+                    ignoring: mini,
+                    child: ExcludeSemantics(
+                      excluding: mini,
+                      child: Opacity(
+                        key: const ValueKey('desktop-mini-player-shell-fade'),
+                        opacity: 1 - fade,
+                        child: RepaintBoundary(
+                          child: OverflowBox(
+                            alignment: Alignment.topLeft,
+                            minWidth: full?.width,
+                            maxWidth: full?.width,
+                            minHeight: full?.height,
+                            maxHeight: full?.height,
+                            child: MediaQuery(
+                              data: full == null
+                                  ? mediaQuery
+                                  : mediaQuery.copyWith(size: full),
+                              child: window!,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            if (mini)
-              IgnorePointer(
-                ignoring: progress < 1,
-                child: Opacity(
-                  key: const ValueKey('desktop-mini-player-fade'),
-                  opacity: fade,
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: SizedBox(
-                      width: desktopMiniPlayerSize.width,
-                      child: const KeyedSubtree(
-                        key: ValueKey('desktop-mini-player'),
-                        child: DesktopMiniPlayer(),
+                if (mini)
+                  IgnorePointer(
+                    ignoring: progress < 1,
+                    child: Opacity(
+                      key: const ValueKey('desktop-mini-player-fade'),
+                      opacity: fade,
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: SizedBox(
+                          width: desktopMiniPlayerSize.width,
+                          child: const KeyedSubtree(
+                            key: ValueKey('desktop-mini-player'),
+                            child: DesktopMiniPlayer(),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-          ],
+              ],
+            ),
+          );
+        },
+        child: Builder(
+          builder: (context) => _nowPlayingOrShell(context, ref, show),
         ),
       );
-    },
-    child: Builder(builder: (context) => _nowPlayingOrShell(context, show)),
-  );
 
   /// The window's size before the mini player shrank it.
   static Size? _fullWindowSize;
 
   /// Now Playing covers the whole window. The destinations keep their state
   /// underneath, but stop painting and ticking.
-  Widget _nowPlayingOrShell(BuildContext context, bool showPlayer) =>
-      ValueListenableBuilder<bool>(
-        valueListenable: desktopNowPlayingOpen,
-        builder: (context, nowPlayingOpen, shell) {
-          nowPlayingOpen = nowPlayingOpen && showPlayer;
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Visibility(
-                visible: !nowPlayingOpen,
-                maintainState: true,
-                child: shell!,
-              ),
-              if (nowPlayingOpen)
-                KeyedSubtree(
-                  key: const ValueKey('desktop-now-playing'),
-                  child: nowPlaying,
-                ),
-            ],
-          );
-        },
-        child: Builder(builder: (context) => _shell(context, showPlayer)),
+  Widget _nowPlayingOrShell(
+    BuildContext context,
+    WidgetRef ref,
+    bool showPlayer,
+  ) => ValueListenableBuilder<bool>(
+    valueListenable: desktopNowPlayingOpen,
+    builder: (context, nowPlayingOpen, shell) {
+      nowPlayingOpen = nowPlayingOpen && showPlayer;
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Visibility(
+            visible: !nowPlayingOpen,
+            maintainState: true,
+            child: shell!,
+          ),
+          if (nowPlayingOpen)
+            KeyedSubtree(
+              key: const ValueKey('desktop-now-playing'),
+              child: nowPlaying,
+            ),
+        ],
       );
+    },
+    child: Builder(builder: (context) => _shell(context, ref, showPlayer)),
+  );
 
-  Widget _shell(BuildContext context, bool showPlayer) {
+  Widget _shell(BuildContext context, WidgetRef ref, bool showPlayer) {
     final width = MediaQuery.sizeOf(context).width;
     if (context.isMornye) {
-      // The sidebar always shows, full height against the window's edges.
+      // The sidebar is off by default; the Library page's top sections take
+      // its place and Settings brings it back. Where the window's title bar
+      // lives in the content, the sidebar stays: the window controls and the
+      // drag area are anchored to it.
+      final showSidebar =
+          ref.watch(settingsProvider.select((s) => s.desktopSidebarEnabled)) ||
+          desktopTitleBarInContentFor(context);
+      // The sidebar shows against the window's edges when enabled.
       return ColoredBox(
         color: Theme.of(context).colorScheme.surface,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DesktopSidebar(
-              destinations: destinations,
-              selected: selected,
-              onSelected: onSelected,
-              libraryLinks: libraryLinks,
-              onOpenLibraryLink: onOpenLibraryLink,
-            ),
+            if (showSidebar)
+              DesktopSidebar(
+                destinations: destinations,
+                selected: selected,
+                onSelected: onSelected,
+                libraryLinks: libraryLinks,
+                onOpenLibraryLink: onOpenLibraryLink,
+              ),
             Expanded(
               key: const ValueKey('desktop-content'),
               child: _DesktopContentArea(
