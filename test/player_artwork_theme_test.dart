@@ -17,7 +17,6 @@ import 'package:mornye/theme/app_theme.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/theme/player_artwork_theme.dart';
 import 'package:mornye/widgets/cached_cover_image.dart';
-import 'package:mornye/widgets/desktop/desktop_downloads_button.dart';
 import 'package:mornye/widgets/desktop/desktop_player_bar.dart';
 import 'package:mornye/widgets/expressive_playback_transport.dart';
 import 'package:mornye/widgets/mini_player.dart';
@@ -273,13 +272,6 @@ void main() {
       );
       expect(transport.colorScheme, cover);
       expect(transport.dense, isTrue);
-      // Downloads are app chrome hosted in the bar.
-      expect(
-        Theme.of(
-          tester.element(find.byType(DesktopDownloadsButton)),
-        ).colorScheme,
-        AppTheme.light().colorScheme,
-      );
     });
 
     testWidgets('the Material mini player takes the cover scheme', (

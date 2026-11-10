@@ -18,7 +18,6 @@ import 'package:mornye/widgets/app_icon_button.dart';
 import 'package:mornye/widgets/app_loading_indicator.dart';
 import 'package:mornye/widgets/audio_quality_badges.dart';
 import 'package:mornye/widgets/desktop/desktop_commands.dart';
-import 'package:mornye/widgets/desktop/desktop_downloads_button.dart';
 import 'package:mornye/widgets/desktop/desktop_inspector.dart';
 import 'package:mornye/widgets/desktop/desktop_link_devices_button.dart';
 import 'package:mornye/widgets/desktop/desktop_window.dart';
@@ -40,7 +39,7 @@ final desktopPlayerDismissed = ValueNotifier<bool>(false);
 
 /// The desktop player. It replaces the mobile mini player: no
 /// swipe gestures, with transport, seek, volume, Up Next and
-/// downloads in reach. Paused local playback offers a dismiss button.
+/// Link in reach. Paused local playback offers a dismiss button.
 /// Clicking the artwork or title shows Now
 /// Playing in the content pane; Up Next toggles the trailing
 /// inspector.
@@ -50,7 +49,7 @@ final desktopPlayerDismissed = ValueNotifier<bool>(false);
 /// ([PlayerArtworkTheme]). Mornye draws a glass capsule that the shell
 /// floats over the bottom of the content pane: shuffle and transport, a
 /// center display with the track and its progress, then Up Next,
-/// downloads and volume.
+/// the Link phones button and volume.
 class DesktopPlayerBar extends ConsumerWidget {
   const DesktopPlayerBar({super.key});
 
@@ -80,7 +79,7 @@ class DesktopPlayerBar extends ConsumerWidget {
     final mediaItem = ref.watch(currentMediaItemProvider).value;
     return context.isMornye
         ? _MornyePlayerBar(mediaItem: mediaItem)
-        // The bar takes the track's artwork scheme; the downloads popover
+        // The bar takes the track's artwork scheme; the Link phones button
         // it hosts keeps the app scheme.
         : PlayerArtworkTheme(
             artUri: mediaItem?.artUri?.toString(),
@@ -100,7 +99,7 @@ void _toggleNowPlaying() =>
 class _MaterialPlayerBar extends StatelessWidget {
   const _MaterialPlayerBar({required this.mediaItem, required this.appTheme});
 
-  // Queue, mini player, Link, downloads and dismiss each keep their
+  // Queue, mini player, Link and dismiss each keep their
   // 48dp target. Reserve both sides equally so transport stays centered.
   static const double _sideControlsMinWidth = 6 * 48;
 
@@ -169,7 +168,7 @@ class _MaterialPlayerBar extends StatelessWidget {
 }
 
 /// The Mornye capsule: shuffle, transport and repeat, the center display,
-/// then downloads, Up Next and a volume button whose slider opens in
+/// then Up Next and a volume button whose slider opens in
 /// a popover. Its buttons take macOS
 /// toolbar sizes rather than touch sizes.
 class _MornyePlayerBar extends StatelessWidget {
@@ -800,22 +799,24 @@ class _MornyeLcdLines extends ConsumerWidget {
   }
 }
 
-/// Up Next, which toggles the trailing inspector, downloads, and
-/// volume. Material fills its third of the bar, with phones and downloads
-/// after Up Next and then the volume slider. The Mornye capsule leads with
-/// phones and downloads and ends with a volume button whose slider opens in
-/// a popover. The phones button shows only while a phone is
-/// connected over Mornye Link. Paused local playback adds a dismiss button
-/// at the end in both styles.
+/// Up Next, which toggles the trailing inspector and volume. Material fills
+/// its third of the bar, with the Link phones button after Up Next and then
+/// the volume slider. The Mornye capsule leads with the phones button and
+/// ends with a volume button whose slider opens in a popover. The phones
+/// button shows only while a phone is connected over Mornye Link. Paused
+/// local playback adds a dismiss button at the end in both styles.
 class _TrailingControls extends ConsumerWidget {
   const _TrailingControls({required this.enabled, this.appTheme});
 
   /// Narrowest room in which the Material bar keeps its volume slider.
   static const double _materialVolumeMinWidth = 140;
 
+  /// Widest the Material bar's inline volume slider grows.
+  static const double _materialVolumeMaxWidth = 300;
+
   final bool enabled;
 
-  /// The Material bar's app theme, for the downloads button and popover.
+  /// The Material bar's app theme, for the Link phones button.
   final ThemeData? appTheme;
 
   @override
@@ -832,10 +833,7 @@ class _TrailingControls extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: mornye ? MainAxisSize.min : MainAxisSize.max,
       children: [
-        if (mornye) ...[
-          const DesktopLinkDevicesButton(),
-          const DesktopDownloadsButton(),
-        ],
+        if (mornye) const DesktopLinkDevicesButton(),
         ValueListenableBuilder<DesktopInspectorPanel?>(
           valueListenable: desktopInspectorPanel,
           builder: (context, panel, _) => Row(
@@ -877,30 +875,22 @@ class _TrailingControls extends ConsumerWidget {
         else ...[
           Theme(
             data: appTheme ?? Theme.of(context),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [DesktopLinkDevicesButton(), DesktopDownloadsButton()],
-            ),
+            child: const DesktopLinkDevicesButton(),
           ),
           // A narrow window leaves too little room for a usable slider;
           // the volume shortcuts still work there.
           Flexible(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final slider = constraints.maxWidth >= _materialVolumeMinWidth;
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (slider)
-                      Flexible(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 220),
-                          child: PlayerVolumeControl(
-                            foreground: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                  ],
+                final room = constraints.maxWidth;
+                if (room < _materialVolumeMinWidth) {
+                  return const SizedBox.shrink();
+                }
+                // A tight width keeps the slider from collapsing to its
+                // intrinsic thumb size inside the loose flexible.
+                return SizedBox(
+                  width: room.clamp(0.0, _materialVolumeMaxWidth),
+                  child: PlayerVolumeControl(foreground: colorScheme.onSurface),
                 );
               },
             ),
@@ -969,8 +959,8 @@ class _MornyeVolumeButtonState extends ConsumerState<_MornyeVolumeButton> {
               children: [
                 SizedBox(
                   key: const ValueKey('desktop-player-volume-popover'),
-                  width: 240,
-                  height: 48,
+                  width: 320,
+                  height: 52,
                   child: PlayerVolumeControl(foreground: colorScheme.onSurface),
                 ),
               ],

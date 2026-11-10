@@ -23,7 +23,6 @@ import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/utils/desktop_platform.dart';
 import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/desktop/desktop_commands.dart';
-import 'package:mornye/widgets/desktop/desktop_downloads_button.dart';
 import 'package:mornye/widgets/desktop/desktop_inspector.dart';
 import 'package:mornye/widgets/desktop/desktop_navigation.dart';
 import 'package:mornye/widgets/desktop/desktop_player_bar.dart';
@@ -347,7 +346,6 @@ void main() {
                 'desktop-player-up-next',
                 'desktop-player-mini',
                 if (link) 'desktop-link-devices-button',
-                'desktop-downloads-button',
                 if (!playing) 'desktop-player-dismiss',
               ]) {
                 final button = find.byKey(ValueKey(key));
@@ -451,8 +449,7 @@ void main() {
       // Home and Library bring their own search fields, so the shell adds
       // no second one above them.
       expect(tester.getRect(contentPage()).top, 0);
-      // Downloads live in the player bar on every page.
-      expect(find.byType(DesktopDownloadsButton), findsOneWidget);
+      // The shell search field stays away on content pages.
     });
 
     testWidgets('the sidebar shortcut remembers the rail state', (
