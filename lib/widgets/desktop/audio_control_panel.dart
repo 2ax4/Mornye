@@ -88,11 +88,18 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
 
   Widget _pitchRow(BuildContext context, Color foreground) {
     final l10n = context.l10n;
-    final semitones =
-        _preview ?? _semitonesFromPitch(playbackPitch.value).roundToDouble();
+    final semitones = _preview ?? _semitonesFromPitch(playbackPitch.value);
     String label(double value) => l10n.audioControlPitchSemitones(
-      '${value >= 0 ? '+' : ''}${value.round()}',
+      '${value >= 0 ? '+' : ''}${value.toStringAsFixed(1)}',
     );
+
+    // Every drag tick shifts the pitch at once; only the preference save
+    // waits for the gesture to end.
+    void drag(double value) {
+      setState(() => _preview = value);
+      playbackPitch.value = _pitchFromSemitones(value);
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 8, 8),
       child: Row(
@@ -110,27 +117,28 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
                 value: semitones.clamp(-12, 12),
                 min: -12,
                 max: 12,
-                divisions: 24,
+                // Continuous, so a fine shift such as ×0.94 is reachable.
                 label: label(semitones),
-                onChanged: (value) => setState(() => _preview = value),
+                onChanged: drag,
                 onChangeEnd: (value) {
                   setState(() => _preview = null);
-                  _commit(value);
+                  unawaited(_savePitch(value));
                 },
               ),
             ),
           ),
           Text(
-            label(semitones),
+            '×${_pitchFromSemitones(semitones).toStringAsFixed(2)}',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: foreground.withValues(alpha: 0.7),
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           IconButton(
             tooltip: l10n.audioControlPitchReset,
             color: foreground.withValues(alpha: 0.7),
             icon: const AppIcon(Icons.restart_alt),
-            onPressed: semitones == 0
+            onPressed: semitones.abs() < 0.005
                 ? null
                 : () {
                     setState(() => _preview = null);

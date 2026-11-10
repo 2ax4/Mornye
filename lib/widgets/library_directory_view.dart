@@ -912,7 +912,7 @@ class _LibraryDirectoryViewState extends ConsumerState<LibraryDirectoryView>
             final seconds? when seconds > 0 => Duration(seconds: seconds),
             _ => null,
           },
-          leading: _SongArtwork(item: item, size: 32),
+          leading: _SongArtwork(item: item, size: TrackTableLayout.artworkSize),
           playback: mediaItemPlaybackUiProvider(_playbackKey(item)),
         ),
     ];

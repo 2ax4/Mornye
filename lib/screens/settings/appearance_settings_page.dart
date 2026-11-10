@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:mornye/widgets/app_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -108,9 +110,9 @@ class AppearanceSettingsPage extends ConsumerWidget {
 
             if (isDesktopPlatform)
               SliverToBoxAdapter(
-                child: ValueListenableBuilder<TrackListDensity>(
-                  valueListenable: trackListDensity,
-                  builder: (context, density, _) => Column(
+                child: ListenableBuilder(
+                  listenable: trackListDensityListenable,
+                  builder: (context, _) => Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -119,27 +121,51 @@ class AppearanceSettingsPage extends ConsumerWidget {
                       ),
                       SettingsGroup(
                         children: [
-                          for (final choice in TrackListDensity.values)
-                            ListTile(
-                              title: Text(switch (choice) {
-                                TrackListDensity.compact =>
-                                  context.l10n.appearanceDensityCompact,
-                                TrackListDensity.comfortable =>
-                                  context.l10n.appearanceDensityComfortable,
-                                TrackListDensity.spacious =>
-                                  context.l10n.appearanceDensitySpacious,
-                              }),
-                              trailing: density == choice
-                                  ? AppIcon(
-                                      Icons.check_circle,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    )
-                                  : null,
-                              selected: density == choice,
-                              onTap: () => setTrackListDensity(choice),
+                          ListTile(
+                            leading: const AppIcon(Icons.height),
+                            title: Text(context.l10n.appearanceRowHeight),
+                            subtitle: Slider(
+                              value: trackListRowHeight.value.clamp(
+                                trackListRowHeightMin,
+                                trackListRowHeightMax,
+                              ),
+                              min: trackListRowHeightMin,
+                              max: trackListRowHeightMax,
+                              divisions:
+                                  (trackListRowHeightMax -
+                                          trackListRowHeightMin)
+                                      .round() ~/
+                                  4,
+                              label: '${trackListRowHeight.value.round()} px',
+                              onChanged: (value) =>
+                                  unawaited(setTrackListRowHeight(value)),
                             ),
+                            trailing: Text(
+                              '${trackListRowHeight.value.round()} px',
+                            ),
+                          ),
+                          ListTile(
+                            leading: const AppIcon(Icons.format_line_spacing),
+                            title: Text(context.l10n.appearanceRowSpacing),
+                            subtitle: Slider(
+                              value: trackListRowGap.value.clamp(
+                                trackListRowGapMin,
+                                trackListRowGapMax,
+                              ),
+                              min: trackListRowGapMin,
+                              max: trackListRowGapMax,
+                              divisions:
+                                  (trackListRowGapMax - trackListRowGapMin)
+                                      .round() ~/
+                                  2,
+                              label: '${trackListRowGap.value.round()} px',
+                              onChanged: (value) =>
+                                  unawaited(setTrackListRowGap(value)),
+                            ),
+                            trailing: Text(
+                              '${trackListRowGap.value.round()} px',
+                            ),
+                          ),
                         ],
                       ),
                     ],

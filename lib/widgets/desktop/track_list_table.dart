@@ -215,18 +215,19 @@ class _Artwork extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = this.url;
+    final size = TrackTableLayout.artworkSize;
     if (url == null || url.isEmpty) {
-      return const TrackCoverPlaceholder(size: 32);
+      return TrackCoverPlaceholder(size: size);
     }
     // Collection tracks can carry a local artwork path.
     final image = LocalOrNetworkCoverImage(
       url: url,
-      width: 32,
-      height: 32,
+      width: size,
+      height: size,
       borderRadius: BorderRadius.circular(4),
-      networkCacheWidth: 96,
-      localCacheWidth: 96,
-      placeholder: (_) => const TrackCoverPlaceholder(size: 32),
+      networkCacheWidth: (size * 3).round(),
+      localCacheWidth: (size * 3).round(),
+      placeholder: (_) => TrackCoverPlaceholder(size: size),
     );
     final onSave = this.onSave;
     if (onSave == null) return image;

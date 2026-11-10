@@ -51,8 +51,8 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     // The base row heights, with the density setting at its smallest.
-    trackListDensity.value = TrackListDensity.compact;
-    addTearDown(() => trackListDensity.value = TrackListDensity.comfortable);
+    trackListRowHeight.value = trackListRowHeightMin;
+    addTearDown(() => trackListRowHeight.value = trackListRowHeightDefault);
     for (final mornye in [false, true]) {
       late double inset;
       late double rowHeight;
@@ -77,7 +77,8 @@ void main() {
             : (1920 - desktopMaterialContentMaxWidth) / 2,
         reason: 'Mornye=$mornye',
       );
-      expect(rowHeight, mornye ? 40 : 44, reason: 'Mornye=$mornye');
+      // The slider's number is what a row measures, on both shells.
+      expect(rowHeight, trackListRowHeightMin, reason: 'Mornye=$mornye');
     }
   });
 

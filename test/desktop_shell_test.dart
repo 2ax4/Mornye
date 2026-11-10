@@ -242,6 +242,20 @@ void main() {
   }
 
   for (final mornye in [false, true]) {
+    testWidgets('bar transport runs previous and next ($mornye)', (
+      tester,
+    ) async {
+      await pumpShell(tester, mornye: mornye, width: 900, playing: true);
+
+      await tester.tap(find.byTooltip('Previous track (Ctrl+Left)'));
+      await tester.pump();
+      await tester.tap(find.byTooltip('Next track (Ctrl+Right)'));
+      await tester.pump();
+
+      expect(controller.calls, ['previous', 'next']);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('paused desktop player dismisses and returns for a new song '
         '($mornye)', (tester) async {
       final items = StreamController<MediaItem?>();

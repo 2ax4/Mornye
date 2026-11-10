@@ -2405,6 +2405,12 @@ class MusicPlayerHandler extends BaseAudioHandler
     }
     if (_index < _media.length - 1) {
       await _playIndex(_index + 1, userSkip: true);
+      return;
+    }
+    // The queue ended and autoplay added nothing: a manual skip wraps to
+    // the queue's first track, so the button always responds.
+    if (_media.isNotEmpty) {
+      await _playIndex(0, userSkip: true);
     }
   }
 
@@ -2431,6 +2437,13 @@ class MusicPlayerHandler extends BaseAudioHandler
     }
     if (_index > 0) {
       await _playIndex(_index - 1, userSkip: true);
+      _runtime.personalization.replayed();
+      return;
+    }
+    // At the queue's first track a manual skip wraps to the last one, so
+    // the button always responds.
+    if (_media.length > 1) {
+      await _playIndex(_media.length - 1, userSkip: true);
       _runtime.personalization.replayed();
     }
   }

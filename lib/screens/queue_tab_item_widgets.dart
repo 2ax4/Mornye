@@ -1022,7 +1022,11 @@ extension _QueueTabItemWidgets on _QueueTabState {
               final seconds? when seconds > 0 => Duration(seconds: seconds),
               _ => null,
             },
-            leading: _buildUnifiedCoverImage(item, colorScheme, 32),
+            leading: _buildUnifiedCoverImage(
+              item,
+              colorScheme,
+              TrackTableLayout.artworkSize,
+            ),
             playback: mediaItemPlaybackUiProvider(_libraryPlaybackKey(item)),
           );
       rows.add(row);

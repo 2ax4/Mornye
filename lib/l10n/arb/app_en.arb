@@ -359,17 +359,13 @@
   "@appearanceSongListDensity": {
     "description": "Settings section title for the height of desktop song list rows"
   },
-  "appearanceDensityCompact": "Compact",
-  "@appearanceDensityCompact": {
-    "description": "Song list density option that keeps rows at their smallest size"
+  "appearanceRowHeight": "Row Height",
+  "@appearanceRowHeight": {
+    "description": "Setting that scales desktop song list rows up and down"
   },
-  "appearanceDensityComfortable": "Comfortable",
-  "@appearanceDensityComfortable": {
-    "description": "Default song list density option with taller rows"
-  },
-  "appearanceDensitySpacious": "Spacious",
-  "@appearanceDensitySpacious": {
-    "description": "Song list density option with the tallest rows"
+  "appearanceRowSpacing": "Row Spacing",
+  "@appearanceRowSpacing": {
+    "description": "Setting for the empty space between desktop song list rows"
   },
   "audioControlPitch": "Pitch",
   "@audioControlPitch": {

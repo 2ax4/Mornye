@@ -425,7 +425,11 @@ class _LibraryMixScreenState extends ConsumerState<LibraryMixScreen>
               },
               leading: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: LibraryItemArtwork(item: item, size: 32, iconSize: 16),
+                child: LibraryItemArtwork(
+                  item: item,
+                  size: TrackTableLayout.artworkSize,
+                  iconSize: TrackTableLayout.artworkSize / 2,
+                ),
               ),
               playback: mediaItemPlaybackUiProvider(_rowKey(item)),
             ),

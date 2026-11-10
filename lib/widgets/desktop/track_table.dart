@@ -390,39 +390,75 @@ String _formatDuration(Duration duration) {
       : '$minutes:$seconds';
 }
 
-/// The height of desktop song list rows, chosen in appearance settings.
-enum TrackListDensity {
-  /// The original compact rows, about 10 songs per screen.
-  compact,
+/// The desktop song list row height in px, chosen with a number slider in
+/// appearance settings. Shared by every track table and both shell styles.
+final trackListRowHeight = ValueNotifier<double>(trackListRowHeightDefault);
 
-  /// The default tall rows, about 5-6 songs per screen.
-  comfortable,
+/// The empty space between song list rows, in px, chosen in appearance
+/// settings too.
+final trackListRowGap = ValueNotifier<double>(trackListRowGapDefault);
 
-  /// The tallest rows, about 4-5 songs per screen.
-  spacious,
-}
+/// The row height range and defaults of the appearance sliders.
+const double trackListRowHeightMin = 40;
+const double trackListRowHeightMax = 112;
+const double trackListRowHeightDefault = 80;
+const double trackListRowGapMin = 0;
+const double trackListRowGapMax = 16;
+const double trackListRowGapDefault = 2;
 
-/// The current song list row density. Shared by every track table.
-final trackListDensity = ValueNotifier<TrackListDensity>(
-  TrackListDensity.comfortable,
-);
-
+const _trackListRowHeightPrefKey = 'desktop.trackListRowHeight';
+const _trackListRowGapPrefKey = 'desktop.trackListRowGap';
 const _trackListDensityPrefKey = 'desktop.trackListDensity';
 
-/// Restores the saved song list density at startup.
+/// Rebuilds every row when the height or the gap changes.
+final Listenable trackListDensityListenable = Listenable.merge([
+  trackListRowHeight,
+  trackListRowGap,
+]);
+
+/// Restores the saved song list density at startup. The old three-choice
+/// pref maps onto the row height it used to stand for.
 void restoreTrackListDensity(SharedPreferences prefs) {
-  final name = prefs.getString(_trackListDensityPrefKey);
-  if (name == null) return;
-  final density = TrackListDensity.values.asNameMap()[name];
-  if (density != null) trackListDensity.value = density;
+  final height = prefs.getDouble(_trackListRowHeightPrefKey);
+  trackListRowHeight.value = (height ?? _legacyDensityHeight(prefs)).clamp(
+    trackListRowHeightMin,
+    trackListRowHeightMax,
+  );
+  final gap = prefs.getDouble(_trackListRowGapPrefKey);
+  if (gap != null) {
+    trackListRowGap.value = gap.clamp(trackListRowGapMin, trackListRowGapMax);
+  }
 }
 
-/// Applies [density] to every track table and saves the choice.
-Future<void> setTrackListDensity(TrackListDensity density) async {
-  trackListDensity.value = density;
+double _legacyDensityHeight(SharedPreferences prefs) {
+  final name = prefs.getString(_trackListDensityPrefKey);
+  return switch (name) {
+    'compact' => 40,
+    'spacious' => 100,
+    _ => trackListRowHeightDefault,
+  };
+}
+
+/// Applies [height] to every track table and saves the choice.
+Future<void> setTrackListRowHeight(double height) async {
+  trackListRowHeight.value = height.clamp(
+    trackListRowHeightMin,
+    trackListRowHeightMax,
+  );
   try {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_trackListDensityPrefKey, density.name);
+    await prefs.setDouble(_trackListRowHeightPrefKey, height);
+  } catch (_) {
+    // A failed save keeps the choice for this session only.
+  }
+}
+
+/// Applies [gap] between the rows and saves the choice.
+Future<void> setTrackListRowGap(double gap) async {
+  trackListRowGap.value = gap.clamp(trackListRowGapMin, trackListRowGapMax);
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_trackListRowGapPrefKey, gap);
   } catch (_) {
     // A failed save keeps the choice for this session only.
   }
@@ -441,17 +477,15 @@ class TrackTableLayout {
   static const double albumNumber = 32;
   static const double albumTitleGap = 14;
 
-  // Pointer rows: 40pt for Mornye, and the M3 compact list density for Material
-  // instead of the 48dp touch row. The density setting scales them so fewer
-  // songs fill a screen at once.
-  static double rowMinHeightFor(BuildContext context) {
-    final base = context.isMornye ? 40.0 : 44.0;
-    return switch (trackListDensity.value) {
-      TrackListDensity.compact => base,
-      TrackListDensity.comfortable => base * 2,
-      TrackListDensity.spacious => base * 2.5,
-    };
-  }
+  // Pointer rows take the chosen height on both shells, so the number the
+  // appearance slider shows is what a row measures.
+  static double rowMinHeightFor(BuildContext context) =>
+      trackListRowHeight.value;
+
+  /// The row artwork follows the row height, capped so the tallest rows
+  /// keep a tidy cover instead of a square panel.
+  static double get artworkSize =>
+      (trackListRowHeight.value - 16).clamp(28.0, 72.0);
 
   static double headerHeightFor(BuildContext context) =>
       MediaQuery.textScalerOf(context).scale(20) + 16;
@@ -720,6 +754,14 @@ class _TrackTableRowViewState extends State<_TrackTableRowView> {
     final markNumber = current && columns.contains(TrackTableColumn.number);
     final markTitle = current && !markNumber;
     var leading = row.leading;
+    // The artwork fits the chosen row height even before the screen that
+    // built the row renders again: the row scales whatever cover it got.
+    if (leading != null) {
+      leading = SizedBox.square(
+        dimension: TrackTableLayout.artworkSize,
+        child: FittedBox(fit: BoxFit.contain, child: leading),
+      );
+    }
     if (markTitle && leading != null) {
       leading = Stack(
         alignment: Alignment.center,
@@ -802,21 +844,18 @@ class _TrackTableRowViewState extends State<_TrackTableRowView> {
       hoverColor: material
           ? (content ?? colorScheme.onSurface).withValues(alpha: 0.08)
           : null,
-      child: ValueListenableBuilder<TrackListDensity>(
-        valueListenable: trackListDensity,
-        builder: (context, _, _) => ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: TrackTableLayout.rowMinHeightFor(context),
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: tokens.gapXs),
-            child: Row(
-              children: TrackTableLayout.layout(
-                columns: columns,
-                cell: cell,
-                hasTrailing: hasTrailing,
-                trailing: trailing,
-              ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: TrackTableLayout.rowMinHeightFor(context),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: tokens.gapXs),
+          child: Row(
+            children: TrackTableLayout.layout(
+              columns: columns,
+              cell: cell,
+              hasTrailing: hasTrailing,
+              trailing: trailing,
             ),
           ),
         ),
@@ -853,14 +892,24 @@ class _TrackTableRowViewState extends State<_TrackTableRowView> {
     } else {
       body = surface(selected ? selectedFill : Colors.transparent, ink);
     }
-    return Semantics(
-      selected: selected,
-      label: [row.title, ?row.artist].join(', '),
-      child: DesktopContextMenuRegion(
-        onContextMenu: onContextMenu,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: tokens.gapXs, vertical: 1),
-          child: body,
+    // The density listenable rebuilds the row when the height or the gap
+    // changes, so the appearance sliders update the tables at once.
+    return ListenableBuilder(
+      listenable: trackListDensityListenable,
+      builder: (context, _) => Semantics(
+        selected: selected,
+        label: [row.title, ?row.artist].join(', '),
+        child: DesktopContextMenuRegion(
+          onContextMenu: onContextMenu,
+          child: Padding(
+            // The gap splits around the fill, so two rows leave [gap]
+            // between their surfaces.
+            padding: EdgeInsets.symmetric(
+              horizontal: tokens.gapXs,
+              vertical: 1 + trackListRowGap.value / 2,
+            ),
+            child: body,
+          ),
         ),
       ),
     );
