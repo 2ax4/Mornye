@@ -309,7 +309,7 @@ class _MornyeGlassClaritySlider extends ConsumerWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Mornye',
+                              'Munshid',
                               style: theme.textTheme.titleMedium,
                             ),
                           ),

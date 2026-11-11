@@ -55,7 +55,7 @@ String linkDefaultDeviceName() {
   } on Object {
     // Some sandboxes hide the host name.
   }
-  return 'Mornye';
+  return 'Munshid';
 }
 
 String? _cleanName(String? name) {
@@ -368,7 +368,7 @@ class LinkDesktopHost extends Notifier<LinkDesktopHostState> {
         Object error,
         StackTrace stack,
       ) {
-        _log.e('Mornye Link step failed', error, stack);
+        _log.e('Munshid Link step failed', error, stack);
       });
 
   /// Turns the server on or off and remembers the choice.

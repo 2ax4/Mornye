@@ -144,13 +144,37 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
+  // Reopen at the size and position the user left the window at. The saved
+  // rect is in physical pixels, applied directly with SetWindowPos so it
+  // stays exact regardless of the current monitor DPI.
+  RECT saved;
+  bool savedMaximized = false;
+  if (ReadWindowBounds(&saved, &savedMaximized)) {
+    restore_maximized_ = savedMaximized;
+    if (!savedMaximized && saved.right - saved.left >= 200 &&
+        saved.bottom - saved.top >= 200) {
+      // Keep the window reachable if the saved monitor went away.
+      const int vx = ::GetSystemMetrics(SM_XVIRTUALSCREEN);
+      const int vy = ::GetSystemMetrics(SM_YVIRTUALSCREEN);
+      const int vw = ::GetSystemMetrics(SM_CXVIRTUALSCREEN);
+      const int vh = ::GetSystemMetrics(SM_CYVIRTUALSCREEN);
+      if (saved.right > vx && saved.bottom > vy && saved.left < vx + vw &&
+          saved.top < vy + vh) {
+        ::SetWindowPos(window, nullptr, saved.left, saved.top,
+                       saved.right - saved.left, saved.bottom - saved.top,
+                       SWP_NOZORDER | SWP_NOACTIVATE);
+      }
+    }
+  }
+
   UpdateTheme(window);
 
   return OnCreate();
 }
 
 bool Win32Window::Show() {
-  return ShowWindow(window_handle_, SW_SHOWNORMAL);
+  return ShowWindow(window_handle_,
+                    restore_maximized_ ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
 }
 
 // static
@@ -179,6 +203,20 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
+    case WM_CLOSE:
+      // Remember the windowed size and position for the next launch. Saved
+      // here, while the window is still alive and in its final state.
+      SaveWindowBounds(hwnd);
+      break;
+
+    case WM_ENDSESSION:
+      // Windows shutdown/log off also ends the session; keep the last
+      // bounds so the next start matches what the user saw.
+      if (wparam) {
+        SaveWindowBounds(hwnd);
+      }
+      return 0;
+
     case WM_DESTROY:
       window_handle_ = nullptr;
       Destroy();
@@ -284,5 +322,74 @@ void Win32Window::UpdateTheme(HWND const window) {
     BOOL enable_dark_mode = light_mode == 0;
     DwmSetWindowAttribute(window, DWMWA_USE_IMMERSIVE_DARK_MODE,
                           &enable_dark_mode, sizeof(enable_dark_mode));
+  }
+}
+
+bool Win32Window::ReadWindowBounds(RECT* rect, bool* maximized) {
+  *maximized = false;
+  struct BoundsValue {
+    const wchar_t* name;
+    LONG* out;
+  };
+  LONG x = 0, y = 0, width = 0, height = 0;
+  const BoundsValue values[] = {
+      {L"X", &x},
+      {L"Y", &y},
+      {L"Width", &width},
+      {L"Height", &height},
+  };
+  for (const auto& value : values) {
+    DWORD data = 0;
+    DWORD size = sizeof(data);
+    if (::RegGetValueW(HKEY_CURRENT_USER, kWindowBoundsRegKey, value.name,
+                       RRF_RT_REG_DWORD, nullptr, &data,
+                       &size) != ERROR_SUCCESS) {
+      return false;
+    }
+    // Stored as signed pixels; reinterpret the DWORD.
+    *value.out = static_cast<LONG>(static_cast<int32_t>(data));
+  }
+  rect->left = x;
+  rect->top = y;
+  rect->right = x + width;
+  rect->bottom = y + height;
+  DWORD maximizedValue = 0;
+  DWORD maximizedSize = sizeof(maximizedValue);
+  if (::RegGetValueW(HKEY_CURRENT_USER, kWindowBoundsRegKey, L"Maximized",
+                     RRF_RT_REG_DWORD, nullptr, &maximizedValue,
+                     &maximizedSize) == ERROR_SUCCESS) {
+    *maximized = maximizedValue != 0;
+  }
+  return true;
+}
+
+void Win32Window::SaveWindowBounds(HWND window) {
+  if (!window) return;
+  // Only the ordinary windowed state carries over: maximized windows reopen
+  // maximized, and borderless/full screen frames have no user-sized bounds.
+  const LONG style = static_cast<LONG>(::GetWindowLongPtr(window, GWL_STYLE));
+  if ((style & WS_CAPTION) == 0) return;
+  if (::IsZoomed(window) || ::IsIconic(window)) {
+    // Keep the previous bounds but remember the maximized state, like
+    // conventional Windows apps do.
+    DWORD maximized = 1;
+    ::RegSetKeyValueW(HKEY_CURRENT_USER, kWindowBoundsRegKey, L"Maximized",
+                      REG_DWORD, &maximized, sizeof(maximized));
+    return;
+  }
+
+  RECT rect;
+  if (!::GetWindowRect(window, &rect)) return;
+  const DWORD values[] = {
+      static_cast<DWORD>(static_cast<int32_t>(rect.left)),
+      static_cast<DWORD>(static_cast<int32_t>(rect.top)),
+      static_cast<DWORD>(rect.right - rect.left),
+      static_cast<DWORD>(rect.bottom - rect.top),
+      0,
+  };
+  const wchar_t* names[] = {L"X", L"Y", L"Width", L"Height", L"Maximized"};
+  for (int i = 0; i < 5; ++i) {
+    ::RegSetKeyValueW(HKEY_CURRENT_USER, kWindowBoundsRegKey, names[i],
+                      REG_DWORD, &values[i], sizeof(DWORD));
   }
 }

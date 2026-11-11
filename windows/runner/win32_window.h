@@ -7,6 +7,12 @@
 #include <memory>
 #include <string>
 
+// Registry key under HKEY_CURRENT_USER storing the last windowed bounds, so
+// a closed-and-reopened window reopens at the size and position the user
+// left it at.
+constexpr const wchar_t kWindowBoundsRegKey[] =
+    L"Software\\Munshid\\WindowBounds";
+
 // A class abstraction for a high DPI-aware Win32 Window. Intended to be
 // inherited from by classes that wish to specialize with custom
 // rendering and input handling
@@ -83,7 +89,19 @@ class Win32Window {
 
   static void UpdateTheme(HWND const window);
 
+  // Reads the saved window bounds into |rect|; returns false when no usable
+  // bounds were saved (first run or sanitized away). |maximized| receives the
+  // saved maximized state.
+  static bool ReadWindowBounds(RECT* rect, bool* maximized);
+
+  // Saves the current windowed bounds of |window|, skipping maximized,
+  // minimized, borderless and full screen states.
+  static void SaveWindowBounds(HWND window);
+
   bool quit_on_close_ = false;
+
+  // Set when the saved session ended maximized; Show re-applies it.
+  bool restore_maximized_ = false;
 
   HWND window_handle_ = nullptr;
 

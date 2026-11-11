@@ -181,7 +181,7 @@ void main() {
 
     // The opening page names every section that follows it.
     final pages = whatsNewHighlights(l10n, androidPhone: true, desktop: false);
-    expect(pages.first.title, 'Mornye ${AppInfo.whatsNewRelease} is here');
+    expect(pages.first.title, 'Munshid ${AppInfo.whatsNewRelease} is here');
     expect(
       [for (final feature in pages.first.features) feature.title],
       [for (final page in pages.skip(1)) page.title],
@@ -289,10 +289,10 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       final container = await openTour(tester);
 
-      expect(find.text('Mornye ${AppInfo.whatsNewRelease} is here'), findsOne);
+      expect(find.text('Munshid ${AppInfo.whatsNewRelease} is here'), findsOne);
       expect(find.text('Skip for now'), findsOne);
       for (final title in [
-        'Mornye Link',
+        'Munshid Link',
         'A Home that learns',
         'Player and lyrics',
         'Library and search',
@@ -388,7 +388,7 @@ void main() {
       final container = await openDialog(tester);
 
       expect(find.byType(WhatsNewScreen), findsNothing);
-      expect(find.text('Mornye ${AppInfo.whatsNewRelease} is here'), findsOne);
+      expect(find.text('Munshid ${AppInfo.whatsNewRelease} is here'), findsOne);
       // The list names every section; the first one is shown.
       for (final title in [
         'A Home that learns',
@@ -398,7 +398,7 @@ void main() {
       ]) {
         expect(find.text(title), findsOne);
       }
-      expect(find.text('Mornye Link'), findsNWidgets(2));
+      expect(find.text('Munshid Link'), findsNWidgets(2));
       expect(find.text('Play across devices'), findsOne);
 
       // A click on a section shows it; Next walks to the last one.

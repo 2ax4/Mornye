@@ -63,7 +63,7 @@
   "@linkFileJobsView": {
     "description": "Snackbar action that opens the file changes list to see which songs failed"
   },
-  "linkFileJobsUnsupported": "Müzik dosyalarını bu telefondan yönetmek için bilgisayarınızda Mornye'yi güncelleyin.",
+  "linkFileJobsUnsupported": "Müzik dosyalarını bu telefondan yönetmek için bilgisayarınızda Munshid'yi güncelleyin.",
   "linkFileSelectionOneDevice": "Şarkıları aynı anda tek bir bağlı bilgisayardan seçin (en fazla 100 şarkı).",
   "linkFileJobProgress": "{finished} / {total} {total, plural, =1{şarkı} other{şarkı}}",
   "@linkFileJobProgress": {
@@ -178,7 +178,7 @@
   "@networkErrorPermission": {
     "description": "Network access error when the server denies account permissions for a shared folder; distinct from the device's local network permission"
   },
-  "networkErrorLocalPermission": "Yerel ağ erişimine izin verilmiyor. Android uygulama ayarlarından Mornye için Yakındaki cihazlar iznini verin, ardından tekrar deneyin.",
+  "networkErrorLocalPermission": "Yerel ağ erişimine izin verilmiyor. Android uygulama ayarlarından Munshid için Yakındaki cihazlar iznini verin, ardından tekrar deneyin.",
   "@networkErrorLocalPermission": {
     "description": "Network access error when Android denies local network permission; Nearby devices is the Android app permission setting"
   },
@@ -287,7 +287,7 @@
   "usbBitPerfectDescription": "Uyumlu çıkışlarda kaynağın hassasiyetini korur. Aşağıdan doğrudan USB veya AAudio özel modunu seçin; aksi halde Android USB çıkışı Android 14 veya üstünü gerektirir. AutoMix ve normalizasyon olmadan bir sonraki parçadan itibaren uygulanır. Sistem ses düzeyi doğrudan USB'yi kontrol etmeyebilir.",
   "usbHardwareVolume": "DAC donanım ses düzeyi",
   "usbVolumeWarningTitle": "Dinleme ses düzeyinizi kontrol edin",
-  "usbVolumeWarning": "Doğrudan USB sesi normal oynatmadan çok daha yüksek olabilir ve telefonun ses düğmeleri bunu denetlemeyebilir. Başlamadan önce DAC veya amplifikatör sesini kısın. Desteklendiğinde Mornye, bağlantı sırasında DAC'ı en fazla −40 dB'ye ayarlar; bu, her amplifikatörde veya kulaklıkta güvenli bir dinleme seviyesi garanti etmez.",
+  "usbVolumeWarning": "Doğrudan USB sesi normal oynatmadan çok daha yüksek olabilir ve telefonun ses düğmeleri bunu denetlemeyebilir. Başlamadan önce DAC veya amplifikatör sesini kısın. Desteklendiğinde Munshid, bağlantı sırasında DAC'ı en fazla −40 dB'ye ayarlar; bu, her amplifikatörde veya kulaklıkta güvenli bir dinleme seviyesi garanti etmez.",
   "usbVolumeAccept": "Anladım",
   "usbVolumeUnavailable": "Bu DAC'te doğrulanmış donanım ses kontrolü olmadığı için oynatma duraklatıldı. DAC veya amplifikatör sesini düşürün, gerekirse sabit ses düzeyli çıkışı etkinleştirin ve parçayı yeniden seçin.",
   "usbFixedVolume": "Sabit ses düzeyli USB çıkışına izin ver",
@@ -299,8 +299,8 @@
   "exclusiveOutputWindows": "WASAPI özel modu",
   "exclusiveOutputMacos": "Özel erişim (hog modu)",
   "exclusiveOutputLinux": "Doğrudan ALSA çıkışı",
-  "exclusiveOutputDescriptionWindows": "Çıkışın her parçanın örnekleme hızını ve bit derinliğini izlemesi için Windows mikserini atlayın. Mornye aygıtı tutarken diğer uygulamalar ses çalamaz. Bu modda AutoMix ve önizlemeler kapalıdır. Bit-perfect çıkış için sesi %100'de tutun ve ekolayzer ile normalizasyonu kapatın.",
-  "exclusiveOutputDescriptionMacos": "Çıkış aygıtını yalnızca Mornye için tutun ve her parçanın örnekleme hızına ve bit derinliğine geçirin; böylece Core Audio yeniden örnekleme yapmaz. Mornye aygıtı tutarken diğer uygulamalar ses çalamaz. Bu modda AutoMix ve önizlemeler kapalıdır. Bit-perfect çıkış için sesi %100'de tutun ve ekolayzer ile normalizasyonu kapatın.",
+  "exclusiveOutputDescriptionWindows": "Çıkışın her parçanın örnekleme hızını ve bit derinliğini izlemesi için Windows mikserini atlayın. Munshid aygıtı tutarken diğer uygulamalar ses çalamaz. Bu modda AutoMix ve önizlemeler kapalıdır. Bit-perfect çıkış için sesi %100'de tutun ve ekolayzer ile normalizasyonu kapatın.",
+  "exclusiveOutputDescriptionMacos": "Çıkış aygıtını yalnızca Munshid için tutun ve her parçanın örnekleme hızına ve bit derinliğine geçirin; böylece Core Audio yeniden örnekleme yapmaz. Munshid aygıtı tutarken diğer uygulamalar ses çalamaz. Bu modda AutoMix ve önizlemeler kapalıdır. Bit-perfect çıkış için sesi %100'de tutun ve ekolayzer ile normalizasyonu kapatın.",
   "exclusiveOutputDescriptionLinux": "PipeWire veya PulseAudio'yu atlayarak doğrudan bir ALSA donanım aygıtına çalın; böylece çıkış her parçanın örnekleme hızını ve bit derinliğini izler. Aygıt boşta olmalıdır: ses sunucusu boştaki kartı birkaç saniye sonra bırakır veya profilini Kapalı olarak ayarlayın. Bu modda AutoMix ve önizlemeler kapalıdır.",
   "exclusiveOutputPending": "Bir parça çalındığında aygıtı alır.",
   "exclusiveOutputActive": "Özel modda çalıyor.",
@@ -325,7 +325,7 @@
   "cacheMotionArtworkDesc": "İndirmelerle birlikte kaydedilen albüm videoları. Kaldırıldığında müzik dosyalarınız ve sabit kapaklar korunur.",
   "nowPlayingVolume": "Ses",
   "@nowPlayingVolume": {
-    "description": "System volume control label in the Mornye player"
+    "description": "System volume control label in the Munshid player"
   },
   "appearanceStyle": "Uygulama stili",
   "appearanceAccentRed": "Kırmızı (varsayılan)",
@@ -337,14 +337,14 @@
   "appearanceAccentPink": "Pembe",
   "appearanceGlassClarity": "Cam netliği",
   "appearanceGlassOutlines": "Cam kenarlıkları",
-  "appearanceGlassOutlinesSubtitle": "Mornye camı çevresinde dekoratif kenarlıklar gösterir. Kapatıldığında bulanıklık ve kırılma korunur.",
-  "appearanceGlassClaritySubtitle": "Mornye menülerinde ve gezinmede saydamlığı ayarlayın. Metin kontrastı korunur.",
+  "appearanceGlassOutlinesSubtitle": "Munshid camı çevresinde dekoratif kenarlıklar gösterir. Kapatıldığında bulanıklık ve kırılma korunur.",
+  "appearanceGlassClaritySubtitle": "Munshid menülerinde ve gezinmede saydamlığı ayarlayın. Metin kontrastı korunur.",
   "appearanceGlassTinted": "Renkli",
   "appearanceGlassClear": "Şeffaf",
   "appearanceGlassClearPerformance": "Çok şeffaf cam, eski cihazlarda daha fazla güç tüketebilir ve daha az akıcı hissettirebilir. Gerekirse netliği düşürün.",
   "appearanceGlassClarityBlurOff": "Bu cihazda cam opak. Netliği ayarlamak için \"{setting}\" seçeneğini açın.",
   "@appearanceGlassClarityBlurOff": {
-    "description": "Shown under the disabled glass clarity slider when the device renders Mornye glass without blur. The placeholder is the name of the force-blur toggle.",
+    "description": "Shown under the disabled glass clarity slider when the device renders Munshid glass without blur. The placeholder is the name of the force-blur toggle.",
     "placeholders": {
       "setting": {
         "type": "String"
@@ -367,7 +367,7 @@
   },
   "@@locale": "tr",
   "@@last_modified": "2026-04-28",
-  "appName": "Mornye",
+  "appName": "Munshid",
   "@appName": {
     "description": "App name - DO NOT TRANSLATE"
   },
@@ -877,7 +877,7 @@
   },
   "aboutServiceStatus": "Hizmet durumu",
   "@aboutServiceStatus": {
-    "description": "Link to the status page of the Mornye online services"
+    "description": "Link to the status page of the Munshid online services"
   },
   "aboutReportIssue": "Sorun bildir",
   "@aboutReportIssue": {
@@ -1088,7 +1088,7 @@
   "@setupStorageRequired": {
     "description": "Title when storage permission needed"
   },
-  "setupStorageDescription": "Mornye'nin şarkılarınızı kaydetmek için depolama iznine ihtiyacı var.",
+  "setupStorageDescription": "Munshid'nin şarkılarınızı kaydetmek için depolama iznine ihtiyacı var.",
   "@setupStorageDescription": {
     "description": "Explanation for storage permission"
   },
@@ -1128,7 +1128,7 @@
   "@setupNearbyEnable": {
     "description": "Setup step title and button for the Android Nearby devices permission; Nearby devices is the Android permission name"
   },
-  "setupNearbyDescription": "Mornye Link bunu aynı ağdaki bilgisayarınızı bulmak için, ağ depolaması ise evdeki bir sunucuya ulaşmak için kullanır.",
+  "setupNearbyDescription": "Munshid Link bunu aynı ağdaki bilgisayarınızı bulmak için, ağ depolaması ise evdeki bir sunucuya ulaşmak için kullanır.",
   "@setupNearbyDescription": {
     "description": "Setup step explaining why Android's Nearby devices permission is needed"
   },
@@ -1152,17 +1152,17 @@
   "@whatsNewNearbyTitle": {
     "description": "Title of the What's New page that asks for Android's Nearby devices permission; use Android's name for this permission"
   },
-  "whatsNewNearbyDesc": "Android artık bir uygulama ağınızdaki diğer cihazlara erişmeden önce izin istiyor. Mornye buna şunlar için ihtiyaç duyar:",
+  "whatsNewNearbyDesc": "Android artık bir uygulama ağınızdaki diğer cihazlara erişmeden önce izin istiyor. Munshid buna şunlar için ihtiyaç duyar:",
   "@whatsNewNearbyDesc": {
     "description": "Description on the Nearby devices page of the What's New tour, followed by a list of uses"
   },
   "whatsNewNearbyLinkTitle": "Bilgisayarınızı bulma",
   "@whatsNewNearbyLinkTitle": {
-    "description": "Use of the Nearby devices permission: Mornye Link finds the computer"
+    "description": "Use of the Nearby devices permission: Munshid Link finds the computer"
   },
-  "whatsNewNearbyLinkBody": "Mornye Link, bilgisayarınızı aynı Wi-Fi'de arar ve bağlantıyı sürdürür.",
+  "whatsNewNearbyLinkBody": "Munshid Link, bilgisayarınızı aynı Wi-Fi'de arar ve bağlantıyı sürdürür.",
   "@whatsNewNearbyLinkBody": {
-    "description": "Explains how Mornye Link uses the Nearby devices permission"
+    "description": "Explains how Munshid Link uses the Nearby devices permission"
   },
   "whatsNewNearbyStorageTitle": "Ağ depolaması",
   "@whatsNewNearbyStorageTitle": {
@@ -1176,11 +1176,11 @@
   "@whatsNewNearbyPrivateTitle": {
     "description": "Reassurance on the Nearby devices page of the What's New tour"
   },
-  "whatsNewNearbyPrivateBody": "Mornye bunu yalnızca ağınızdaki cihazlara ulaşmak için kullanır, konumunuzu bulmak için asla.",
+  "whatsNewNearbyPrivateBody": "Munshid bunu yalnızca ağınızdaki cihazlara ulaşmak için kullanır, konumunuzu bulmak için asla.",
   "@whatsNewNearbyPrivateBody": {
     "description": "Explains that the Nearby devices permission is not used for location"
   },
-  "whatsNewNearbyRefused": "İzin verilmedi. Android ayarlarından Mornye için Yakındaki cihazlar iznini verene kadar Mornye Link ve ağ depolaması kapalı kalır.",
+  "whatsNewNearbyRefused": "İzin verilmedi. Android ayarlarından Munshid için Yakındaki cihazlar iznini verene kadar Munshid Link ve ağ depolaması kapalı kalır.",
   "@whatsNewNearbyRefused": {
     "description": "Shown on the Nearby devices page of the What's New tour after the permission is refused"
   },
@@ -1832,15 +1832,15 @@
   "@updateStartingInstaller": {
     "description": "Update status on Windows - the downloaded installer is starting and the app will close"
   },
-  "updateMacInstallHint": "Disk görüntüsü Finder'da açıldı. Mornye'den çıkın, ardından Mornye'yi disk görüntüsünden Uygulamalar'a sürükleyip eski kopyanın yerine koyun.",
+  "updateMacInstallHint": "Disk görüntüsü Finder'da açıldı. Munshid'den çıkın, ardından Munshid'yi disk görüntüsünden Uygulamalar'a sürükleyip eski kopyanın yerine koyun.",
   "@updateMacInstallHint": {
     "description": "Update instructions on macOS after the downloaded disk image opens"
   },
-  "updateQuitApp": "Mornye'den Çık",
+  "updateQuitApp": "Munshid'den Çık",
   "@updateQuitApp": {
     "description": "Update button on macOS - quit the app so the new version can replace it"
   },
-  "updateReadyToRestart": "Güncelleme yüklendi. Kullanmak için Mornye'yi yeniden başlatın.",
+  "updateReadyToRestart": "Güncelleme yüklendi. Kullanmak için Munshid'yi yeniden başlatın.",
   "@updateReadyToRestart": {
     "description": "Update status on Linux after the AppImage was replaced"
   },
@@ -3124,7 +3124,7 @@
   "@libraryRemoveFolder": {
     "description": "Action to remove one indexed library source"
   },
-  "libraryRemoveFolderMessage": "Bu klasör ve dizinlenmiş parçaları Mornye'den kaldırılsın mı? Depolamadaki ses dosyaları silinmez.",
+  "libraryRemoveFolderMessage": "Bu klasör ve dizinlenmiş parçaları Munshid'den kaldırılsın mı? Depolamadaki ses dosyaları silinmez.",
   "@libraryRemoveFolderMessage": {
     "description": "Confirmation shown before removing a library source"
   },
@@ -3314,13 +3314,13 @@
   "@libraryStorageAccessRequired": {
     "description": "Dialog title for storage permission"
   },
-  "libraryStorageAccessMessage": "Mornye, müzik kitaplığınızı tarayabilmek için depolama alanına erişime ihtiyaç duyar. Lütfen ayarlar bölümünden izin verin.",
+  "libraryStorageAccessMessage": "Munshid, müzik kitaplığınızı tarayabilmek için depolama alanına erişime ihtiyaç duyar. Lütfen ayarlar bölümünden izin verin.",
   "@libraryStorageAccessMessage": {
     "description": "Dialog message for storage permission"
   },
   "librarySourceDownloaded": "İndirildi",
   "@librarySourceDownloaded": {
-    "description": "Badge for tracks downloaded via Mornye"
+    "description": "Badge for tracks downloaded via Munshid"
   },
   "librarySourceLocal": "Yerel",
   "@librarySourceLocal": {
@@ -3472,11 +3472,11 @@
       }
     }
   },
-  "tutorialWelcomeTitle": "Mornye'ye hoş geldiniz!",
+  "tutorialWelcomeTitle": "Munshid'ye hoş geldiniz!",
   "@tutorialWelcomeTitle": {
     "description": "Tutorial welcome page title"
   },
-  "tutorialWelcomeDesc": "Uzantılarla müzik bulmayı, istediğiniz kaliteyi seçmeyi ve Mornye'de indirmeleri yönetmeyi öğrenin.",
+  "tutorialWelcomeDesc": "Uzantılarla müzik bulmayı, istediğiniz kaliteyi seçmeyi ve Munshid'de indirmeleri yönetmeyi öğrenin.",
   "@tutorialWelcomeDesc": {
     "description": "Tutorial welcome page description"
   },
@@ -3572,7 +3572,7 @@
   "@tutorialReadyMessage": {
     "description": "Tutorial completion message"
   },
-  "whatsNewIntroTitle": "Mornye {version} geldi",
+  "whatsNewIntroTitle": "Munshid {version} geldi",
   "@whatsNewIntroTitle": {
     "description": "First page of the tour shown once after updating; version is like 5.3",
     "placeholders": {
@@ -3582,8 +3582,8 @@
     }
   },
   "whatsNewIntroDesc": "Şimdiye kadarki en büyük güncellememiz. Yeniliklerimize hızlıca bir göz atın.",
-  "whatsNewLinkTitle": "Mornye Link",
-  "whatsNewLinkDesc": "Telefonunuzu ve bilgisayarınızı aynı ağda eşleştirin. Mornye Link beta aşamasındadır.",
+  "whatsNewLinkTitle": "Munshid Link",
+  "whatsNewLinkDesc": "Telefonunuzu ve bilgisayarınızı aynı ağda eşleştirin. Munshid Link beta aşamasındadır.",
   "whatsNewLinkPlayTitle": "Cihazlar arasında çalın",
   "whatsNewLinkPlayBody": "Bilgisayarınızın kitaplığına telefonunuzdan göz atın, ne çaldığını denetleyin ve kaldığınız yeri kaybetmeden oynatmayı devredin.",
   "whatsNewLinkTransferTitle": "Şarkıları iki yönde taşıyın",
@@ -3597,7 +3597,7 @@
   "whatsNewHomeAutoplayTitle": "Daha akıllı otomatik oynatma",
   "whatsNewHomeAutoplayBody": "Otomatik oynatma dinleme oturumunuzu izler ve favorilerinizden, çalma listelerinizden ve tekrarlarınızdan öğrenir.",
   "whatsNewHomeAnalysisTitle": "Şarkı analizi",
-  "whatsNewHomeAnalysisBody": "Mornye daha isabetli seçimler için şarkılarınızın nasıl kulağa geldiğini analiz edebilir. Ayarlar'dan açana kadar kapalı kalır.",
+  "whatsNewHomeAnalysisBody": "Munshid daha isabetli seçimler için şarkılarınızın nasıl kulağa geldiğini analiz edebilir. Ayarlar'dan açana kadar kapalı kalır.",
   "whatsNewPlayerTitle": "Oynatıcı ve şarkı sözleri",
   "whatsNewPlayerDesc": "Daha akıcı oynatma ve her dilde şarkı sözleri.",
   "whatsNewPlayerGaplessTitle": "Gapless oynatma",
@@ -4667,7 +4667,7 @@
   "@safMigrationTitle": {
     "description": "Title of SAF migration dialog"
   },
-  "safMigrationMessage1": "Mornye artık indirmeler için Android Depolama Erişim Çerçevesi'ni (SAF) kullanıyor. Bu, Android 10+ sürümlerindeki \"izin reddedildi\" hatalarını giderir.",
+  "safMigrationMessage1": "Munshid artık indirmeler için Android Depolama Erişim Çerçevesi'ni (SAF) kullanıyor. Bu, Android 10+ sürümlerindeki \"izin reddedildi\" hatalarını giderir.",
   "@safMigrationMessage1": {
     "description": "First paragraph of SAF migration dialog"
   },
@@ -4747,7 +4747,7 @@
   "@backupRestoreFailed": {
     "description": "Snackbar when restore fails"
   },
-  "backupInvalidFile": "Bu dosya geçerli bir Mornye yedeği değil",
+  "backupInvalidFile": "Bu dosya geçerli bir Munshid yedeği değil",
   "@backupInvalidFile": {
     "description": "Snackbar when the chosen file is not a valid backup"
   },
@@ -4931,9 +4931,9 @@
     "description": "Subtitle shown in the download location picker sheet"
   },
   "storageAutomaticFolder": "Otomatik klasör",
-  "storageAutomaticDownloadFolder": "Yazılabilirse Download/Mornye kullanılır, aksi halde uygulama depolaması",
+  "storageAutomaticDownloadFolder": "Yazılabilirse Download/Munshid kullanılır, aksi halde uygulama depolaması",
   "storageSafRecommended": "Klasör seç (Önerilen)",
-  "storageDownloadFolderHint": "Android klasör seçicide Download klasörünü açıp Mornye'yi seçin. Yoksa Yeni klasör ile oluşturun, ardından erişim vermek için Bu klasörü kullan'a dokunun.",
+  "storageDownloadFolderHint": "Android klasör seçicide Download klasörünü açıp Munshid'yi seçin. Yoksa Yeni klasör ile oluşturun, ardından erişim vermek için Bu klasörü kullan'a dokunun.",
   "downloadFolderAccessLostTitle": "İndirme klasörü erişimi kaybedildi",
   "@downloadFolderAccessLostTitle": {
     "description": "Title of the warning banner shown in Files settings when the saved SAF folder grant is no longer valid"
@@ -5946,7 +5946,7 @@
       }
     }
   },
-  "notifDownloadingUpdate": "Mornye v{version} indiriliyor",
+  "notifDownloadingUpdate": "Munshid v{version} indiriliyor",
   "@notifDownloadingUpdate": {
     "description": "Notification title while downloading an app update",
     "placeholders": {
@@ -5974,7 +5974,7 @@
   "@notifUpdateReady": {
     "description": "Notification title when app update download is complete"
   },
-  "notifUpdateReadyBody": "Mornye v{version} indirildi. Yüklemek için dokunun.",
+  "notifUpdateReadyBody": "Munshid v{version} indirildi. Yüklemek için dokunun.",
   "@notifUpdateReadyBody": {
     "description": "Notification body when app update is ready to install",
     "placeholders": {
@@ -6742,7 +6742,7 @@
   "@extensionCustomUrlHandlingSubtitle": {
     "description": "Extension detail subtitle for custom URL handling"
   },
-  "extensionCustomUrlHandlingShareHint": "Bu sitelerdeki bağlantıları Mornye ile paylaşın; bu uzantı onları işleyecektir.",
+  "extensionCustomUrlHandlingShareHint": "Bu sitelerdeki bağlantıları Munshid ile paylaşın; bu uzantı onları işleyecektir.",
   "@extensionCustomUrlHandlingShareHint": {
     "description": "Extension detail hint explaining share-to-app URL handling"
   },
@@ -6952,7 +6952,7 @@
   "@libraryBuiltInPreviewPlayer": {
     "description": "Setting option to use the built-in preview player"
   },
-  "libraryBuiltInPreviewPlayerSubtitle": "Müziğinizi doğrudan Mornye içinde çalın",
+  "libraryBuiltInPreviewPlayerSubtitle": "Müziğinizi doğrudan Munshid içinde çalın",
   "@libraryBuiltInPreviewPlayerSubtitle": {
     "description": "Subtitle for built-in preview player option"
   },
@@ -7400,27 +7400,27 @@
   },
   "linkDevicesTitle": "Cihazlar",
   "@linkDevicesTitle": {
-    "description": "Mornye Link: title and button tooltip of the phone sheet that controls the paired desktop app"
+    "description": "Munshid Link: title and button tooltip of the phone sheet that controls the paired desktop app"
   },
   "linkConnectionConnected": "Bağlı",
   "@linkConnectionConnected": {
-    "description": "Mornye Link: the phone is connected to the paired desktop"
+    "description": "Munshid Link: the phone is connected to the paired desktop"
   },
   "linkConnectionConnecting": "Bağlanıyor",
   "@linkConnectionConnecting": {
-    "description": "Mornye Link: the phone is connecting to the paired desktop"
+    "description": "Munshid Link: the phone is connecting to the paired desktop"
   },
   "linkConnectionDisconnected": "Bağlı değil",
   "@linkConnectionDisconnected": {
-    "description": "Mornye Link: the paired desktop cannot be reached"
+    "description": "Munshid Link: the paired desktop cannot be reached"
   },
   "linkThisPhone": "Bu telefon",
   "@linkThisPhone": {
-    "description": "Mornye Link: the phone's own row in the Devices sheet; choosing it plays music here again"
+    "description": "Munshid Link: the phone's own row in the Devices sheet; choosing it plays music here again"
   },
   "linkPlayingOn": "{name} üzerinde çalıyor",
   "@linkPlayingOn": {
-    "description": "Mornye Link: shown in the player while the paired desktop plays in the phone's place",
+    "description": "Munshid Link: shown in the player while the paired desktop plays in the phone's place",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7429,7 +7429,7 @@
   },
   "linkDesktopDownloads": "{name} üzerindeki indirmeler",
   "@linkDesktopDownloads": {
-    "description": "Mornye Link: heading of the paired desktop's download queue",
+    "description": "Munshid Link: heading of the paired desktop's download queue",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7438,7 +7438,7 @@
   },
   "linkHandoffStarted": "{name} üzerinde çalıyor",
   "@linkHandoffStarted": {
-    "description": "Mornye Link: the paired desktop took over the phone's queue",
+    "description": "Munshid Link: the paired desktop took over the phone's queue",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7447,7 +7447,7 @@
   },
   "linkHandoffSending": "Bu şarkı {name} cihazına gönderiliyor...",
   "@linkHandoffSending": {
-    "description": "Mornye Link: the phone uploads the current song, which the paired desktop lacks, before it plays there",
+    "description": "Munshid Link: the phone uploads the current song, which the paired desktop lacks, before it plays there",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7456,7 +7456,7 @@
   },
   "linkHandoffMissing": "{name} üzerinde çalıyor. Orada bulunamadı: {titles}",
   "@linkHandoffMissing": {
-    "description": "Mornye Link: the paired desktop took over the phone's queue but lacks some tracks, listed by title",
+    "description": "Munshid Link: the paired desktop took over the phone's queue but lacks some tracks, listed by title",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7468,7 +7468,7 @@
   },
   "linkHandoffNotFound": "{name} cihazında bu parçaların hiçbiri yok",
   "@linkHandoffNotFound": {
-    "description": "Mornye Link: the paired desktop has none of the tracks in the phone's queue",
+    "description": "Munshid Link: the paired desktop has none of the tracks in the phone's queue",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7477,11 +7477,11 @@
   },
   "linkHandoffNothingPlaying": "Bu telefonda hiçbir şey çalmıyor",
   "@linkHandoffNothingPlaying": {
-    "description": "Mornye Link: Play on desktop needs a track playing on the phone"
+    "description": "Munshid Link: Play on desktop needs a track playing on the phone"
   },
   "linkContinueSkipped": "Bu telefonda yok: {titles}",
   "@linkContinueSkipped": {
-    "description": "Mornye Link: tracks of the desktop queue the phone could not play, listed by title",
+    "description": "Munshid Link: tracks of the desktop queue the phone could not play, listed by title",
     "placeholders": {
       "titles": {
         "type": "String"
@@ -7490,11 +7490,11 @@
   },
   "linkContinueNotFound": "Bu parçaların hiçbiri bu telefonda yok",
   "@linkContinueNotFound": {
-    "description": "Mornye Link: the phone has none of the tracks of the desktop queue"
+    "description": "Munshid Link: the phone has none of the tracks of the desktop queue"
   },
   "linkRequestFailed": "{name} cihazına ulaşılamadı",
   "@linkRequestFailed": {
-    "description": "Mornye Link: a request to the paired desktop failed",
+    "description": "Munshid Link: a request to the paired desktop failed",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7503,7 +7503,7 @@
   },
   "linkDownloadOnDesktop": "{name} üzerinde indir",
   "@linkDownloadOnDesktop": {
-    "description": "Mornye Link: queues a track, album or link for download in the paired desktop app",
+    "description": "Munshid Link: queues a track, album or link for download in the paired desktop app",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7512,7 +7512,7 @@
   },
   "linkDownloadQueuedOnDesktop": "{count, plural, =1{{name} üzerinde 1 parça kuyruğa alındı} other{{name} üzerinde {count} parça kuyruğa alındı}}",
   "@linkDownloadQueuedOnDesktop": {
-    "description": "Mornye Link: the paired desktop queued downloads",
+    "description": "Munshid Link: the paired desktop queued downloads",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7524,7 +7524,7 @@
   },
   "linkOpenOnDesktop": "{name} üzerinde aç",
   "@linkOpenOnDesktop": {
-    "description": "Mornye Link: opens a shared link in the paired desktop app",
+    "description": "Munshid Link: opens a shared link in the paired desktop app",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7533,7 +7533,7 @@
   },
   "linkOpenedOnDesktop": "{name} üzerinde açıldı",
   "@linkOpenedOnDesktop": {
-    "description": "Mornye Link: the paired desktop opened the link",
+    "description": "Munshid Link: the paired desktop opened the link",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7542,7 +7542,7 @@
   },
   "linkSendToDesktop": "{name} cihazına gönder",
   "@linkSendToDesktop": {
-    "description": "Mornye Link: action on a shared link that offers to open or download it on the paired desktop",
+    "description": "Munshid Link: action on a shared link that offers to open or download it on the paired desktop",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7551,15 +7551,15 @@
   },
   "linkSaveToPhone": "Bu telefona kaydet",
   "@linkSaveToPhone": {
-    "description": "Mornye Link: downloads songs of the paired desktop's library into the phone's download folder"
+    "description": "Munshid Link: downloads songs of the paired desktop's library into the phone's download folder"
   },
   "linkSavingToPhone": "Bu telefona kaydediliyor",
   "@linkSavingToPhone": {
-    "description": "Mornye Link: title of the progress dialog while desktop songs are saved to the phone"
+    "description": "Munshid Link: title of the progress dialog while desktop songs are saved to the phone"
   },
   "linkSavedToPhone": "{count, plural, =1{Bu telefona 1 şarkı kaydedildi} other{Bu telefona {count} şarkı kaydedildi}}",
   "@linkSavedToPhone": {
-    "description": "Mornye Link: desktop songs were saved to the phone",
+    "description": "Munshid Link: desktop songs were saved to the phone",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7568,7 +7568,7 @@
   },
   "linkSaveToPhoneFailed": "{count, plural, =1{1 şarkı kaydedilemedi} other{{count} şarkı kaydedilemedi}}",
   "@linkSaveToPhoneFailed": {
-    "description": "Mornye Link: some desktop songs could not be saved to the phone",
+    "description": "Munshid Link: some desktop songs could not be saved to the phone",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7577,11 +7577,11 @@
   },
   "linkSaveToPhoneCancelled": "Kaydetme durduruldu",
   "@linkSaveToPhoneCancelled": {
-    "description": "Mornye Link: the listener cancelled saving desktop songs to the phone"
+    "description": "Munshid Link: the listener cancelled saving desktop songs to the phone"
   },
   "linkTransferPhoneReceiving": "{count, plural, =1{{name} cihazından {title} kaydediliyor} other{{name} cihazından {count} şarkı kaydediliyor}}",
   "@linkTransferPhoneReceiving": {
-    "description": "Mornye Link: snackbar and notification when the phone starts copying songs from the paired computer into its download folder; title is the song's title when there is one song",
+    "description": "Munshid Link: snackbar and notification when the phone starts copying songs from the paired computer into its download folder; title is the song's title when there is one song",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7596,7 +7596,7 @@
   },
   "linkTransferPhoneOffered": "{count, plural, =1{{name} bu telefona {title} gönderiyor} other{{name} bu telefona {count} şarkı gönderiyor}}",
   "@linkTransferPhoneOffered": {
-    "description": "Mornye Link: snackbar when the paired computer starts sending songs to the phone; title is the song's title when there is one song",
+    "description": "Munshid Link: snackbar when the paired computer starts sending songs to the phone; title is the song's title when there is one song",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7611,11 +7611,11 @@
   },
   "linkTransferPhoneView": "Görüntüle",
   "@linkTransferPhoneView": {
-    "description": "Mornye Link: snackbar action that opens the list of song transfers"
+    "description": "Munshid Link: snackbar action that opens the list of song transfers"
   },
   "linkTransferPhoneWith": "{name} ile aktar",
   "@linkTransferPhoneWith": {
-    "description": "Mornye Link: tooltip and sheet title of a playlist's button that sends its songs to the paired computer or saves the computer's songs to the phone",
+    "description": "Munshid Link: tooltip and sheet title of a playlist's button that sends its songs to the paired computer or saves the computer's songs to the phone",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7624,7 +7624,7 @@
   },
   "linkTransferPhoneNothing": "Bu şarkıların hiçbiri {name} cihazında yok",
   "@linkTransferPhoneNothing": {
-    "description": "Mornye Link: Save to this phone found none of the chosen songs in the paired computer's library",
+    "description": "Munshid Link: Save to this phone found none of the chosen songs in the paired computer's library",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7633,7 +7633,7 @@
   },
   "linkSendSending": "{count, plural, =1{{title} {name} cihazına gönderiliyor} other{{count} şarkı {name} cihazına gönderiliyor}}",
   "@linkSendSending": {
-    "description": "Mornye Link: snackbar and notification when the phone starts copying its own songs to the paired computer; title is the song's title when there is one song",
+    "description": "Munshid Link: snackbar and notification when the phone starts copying its own songs to the paired computer; title is the song's title when there is one song",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7648,7 +7648,7 @@
   },
   "linkSendNothing": "Bu şarkıların hiçbiri {name} cihazına gönderilemiyor",
   "@linkSendNothing": {
-    "description": "Mornye Link: none of the chosen songs is a file on this phone in a format the paired computer takes",
+    "description": "Munshid Link: none of the chosen songs is a file on this phone in a format the paired computer takes",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7657,19 +7657,19 @@
   },
   "linkDownloadStatusQueued": "Bekliyor",
   "@linkDownloadStatusQueued": {
-    "description": "Mornye Link: a download on the paired desktop has not started"
+    "description": "Munshid Link: a download on the paired desktop has not started"
   },
   "linkDownloadStatusDownloading": "İndiriliyor",
   "@linkDownloadStatusDownloading": {
-    "description": "Mornye Link: a download on the paired desktop is running"
+    "description": "Munshid Link: a download on the paired desktop is running"
   },
   "linkDownloadStatusDone": "Tamamlandı",
   "@linkDownloadStatusDone": {
-    "description": "Mornye Link: a download on the paired desktop finished"
+    "description": "Munshid Link: a download on the paired desktop finished"
   },
   "linkDownloadStatusFailed": "Başarısız",
   "@linkDownloadStatusFailed": {
-    "description": "Mornye Link: a download on the paired desktop failed"
+    "description": "Munshid Link: a download on the paired desktop failed"
   },
   "announcementUnableToOpenLink": "Bağlantı açılamadı. Lütfen tekrar deneyin.",
   "@announcementUnableToOpenLink": {
@@ -7989,11 +7989,11 @@
   "@extensionVerificationHelpTitleWaiting": {
     "description": "Dialog title when verification is taking longer than expected"
   },
-  "extensionVerificationHelpMessageManual": "Mornye tarayıcıyı otomatik açamadı. Bu bağlantıyı tarayıcınızda açın veya elle kopyalayın.",
+  "extensionVerificationHelpMessageManual": "Munshid tarayıcıyı otomatik açamadı. Bu bağlantıyı tarayıcınızda açın veya elle kopyalayın.",
   "@extensionVerificationHelpMessageManual": {
     "description": "Dialog message when automatic browser launch for verification fails"
   },
-  "extensionVerificationHelpMessageWaiting": "Tarayıcı açılmadıysa veya doğrulama tamamlanıp Mornye'ye dönmediyse bu bağlantıyı tekrar açın ya da elle kopyalayın.",
+  "extensionVerificationHelpMessageWaiting": "Tarayıcı açılmadıysa veya doğrulama tamamlanıp Munshid'ye dönmediyse bu bağlantıyı tekrar açın ya da elle kopyalayın.",
   "@extensionVerificationHelpMessageWaiting": {
     "description": "Dialog message when verification may need manual browser help"
   },
@@ -8153,7 +8153,7 @@
   "@playerCoverStyleFullScreen": {
     "description": "Cover art style: artwork fills the top of the player"
   },
-  "playerCoverStyleFullScreenDescription": "Albüm kapağı oynatıcının üst kısmını doldurur ve bulanıklığa karışır. Hareketli kapaklar Mornye'de her zaman tam ekrandır",
+  "playerCoverStyleFullScreenDescription": "Albüm kapağı oynatıcının üst kısmını doldurur ve bulanıklığa karışır. Hareketli kapaklar Munshid'de her zaman tam ekrandır",
   "@playerCoverStyleFullScreenDescription": {
     "description": "Subtitle of the full screen cover art style"
   },
@@ -8822,7 +8822,7 @@
   "equalizerPresetName": "Ön ayar adı",
   "equalizerImport": "Ön ayar içe aktar",
   "equalizerExport": "Ön ayarı paylaş",
-  "equalizerImportInvalid": "Geçerli bir Mornye ekolayzer ön ayarı seçin (JSON, en fazla 64 KB).",
+  "equalizerImportInvalid": "Geçerli bir Munshid ekolayzer ön ayarı seçin (JSON, en fazla 64 KB).",
   "equalizerSaved": "Ön ayar kaydedildi",
   "equalizerResetTitle": "Ekolayzer sıfırlansın mı?",
   "equalizerResetDescription": "Düz bir eğri ile varsayılan ton ve dinamik ayarlarını geri yükleyin. Kaydedilen ön ayarlar korunur.",
@@ -8902,9 +8902,9 @@
   "audioInfoLocationLocal": "Cihaz depolaması",
   "audioInfoLocationShared": "Paylaşılan klasör",
   "audioInfoLocationNetwork": "Ağ depolaması",
-  "audioInfoLocationLink": "{device} (Mornye Link üzerinden)",
+  "audioInfoLocationLink": "{device} (Munshid Link üzerinden)",
   "@audioInfoLocationLink": {
-    "description": "Audio info location of a song played from a paired computer or phone over Mornye Link; device is that device's name",
+    "description": "Audio info location of a song played from a paired computer or phone over Munshid Link; device is that device's name",
     "placeholders": {
       "device": {
         "type": "String"
@@ -8939,7 +8939,7 @@
   "audioInfoOff": "Kapalı",
   "audioInfoBypassed": "Doğrudan çıkış tarafından atlandı",
   "audioInfoPlayer": "Oynatıcı",
-  "audioInfoPlayerValue": "Mornye yerleşik oynatıcısı",
+  "audioInfoPlayerValue": "Munshid yerleşik oynatıcısı",
   "audioInfoSignalPath": "Sinyal yolu",
   "audioInfoPathSystem": "Sistem mikseri",
   "audioInfoPathDirect": "Doğrudan USB, sistem mikserini atlar",
@@ -9000,7 +9000,7 @@
   "lyricsTextPreview": "Favori şarkınızın her satırını takip edin",
   "lyricsBlur": "Şarkı sözü bulanıklığı",
   "@lyricsBlur": {
-    "description": "Mornye setting: how strongly lyric lines around the current one are blurred"
+    "description": "Munshid setting: how strongly lyric lines around the current one are blurred"
   },
   "lyricsBlurSubtitle": "Geçerli satırın çevresindeki satırların ne kadar yumuşatılacağı",
   "lyricsBlurOff": "Kapalı",
@@ -9167,15 +9167,15 @@
   "@desktopDownloadsCancel": {
     "description": "Tooltip of the button that cancels one download in the desktop downloads popover"
   },
-  "linkDesktopSettingsTitle": "Telefonunuzdaki Mornye",
+  "linkDesktopSettingsTitle": "Telefonunuzdaki Munshid",
   "@linkDesktopSettingsTitle": {
-    "description": "Desktop Settings page that shares this computer's library with the Mornye phone app over the local network"
+    "description": "Desktop Settings page that shares this computer's library with the Munshid phone app over the local network"
   },
   "linkDesktopSettingsSubtitle": "Kitaplığınızı akış olarak aktarın ve oynatmayı telefonunuzdan denetleyin",
   "@linkDesktopSettingsSubtitle": {
-    "description": "Subtitle of the Mornye on your phone entry in desktop Settings"
+    "description": "Subtitle of the Munshid on your phone entry in desktop Settings"
   },
-  "linkDesktopEnableTitle": "Telefonunuzdaki Mornye ile paylaş",
+  "linkDesktopEnableTitle": "Telefonunuzdaki Munshid ile paylaş",
   "@linkDesktopEnableTitle": {
     "description": "Switch that turns on the local server phones connect to"
   },
@@ -9205,7 +9205,7 @@
       }
     }
   },
-  "linkDesktopFirewallHint": "Bilgisayarınız Mornye'nin gelen ağ bağlantılarını kabul edip edemeyeceğini sorabilir. Telefonunuzun bağlanabilmesi için izin verin.",
+  "linkDesktopFirewallHint": "Bilgisayarınız Munshid'nin gelen ağ bağlantılarını kabul edip edemeyeceğini sorabilir. Telefonunuzun bağlanabilmesi için izin verin.",
   "@linkDesktopFirewallHint": {
     "description": "Hint shown while the phone link server is on, about the operating system firewall prompt"
   },
@@ -9359,7 +9359,7 @@
       }
     }
   },
-  "linkDesktopPairInstructions": "Telefonunuzda Mornye'yi açın, bu bilgisayarı seçin ve bu kodu girin.",
+  "linkDesktopPairInstructions": "Telefonunuzda Munshid'yi açın, bu bilgisayarı seçin ve bu kodu girin.",
   "@linkDesktopPairInstructions": {
     "description": "Instructions in the pairing dialog above the code"
   },
@@ -9454,7 +9454,7 @@
   },
   "linkTransferDesktopSendTo": "{name} cihazına gönder",
   "@linkTransferDesktopSendTo": {
-    "description": "Mornye Link desktop: song menu action that copies this computer's songs to the connected phone {name}",
+    "description": "Munshid Link desktop: song menu action that copies this computer's songs to the connected phone {name}",
     "placeholders": {
       "name": {
         "type": "String"
@@ -9463,11 +9463,11 @@
   },
   "linkTransferDesktopSaveHere": "Bu bilgisayara kaydet",
   "@linkTransferDesktopSaveHere": {
-    "description": "Mornye Link desktop: song menu action that copies a connected phone's songs into this computer's download folder"
+    "description": "Munshid Link desktop: song menu action that copies a connected phone's songs into this computer's download folder"
   },
   "linkTransferDesktopSendingSong": "\"{title}\" {name} cihazına gönderiliyor",
   "@linkTransferDesktopSendingSong": {
-    "description": "Mornye Link desktop: snackbar when one song starts copying to the phone {name}",
+    "description": "Munshid Link desktop: snackbar when one song starts copying to the phone {name}",
     "placeholders": {
       "title": {
         "type": "String"
@@ -9479,7 +9479,7 @@
   },
   "linkTransferDesktopSendingSongs": "{count, plural, =1{{name} cihazına 1 şarkı gönderiliyor} other{{name} cihazına {count} şarkı gönderiliyor}}",
   "@linkTransferDesktopSendingSongs": {
-    "description": "Mornye Link desktop: snackbar when songs start copying to the phone {name}",
+    "description": "Munshid Link desktop: snackbar when songs start copying to the phone {name}",
     "placeholders": {
       "count": {
         "type": "int"
@@ -9491,7 +9491,7 @@
   },
   "linkTransferDesktopReceivingSong": "\"{title}\" {name} cihazından alınıyor",
   "@linkTransferDesktopReceivingSong": {
-    "description": "Mornye Link desktop: snackbar when one song of the phone {name} starts copying to this computer",
+    "description": "Munshid Link desktop: snackbar when one song of the phone {name} starts copying to this computer",
     "placeholders": {
       "title": {
         "type": "String"
@@ -9503,7 +9503,7 @@
   },
   "linkTransferDesktopReceivingSongs": "{count, plural, =1{{name} cihazından 1 şarkı alınıyor} other{{name} cihazından {count} şarkı alınıyor}}",
   "@linkTransferDesktopReceivingSongs": {
-    "description": "Mornye Link desktop: snackbar when songs of the phone {name} start copying to this computer",
+    "description": "Munshid Link desktop: snackbar when songs of the phone {name} start copying to this computer",
     "placeholders": {
       "count": {
         "type": "int"
@@ -9515,15 +9515,15 @@
   },
   "linkTransferDesktopView": "Görüntüle",
   "@linkTransferDesktopView": {
-    "description": "Mornye Link desktop: snackbar action that opens the list of song transfers"
+    "description": "Munshid Link desktop: snackbar action that opens the list of song transfers"
   },
   "linkTransferDesktopNothingToSend": "Bu şarkıların hiçbiri şu anda gönderilemiyor",
   "@linkTransferDesktopNothingToSend": {
-    "description": "Mornye Link desktop: snackbar when Send to phone finds no song file on this computer to send"
+    "description": "Munshid Link desktop: snackbar when Send to phone finds no song file on this computer to send"
   },
   "linkTransferDesktopNothingToSave": "Bu şarkıların hiçbiri şu anda kaydedilemiyor",
   "@linkTransferDesktopNothingToSave": {
-    "description": "Mornye Link desktop: snackbar when Save to this computer finds no song of a connected phone"
+    "description": "Munshid Link desktop: snackbar when Save to this computer finds no song of a connected phone"
   },
   "desktopScrollBack": "Geri kaydır",
   "@desktopScrollBack": {
@@ -9553,19 +9553,19 @@
   "@desktopShortcutToggleSidebar": {
     "description": "Keyboard Shortcuts row for the shortcut that collapses or expands the desktop sidebar"
   },
-  "linkSettingsTitle": "Bilgisayarınızdaki Mornye",
+  "linkSettingsTitle": "Bilgisayarınızdaki Munshid",
   "@linkSettingsTitle": {
-    "description": "Phone Settings entry that pairs the phone with the Mornye desktop app on the local network"
+    "description": "Phone Settings entry that pairs the phone with the Munshid desktop app on the local network"
   },
   "linkSettingsSubtitle": "Bilgisayarınızın kitaplığını çalın ve denetleyin",
   "@linkSettingsSubtitle": {
-    "description": "Subtitle of the Mornye on your computer entry in phone Settings"
+    "description": "Subtitle of the Munshid on your computer entry in phone Settings"
   },
   "linkPageTitle": "Bilgisayarlar",
   "@linkPageTitle": {
-    "description": "Title of the page listing computers running Mornye that the phone can pair with; kept short for the large title"
+    "description": "Title of the page listing computers running Munshid that the phone can pair with; kept short for the large title"
   },
-  "linkPageDescription": "Kitaplığını bu telefonda çalmak ve ne çaldığını denetlemek için bilgisayarınızdaki Mornye ile eşleştirin. Her iki cihaz da aynı ağda olmalıdır.",
+  "linkPageDescription": "Kitaplığını bu telefonda çalmak ve ne çaldığını denetlemek için bilgisayarınızdaki Munshid ile eşleştirin. Her iki cihaz da aynı ağda olmalıdır.",
   "@linkPageDescription": {
     "description": "Introduction at the top of the computers page"
   },
@@ -9595,7 +9595,7 @@
   },
   "linkNearbySection": "Bu ağda",
   "@linkNearbySection": {
-    "description": "Section header for computers running Mornye found on the local network"
+    "description": "Section header for computers running Munshid found on the local network"
   },
   "linkSearching": "Bilgisayarlar aranıyor...",
   "@linkSearching": {
@@ -9605,9 +9605,9 @@
   "@linkNoneFoundTitle": {
     "description": "Row shown when the phone is not searching and found no computer"
   },
-  "linkNoneFound": "Bilgisayarınızda Mornye'yi açın ve ayarlarından Telefonunuzdaki Mornye ile paylaş seçeneğini açın.",
+  "linkNoneFound": "Bilgisayarınızda Munshid'yi açın ve ayarlarından Telefonunuzdaki Munshid ile paylaş seçeneğini açın.",
   "@linkNoneFound": {
-    "description": "Hint under the search row when no computer was found yet; Share with Mornye on your phone is the name of the desktop setting"
+    "description": "Hint under the search row when no computer was found yet; Share with Munshid on your phone is the name of the desktop setting"
   },
   "linkAddManually": "Adresle ekle",
   "@linkAddManually": {
@@ -9619,9 +9619,9 @@
   },
   "linkManualPort": "Bağlantı noktası",
   "@linkManualPort": {
-    "description": "Field label for the network port of the Mornye desktop server"
+    "description": "Field label for the network port of the Munshid desktop server"
   },
-  "linkManualMessage": "Bilgisayarınızdaki Mornye, paylaşımı açtığınız yerde adresini ve bağlantı noktasını gösterir.",
+  "linkManualMessage": "Bilgisayarınızdaki Munshid, paylaşımı açtığınız yerde adresini ve bağlantı noktasını gösterir.",
   "@linkManualMessage": {
     "description": "Explains where to find the address and port to type"
   },
@@ -9696,7 +9696,7 @@
       }
     }
   },
-  "linkPinNotOpen": "Eşleştirme henüz açık değil. PIN göstermek için bilgisayarınızdaki Mornye'de eşleştirmeyi başlatın.",
+  "linkPinNotOpen": "Eşleştirme henüz açık değil. PIN göstermek için bilgisayarınızdaki Munshid'de eşleştirmeyi başlatın.",
   "@linkPinNotOpen": {
     "description": "Note in the PIN dialog when the computer reports that no pairing window is open"
   },
@@ -9719,7 +9719,7 @@
   },
   "linkTransfersTitle": "Aktarımlar",
   "@linkTransfersTitle": {
-    "description": "Mornye Link: title of the list of songs copied between this device and a linked phone or computer, and of the rows that open it"
+    "description": "Munshid Link: title of the list of songs copied between this device and a linked phone or computer, and of the rows that open it"
   },
   "linkTransfersInProgress": "Devam edenler",
   "@linkTransfersInProgress": {
@@ -9988,11 +9988,11 @@
   "@linkErrorCertificate": {
     "description": "Warning shown when the certificate seen during the connection differs from the computer's reported fingerprint"
   },
-  "linkErrorIncompatible": "Bu bilgisayar, bu telefonla eşleşemeyen bir Mornye sürümü çalıştırıyor. Mornye'yi her iki cihazda da güncelleyin.",
+  "linkErrorIncompatible": "Bu bilgisayar, bu telefonla eşleşemeyen bir Munshid sürümü çalıştırıyor. Munshid'yi her iki cihazda da güncelleyin.",
   "@linkErrorIncompatible": {
-    "description": "Pairing error when the computer is not a compatible Mornye desktop"
+    "description": "Pairing error when the computer is not a compatible Munshid desktop"
   },
-  "linkErrorUnreachable": "Bilgisayara ulaşılamadı. Mornye'nin açık olduğunu ve iki cihazın da aynı ağda olduğunu kontrol edin.",
+  "linkErrorUnreachable": "Bilgisayara ulaşılamadı. Munshid'nin açık olduğunu ve iki cihazın da aynı ağda olduğunu kontrol edin.",
   "@linkErrorUnreachable": {
     "description": "Pairing error when the computer cannot be reached"
   },
@@ -10012,7 +10012,7 @@
   "@linkLocalNetworkTitle": {
     "description": "Title of the notice shown when the phone is not allowed to use the local network"
   },
-  "linkLocalNetworkMessage": "Mornye'nin bilgisayarınızı bulmak ve ona bağlanmak için yerel ağ erişimine ihtiyacı var.",
+  "linkLocalNetworkMessage": "Munshid'nin bilgisayarınızı bulmak ve ona bağlanmak için yerel ağ erişimine ihtiyacı var.",
   "@linkLocalNetworkMessage": {
     "description": "Explains why local network access is needed"
   },
@@ -10037,7 +10037,7 @@
       }
     }
   },
-  "linkIssueCertificate": "{name} farklı bir güvenlik sertifikası sundu. Yalnızca o bilgisayarda Mornye'yi yeniden yüklediyseniz veya sıfırladıysanız tekrar eşleştirin.",
+  "linkIssueCertificate": "{name} farklı bir güvenlik sertifikası sundu. Yalnızca o bilgisayarda Munshid'yi yeniden yüklediyseniz veya sıfırladıysanız tekrar eşleştirin.",
   "@linkIssueCertificate": {
     "description": "Warning when a paired computer's certificate changed",
     "placeholders": {
@@ -10046,7 +10046,7 @@
       }
     }
   },
-  "linkIssueIncompatible": "Bağlanmak için Mornye'yi bu telefonda ve {name} cihazında güncelleyin.",
+  "linkIssueIncompatible": "Bağlanmak için Munshid'yi bu telefonda ve {name} cihazında güncelleyin.",
   "@linkIssueIncompatible": {
     "description": "Notice when the paired computer speaks another protocol version",
     "placeholders": {
@@ -10233,7 +10233,7 @@
   "@recognizePermissionTitle": {
     "description": "Title when microphone permission was denied"
   },
-  "recognizePermissionMessage": "Mornye mikrofonu yalnızca bir şarkıyı tanımlarken kullanır.",
+  "recognizePermissionMessage": "Munshid mikrofonu yalnızca bir şarkıyı tanımlarken kullanır.",
   "@recognizePermissionMessage": {
     "description": "Explanation when microphone permission was denied"
   },
@@ -10241,11 +10241,11 @@
   "@recognizePermissionAllow": {
     "description": "Button that asks for microphone permission again"
   },
-  "recognizePlay": "Mornye'de çal",
+  "recognizePlay": "Munshid'de çal",
   "@recognizePlay": {
     "description": "Button that plays the identified song from the downloads or library"
   },
-  "recognizeSearch": "Mornye'de ara",
+  "recognizeSearch": "Munshid'de ara",
   "@recognizeSearch": {
     "description": "Button that searches for the identified song when it is not in the library"
   },
@@ -10303,7 +10303,7 @@
   },
   "reorganizeLibraryScanning": "Checking your files…",
   "@reorganizeLibraryScanning": {
-    "description": "Shown while Mornye works out which downloaded files need to move"
+    "description": "Shown while Munshid works out which downloaded files need to move"
   },
   "reorganizeLibraryBusy": "Wait for active downloads to finish before reorganizing files",
   "@reorganizeLibraryBusy": {
@@ -10313,7 +10313,7 @@
   "@reorganizeLibraryNothingTitle": {
     "description": "Dialog title when every downloaded file already follows the rules"
   },
-  "reorganizeLibraryNothingMessage": "{count, plural, =0{There are no tracks in your download folder to reorganize. Files Mornye did not download are included once the folder is added and scanned in Local Library.} =1{The track in your download folder already follows the current rules.} other{All {count} tracks in your download folder already follow the current rules.}}",
+  "reorganizeLibraryNothingMessage": "{count, plural, =0{There are no tracks in your download folder to reorganize. Files Munshid did not download are included once the folder is added and scanned in Local Library.} =1{The track in your download folder already follows the current rules.} other{All {count} tracks in your download folder already follow the current rules.}}",
   "@reorganizeLibraryNothingMessage": {
     "description": "Dialog message when there is nothing to move",
     "placeholders": {
@@ -10384,15 +10384,15 @@
       }
     }
   },
-  "reorganizeLibraryScanHint": "Files Mornye did not download are only included after their folder is added and scanned in Local Library.",
+  "reorganizeLibraryScanHint": "Files Munshid did not download are only included after their folder is added and scanned in Local Library.",
   "@reorganizeLibraryScanHint": {
     "description": "Hint in the reorganize confirmation dialog about which files are covered"
   },
-  "reorganizeLibraryKeepsPlaylistFolders": "Your folder rule uses the playlist name, which Mornye doesn't keep for past downloads, so files stay in their current folder and are only renamed.",
+  "reorganizeLibraryKeepsPlaylistFolders": "Your folder rule uses the playlist name, which Munshid doesn't keep for past downloads, so files stay in their current folder and are only renamed.",
   "@reorganizeLibraryKeepsPlaylistFolders": {
     "description": "Warning in the reorganize confirmation dialog when the folder rule depends on the playlist"
   },
-  "reorganizeLibraryDropsPlaylistFolders": "Mornye doesn't keep which playlist a past download came from, so tracks inside playlist folders will be moved out of them.",
+  "reorganizeLibraryDropsPlaylistFolders": "Munshid doesn't keep which playlist a past download came from, so tracks inside playlist folders will be moved out of them.",
   "@reorganizeLibraryDropsPlaylistFolders": {
     "description": "Warning in the reorganize confirmation dialog when playlist folders are enabled"
   },

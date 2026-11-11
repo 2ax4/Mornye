@@ -385,12 +385,13 @@ class AppRemoteConfigService {
     // its caller. Cached config and dismissal helpers need no HTTP resources.
     final client = _client ?? http.Client();
     try {
+      // Privacy: the request carries only what the announcement logic needs
+      // (platform family and release version). No build number, no locale,
+      // no identifiers of any kind.
       final uri = Uri.parse(endpoint).replace(
         queryParameters: {
           'platform': Platform.isAndroid ? 'android' : Platform.operatingSystem,
           'version': AppInfo.version,
-          'build': AppInfo.buildNumber,
-          if (locale != null && locale.isNotEmpty) 'locale': locale,
         },
       );
 

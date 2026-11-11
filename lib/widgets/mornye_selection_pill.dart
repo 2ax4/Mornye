@@ -98,7 +98,7 @@ class _MornyeSelectionPillState extends State<MornyeSelectionPill>
       _loadedSelectionMaskProgram = program;
       if (mounted) setState(() => _maskProgram = program);
     } catch (error) {
-      debugPrint('Mornye selection mask unavailable: $error');
+      debugPrint('Munshid selection mask unavailable: $error');
     }
   }
 

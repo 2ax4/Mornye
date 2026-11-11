@@ -257,7 +257,7 @@ class LinkOfflineSaver {
   final Future<bool> Function(String origin)? existsOrigin;
   final DateTime Function() _now;
 
-  static const service = 'Mornye Link';
+  static const service = 'Munshid Link';
 
   /// The history id of [songId] (contract section 13.2): the same song
   /// saved again replaces its record.
@@ -585,7 +585,7 @@ class LinkDownloadFolderDestination implements OfflineRollbackDestination {
       if (root.isEmpty) {
         root = p.join(
           (await getApplicationDocumentsDirectory()).path,
-          'Mornye',
+          'Munshid',
         );
       }
       final directory = Directory(p.joinAll([root, ...relativeDir.split('/')]));

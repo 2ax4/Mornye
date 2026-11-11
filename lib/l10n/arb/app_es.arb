@@ -1,7 +1,7 @@
 {
   "@@locale": "es",
   "@@last_modified": "2026-01-16",
-  "appName": "Mornye",
+  "appName": "Munshid",
   "@appName": {
     "description": "App name - DO NOT TRANSLATE"
   },
@@ -422,7 +422,7 @@
   "@setupStorageRequired": {
     "description": "Title when storage permission needed"
   },
-  "setupStorageDescription": "Mornye needs storage permission to save your downloaded music files.",
+  "setupStorageDescription": "Munshid needs storage permission to save your downloaded music files.",
   "@setupStorageDescription": {
     "description": "Explanation for storage permission"
   },
@@ -2295,13 +2295,13 @@
   "@libraryStorageAccessRequired": {
     "description": "Dialog title for storage permission"
   },
-  "libraryStorageAccessMessage": "Mornye needs storage access to scan your music library. Please grant permission in settings.",
+  "libraryStorageAccessMessage": "Munshid needs storage access to scan your music library. Please grant permission in settings.",
   "@libraryStorageAccessMessage": {
     "description": "Dialog message for storage permission"
   },
   "librarySourceDownloaded": "Downloaded",
   "@librarySourceDownloaded": {
-    "description": "Badge for tracks downloaded via Mornye"
+    "description": "Badge for tracks downloaded via Munshid"
   },
   "librarySourceLocal": "Local",
   "@librarySourceLocal": {
@@ -2429,7 +2429,7 @@
       }
     }
   },
-  "tutorialWelcomeTitle": "¡Te damos la bienvenida a Mornye!",
+  "tutorialWelcomeTitle": "¡Te damos la bienvenida a Munshid!",
   "@tutorialWelcomeTitle": {
     "description": "Tutorial welcome page title"
   },
@@ -3311,7 +3311,7 @@
   "@safMigrationTitle": {
     "description": "Title of SAF migration dialog"
   },
-  "safMigrationMessage1": "Mornye now uses Android Storage Access Framework (SAF) for downloads. This fixes \"permission denied\" errors on Android 10+.",
+  "safMigrationMessage1": "Munshid now uses Android Storage Access Framework (SAF) for downloads. This fixes \"permission denied\" errors on Android 10+.",
   "@safMigrationMessage1": {
     "description": "First paragraph of SAF migration dialog"
   },
@@ -4029,7 +4029,7 @@
   "@notifLibraryScanStopped": {
     "description": "Notification body when library scan is cancelled"
   },
-  "notifDownloadingUpdate": "Downloading Mornye v{version}",
+  "notifDownloadingUpdate": "Downloading Munshid v{version}",
   "@notifDownloadingUpdate": {
     "description": "Notification title while downloading an app update",
     "placeholders": {
@@ -4057,7 +4057,7 @@
   "@notifUpdateReady": {
     "description": "Notification title when app update download is complete"
   },
-  "notifUpdateReadyBody": "Mornye v{version} downloaded. Tap to install.",
+  "notifUpdateReadyBody": "Munshid v{version} downloaded. Tap to install.",
   "@notifUpdateReadyBody": {
     "description": "Notification body when app update is ready to install",
     "placeholders": {

@@ -20,9 +20,18 @@ typedef DesktopScrollArrowsBuilder =
 /// without them a mouse user cannot reach the rest of a shelf. Phones and
 /// tablets get the list unchanged.
 class DesktopScrollArrows extends StatefulWidget {
-  const DesktopScrollArrows({super.key, required this.builder});
+  const DesktopScrollArrows({
+    super.key,
+    required this.builder,
+    this.arrowInsets = EdgeInsets.zero,
+  });
 
   final DesktopScrollArrowsBuilder builder;
+
+  /// Inset applied to the arrow area so the paddings align with the card
+  /// row: when a shelf's list pads its cards asymmetrically, the arrows
+  /// center on the cards instead of the whole box.
+  final EdgeInsets arrowInsets;
 
   @override
   State<DesktopScrollArrows> createState() => _DesktopScrollArrowsState();
@@ -123,8 +132,8 @@ class _DesktopScrollArrowsState extends State<DesktopScrollArrows> {
       return PositionedDirectional(
         start: forward ? null : 6,
         end: forward ? 6 + _glassCover(context) : null,
-        top: 0,
-        bottom: 0,
+        top: widget.arrowInsets.top,
+        bottom: widget.arrowInsets.bottom,
         child: Center(
           child: Tooltip(
             message: forward
@@ -165,8 +174,8 @@ class _DesktopScrollArrowsState extends State<DesktopScrollArrows> {
     return PositionedDirectional(
       start: forward ? null : 8,
       end: forward ? 8 : null,
-      top: 0,
-      bottom: 0,
+      top: widget.arrowInsets.top,
+      bottom: widget.arrowInsets.bottom,
       child: Center(
         child: Tooltip(
           message: forward ? l10n.desktopScrollForward : l10n.desktopScrollBack,

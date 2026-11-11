@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Version=1.4
-Name=Mornye
+Name=Munshid
 GenericName=Music Player
 Comment=Play, organize and download your music library
 Exec=mornye %U

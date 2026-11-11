@@ -5,6 +5,11 @@ extension _MainShellStartupPrompts on _MainShellState {
     if (_hasCheckedAppAnnouncement) return;
     _hasCheckedAppAnnouncement = true;
 
+    // Privacy: the announcement check is the app's only phone-home request.
+    // It shares the "Check for Updates" switch and never runs when that is
+    // off, so the app starts fully offline unless the user opted in.
+    if (!ref.read(settingsProvider).checkForUpdates) return;
+
     final locale = Localizations.localeOf(context).toLanguageTag();
     final remoteConfigService = AppRemoteConfigService();
     final announcement = await remoteConfigService.fetchActiveAnnouncement(

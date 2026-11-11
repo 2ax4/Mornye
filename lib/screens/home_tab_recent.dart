@@ -234,7 +234,10 @@ extension _HomeTabRecentUI on _HomeTabState {
     final inset = 16 + homeContentInset(context);
     return SizedBox(
       height: cardHeight + 20,
+      // The list pads its cards 4 top / 16 bottom inside this box, so the
+      // arrows inset by the same amounts to center on the cards themselves.
       child: DesktopScrollArrows(
+        arrowInsets: const EdgeInsets.only(top: 4, bottom: 16),
         builder: (context, controller) => ListView.separated(
           key: const ValueKey('recent-access-cards'),
           controller: controller,

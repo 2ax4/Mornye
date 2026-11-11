@@ -12,10 +12,10 @@ void main() {
 
         expect(
           strings.tutorialWelcomeTitle,
-          contains('Mornye'),
+          contains('Munshid'),
           reason: 'Unexpected app name for $locale',
         );
-        expect(strings.appName, 'Mornye', reason: 'App name for $locale');
+        expect(strings.appName, 'Munshid', reason: 'App name for $locale');
         expect(
           setupTagline,
           isNot(contains('spotify')),

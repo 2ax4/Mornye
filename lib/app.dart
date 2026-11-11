@@ -26,6 +26,7 @@ import 'package:mornye/widgets/android_keyboard_lifecycle.dart';
 import 'package:mornye/widgets/app_snack_bar.dart';
 import 'package:mornye/widgets/desktop/desktop_shortcuts.dart';
 import 'package:mornye/widgets/desktop/library_drop_target.dart';
+import 'package:mornye/widgets/desktop/smooth_wheel_scroll.dart';
 import 'package:mornye/widgets/link/link_actions.dart';
 import 'package:mornye/widgets/mornye_glass_preparation.dart';
 import 'package:mornye/widgets/playback_feedback.dart';
@@ -98,28 +99,41 @@ class _FluidScrollBehavior extends _VerticalScrollbarBehavior {
 /// Desktop scrollbars mark long vertical content only. Rows that scroll
 /// sideways (carousels, shelves, recent cards) already show arrows and read
 /// cleaner without a bar.
+///
+/// With [smoothWheel] the wrapper animates mouse wheel steps on vertical
+/// lists instead of Flutter's per-notch jump; horizontal shelves keep
+/// their native handling and arrows.
 class _VerticalScrollbarBehavior extends MaterialScrollBehavior {
-  const _VerticalScrollbarBehavior();
+  const _VerticalScrollbarBehavior({this.smoothWheel = false});
+
+  final bool smoothWheel;
 
   @override
   Widget buildScrollbar(
     BuildContext context,
     Widget child,
     ScrollableDetails details,
-  ) => axisDirectionToAxis(details.direction) == Axis.horizontal
-      ? child
-      : super.buildScrollbar(context, child, details);
+  ) {
+    if (axisDirectionToAxis(details.direction) == Axis.horizontal) {
+      return child;
+    }
+    final Widget scoped = smoothWheel ? SmoothWheelScroll(child: child) : child;
+    return super.buildScrollbar(context, scoped, details);
+  }
 }
 
 /// Mobile and macOS use the fluid bounce. Windows and Linux keep Material's
 /// desktop behavior: clamping physics with scrollbars.
 @visibleForTesting
-ScrollBehavior appScrollBehavior({required bool disableOverscrollEffects}) {
+ScrollBehavior appScrollBehavior({
+  required bool disableOverscrollEffects,
+  bool smoothScrolling = false,
+}) {
   if (disableOverscrollEffects) {
     return const _VerticalScrollbarBehavior().copyWith(overscroll: false);
   }
   if (isDesktopPlatform && defaultTargetPlatform != TargetPlatform.macOS) {
-    return const _VerticalScrollbarBehavior();
+    return _VerticalScrollbarBehavior(smoothWheel: smoothScrolling);
   }
   return const _FluidScrollBehavior();
 }
@@ -273,6 +287,9 @@ class MornyeApp extends ConsumerWidget {
     );
     final scrollBehavior = appScrollBehavior(
       disableOverscrollEffects: disableOverscrollEffects,
+      smoothScrolling: ref.watch(
+        settingsProvider.select((s) => s.smoothScrollingEnabled),
+      ),
     );
 
     final locale = localeFromSetting(localeString);

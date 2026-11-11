@@ -53,7 +53,9 @@ class AppearanceSettingsPage extends ConsumerWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          style == AppThemeStyle.mornye ? 'Mornye' : 'Material',
+                          style == AppThemeStyle.mornye
+                              ? 'Munshid'
+                              : 'Material',
                         ),
                         if (style == AppThemeStyle.mornye)
                           Container(
@@ -273,6 +275,15 @@ class AppearanceSettingsPage extends ConsumerWidget {
                     onChanged: (value) => ref
                         .read(settingsProvider.notifier)
                         .setHeroAnimationsEnabled(value),
+                  ),
+                  SettingsSwitchItem(
+                    icon: Icons.waves,
+                    title: context.l10n.appearanceSmoothScrolling,
+                    subtitle: context.l10n.appearanceSmoothScrollingSubtitle,
+                    value: settings.smoothScrollingEnabled,
+                    onChanged: (value) => ref
+                        .read(settingsProvider.notifier)
+                        .setSmoothScrollingEnabled(value),
                   ),
                   const CustomFontSetting(),
                   SettingsSwitchItem(

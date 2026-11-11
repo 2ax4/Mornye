@@ -1,7 +1,7 @@
 {
   "@@locale": "zh",
   "@@last_modified": "2026-04-28",
-  "appName": "Mornye",
+  "appName": "Munshid",
   "@appName": {
     "description": "App name - DO NOT TRANSLATE"
   },
@@ -582,7 +582,7 @@
   "@setupStorageRequired": {
     "description": "Title when storage permission needed"
   },
-  "setupStorageDescription": "Mornye 需要存储权限来保存下载的音乐文件。",
+  "setupStorageDescription": "Munshid 需要存储权限来保存下载的音乐文件。",
   "@setupStorageDescription": {
     "description": "Explanation for storage permission"
   },
@@ -2467,7 +2467,7 @@
   "@libraryRemoveFolder": {
     "description": "Action to remove one indexed library source"
   },
-  "libraryRemoveFolderMessage": "Remove this folder and its indexed tracks from Mornye? Audio files on the storage will not be deleted.",
+  "libraryRemoveFolderMessage": "Remove this folder and its indexed tracks from Munshid? Audio files on the storage will not be deleted.",
   "@libraryRemoveFolderMessage": {
     "description": "Confirmation shown before removing a library source"
   },
@@ -2623,13 +2623,13 @@
   "@libraryStorageAccessRequired": {
     "description": "Dialog title for storage permission"
   },
-  "libraryStorageAccessMessage": "Mornye needs storage access to scan your music library. Please grant permission in settings.",
+  "libraryStorageAccessMessage": "Munshid needs storage access to scan your music library. Please grant permission in settings.",
   "@libraryStorageAccessMessage": {
     "description": "Dialog message for storage permission"
   },
   "librarySourceDownloaded": "Downloaded",
   "@librarySourceDownloaded": {
-    "description": "Badge for tracks downloaded via Mornye"
+    "description": "Badge for tracks downloaded via Munshid"
   },
   "librarySourceLocal": "Local",
   "@librarySourceLocal": {
@@ -2757,11 +2757,11 @@
       }
     }
   },
-  "tutorialWelcomeTitle": "Welcome to Mornye!",
+  "tutorialWelcomeTitle": "Welcome to Munshid!",
   "@tutorialWelcomeTitle": {
     "description": "Tutorial welcome page title"
   },
-  "tutorialWelcomeDesc": "Learn how to find music with extensions, choose the quality you want, and manage downloads in Mornye.",
+  "tutorialWelcomeDesc": "Learn how to find music with extensions, choose the quality you want, and manage downloads in Munshid.",
   "@tutorialWelcomeDesc": {
     "description": "Tutorial welcome page description"
   },
@@ -3807,7 +3807,7 @@
   "@safMigrationTitle": {
     "description": "Title of SAF migration dialog"
   },
-  "safMigrationMessage1": "Mornye now uses Android Storage Access Framework (SAF) for downloads. This fixes \"permission denied\" errors on Android 10+.",
+  "safMigrationMessage1": "Munshid now uses Android Storage Access Framework (SAF) for downloads. This fixes \"permission denied\" errors on Android 10+.",
   "@safMigrationMessage1": {
     "description": "First paragraph of SAF migration dialog"
   },
@@ -3887,7 +3887,7 @@
   "@backupRestoreFailed": {
     "description": "Snackbar when restore fails"
   },
-  "backupInvalidFile": "This file is not a valid Mornye backup",
+  "backupInvalidFile": "This file is not a valid Munshid backup",
   "@backupInvalidFile": {
     "description": "Snackbar when the chosen file is not a valid backup"
   },
@@ -4867,7 +4867,7 @@
   "@notifLibraryScanStopped": {
     "description": "Notification body when library scan is cancelled"
   },
-  "notifDownloadingUpdate": "Downloading Mornye v{version}",
+  "notifDownloadingUpdate": "Downloading Munshid v{version}",
   "@notifDownloadingUpdate": {
     "description": "Notification title while downloading an app update",
     "placeholders": {
@@ -4895,7 +4895,7 @@
   "@notifUpdateReady": {
     "description": "Notification title when app update download is complete"
   },
-  "notifUpdateReadyBody": "Mornye v{version} downloaded. Tap to install.",
+  "notifUpdateReadyBody": "Munshid v{version} downloaded. Tap to install.",
   "@notifUpdateReadyBody": {
     "description": "Notification body when app update is ready to install",
     "placeholders": {
@@ -5663,7 +5663,7 @@
   "@extensionCustomUrlHandlingSubtitle": {
     "description": "Extension detail subtitle for custom URL handling"
   },
-  "extensionCustomUrlHandlingShareHint": "Share links from these sites to Mornye and this extension will handle them.",
+  "extensionCustomUrlHandlingShareHint": "Share links from these sites to Munshid and this extension will handle them.",
   "@extensionCustomUrlHandlingShareHint": {
     "description": "Extension detail hint explaining share-to-app URL handling"
   },
@@ -5873,7 +5873,7 @@
   "@libraryBuiltInPreviewPlayer": {
     "description": "Setting option to use the built-in preview player"
   },
-  "libraryBuiltInPreviewPlayerSubtitle": "Play your music right inside Mornye",
+  "libraryBuiltInPreviewPlayerSubtitle": "Play your music right inside Munshid",
   "@libraryBuiltInPreviewPlayerSubtitle": {
     "description": "Subtitle for built-in preview player option"
   },
@@ -6255,11 +6255,11 @@
   "@extensionVerificationHelpTitleWaiting": {
     "description": "Dialog title when verification is taking longer than expected"
   },
-  "extensionVerificationHelpMessageManual": "Mornye could not open the browser automatically. Open this link in your browser, or copy it manually.",
+  "extensionVerificationHelpMessageManual": "Munshid could not open the browser automatically. Open this link in your browser, or copy it manually.",
   "@extensionVerificationHelpMessageManual": {
     "description": "Dialog message when automatic browser launch for verification fails"
   },
-  "extensionVerificationHelpMessageWaiting": "If the browser did not open, or verification finished but did not return to Mornye, open this link again or copy it manually.",
+  "extensionVerificationHelpMessageWaiting": "If the browser did not open, or verification finished but did not return to Munshid, open this link again or copy it manually.",
   "@extensionVerificationHelpMessageWaiting": {
     "description": "Dialog message when verification may need manual browser help"
   },

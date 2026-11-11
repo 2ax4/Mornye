@@ -48,7 +48,7 @@ class AppDelegate: FlutterAppDelegate {
     {
       FileHandle.standardError.write(
         Data(
-          "Mornye is already running (pid \(running.processIdentifier)); quit it first.\n"
+          "Munshid is already running (pid \(running.processIdentifier)); quit it first.\n"
             .utf8))
       running.activate()
       exit(0)

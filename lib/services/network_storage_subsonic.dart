@@ -58,7 +58,7 @@ Uri _subsonicTarget(
   path.add('$method.view');
   final parameters = <String, String>{
     'v': '1.16.1',
-    'c': 'Mornye',
+    'c': 'Munshid',
     'f': 'json',
     ...arguments,
   };

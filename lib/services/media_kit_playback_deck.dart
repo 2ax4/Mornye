@@ -64,13 +64,13 @@ abstract interface class MpvPlaylistEngine implements MpvEngine {
 class MediaKitEngine implements MpvEngine, MpvPlaylistEngine {
   MediaKitEngine()
     : _player = NativePlayer(
-        configuration: const PlayerConfiguration(title: 'Mornye'),
+        configuration: const PlayerConfiguration(title: 'Munshid'),
       ) {
     _player.onLoadHooks.add(_onLoad);
     _configured = Future.wait([
       // Names the PulseAudio and PipeWire stream. The app applies ReplayGain
       // itself, so mpv's stays at its default (off).
-      setProperty('audio-client-name', 'Mornye'),
+      setProperty('audio-client-name', 'Munshid'),
       // media_kit caches streams on disk, which fails where the cache folder
       // is not writable and reports a load error. Memory is enough for audio.
       setProperty('cache-on-disk', 'no'),

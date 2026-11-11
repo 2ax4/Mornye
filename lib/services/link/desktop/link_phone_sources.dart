@@ -585,7 +585,7 @@ class LinkPhoneSources
     for (final pending in _answers.values.toList()) {
       if (!pending.answer.isCompleted) {
         pending.answer.completeError(
-          const LinkException('unavailable', 'Mornye Link stopped'),
+          const LinkException('unavailable', 'Munshid Link stopped'),
         );
       }
     }

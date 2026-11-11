@@ -193,6 +193,10 @@ class AppSettings {
   /// into the full player. Off skips the flights entirely.
   final bool heroAnimationsEnabled;
 
+  /// Desktop only: animates mouse wheel scrolling instead of jumping per
+  /// notch. Off keeps Flutter's instant wheel steps.
+  final bool smoothScrollingEnabled;
+
   /// Forces the shell's backdrop blur on even when the startup runtime
   /// profile disabled it for this device tier. Off means "follow the
   /// device default".
@@ -371,6 +375,7 @@ class AppSettings {
     this.albumFolderStructure = 'artist_album',
     this.showExtensionStore = true,
     this.heroAnimationsEnabled = true,
+    this.smoothScrollingEnabled = true,
     this.forceBackdropBlur = false,
     this.extensionVerificationBrowserMode = 'in_app_first',
     this.locale = 'system',
@@ -530,6 +535,7 @@ class AppSettings {
     String? albumFolderStructure,
     bool? showExtensionStore,
     bool? heroAnimationsEnabled,
+    bool? smoothScrollingEnabled,
     bool? forceBackdropBlur,
     String? extensionVerificationBrowserMode,
     String? locale,
@@ -690,6 +696,8 @@ class AppSettings {
       showExtensionStore: showExtensionStore ?? this.showExtensionStore,
       heroAnimationsEnabled:
           heroAnimationsEnabled ?? this.heroAnimationsEnabled,
+      smoothScrollingEnabled:
+          smoothScrollingEnabled ?? this.smoothScrollingEnabled,
       forceBackdropBlur: forceBackdropBlur ?? this.forceBackdropBlur,
       extensionVerificationBrowserMode:
           extensionVerificationBrowserMode ??

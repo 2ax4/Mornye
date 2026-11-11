@@ -1013,6 +1013,9 @@ class SettingsNotifier extends Notifier<AppSettings> {
   void setHeroAnimationsEnabled(bool enabled) =>
       _commit(state.copyWith(heroAnimationsEnabled: enabled));
 
+  void setSmoothScrollingEnabled(bool enabled) =>
+      _commit(state.copyWith(smoothScrollingEnabled: enabled));
+
   void setForceBackdropBlur(bool enabled) =>
       _commit(state.copyWith(forceBackdropBlur: enabled));
 

@@ -10,7 +10,7 @@ bool get isLinkPhonePlatform => !isDesktopPlatform;
 /// The paired desktop's name for labels such as "Play on Studio PC".
 String linkDesktopName(LinkClientApi client) {
   final name = client.server.name.trim();
-  return name.isEmpty ? 'Mornye' : name;
+  return name.isEmpty ? 'Munshid' : name;
 }
 
 /// The paired desktop's session on a phone, or null when none is paired or

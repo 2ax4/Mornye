@@ -63,7 +63,7 @@
   "@linkFileJobsView": {
     "description": "Snackbar action that opens the file changes list to see which songs failed"
   },
-  "linkFileJobsUnsupported": "Cập nhật Mornye trên máy tính của bạn để quản lý các tệp nhạc từ điện thoại này.",
+  "linkFileJobsUnsupported": "Cập nhật Munshid trên máy tính của bạn để quản lý các tệp nhạc từ điện thoại này.",
   "linkFileSelectionOneDevice": "Chọn bài hát từ một máy tính được liên kết tại một thời điểm (tối đa 100 bài hát).",
   "linkFileJobProgress": "Đã xong {finished}/{total} {total, plural, =1{bài hát} other{bài hát}}\n",
   "@linkFileJobProgress": {
@@ -178,7 +178,7 @@
   "@networkErrorPermission": {
     "description": "Network access error when the server denies account permissions for a shared folder; distinct from the device's local network permission"
   },
-  "networkErrorLocalPermission": "Không cho phép truy cập mạng cục bộ. Hãy bật thiết bị lân cận cho Mornye trong phần cài đặt ứng dụng Android, sau đó thử lại.",
+  "networkErrorLocalPermission": "Không cho phép truy cập mạng cục bộ. Hãy bật thiết bị lân cận cho Munshid trong phần cài đặt ứng dụng Android, sau đó thử lại.",
   "@networkErrorLocalPermission": {
     "description": "Network access error when Android denies local network permission; Nearby devices is the Android app permission setting"
   },
@@ -299,8 +299,8 @@
   "exclusiveOutputWindows": "Chế độ độc quyền WASAPI",
   "exclusiveOutputMacos": "Truy cập độc quyền (chế độ chiếm quyền độc quyền)",
   "exclusiveOutputLinux": "Đầu ra ALSA trực tiếp",
-  "exclusiveOutputDescriptionWindows": "Bỏ qua bộ trộn Windows để đầu ra khớp với tần số lấy mẫu và độ sâu bit của từng bài hát. Các ứng dụng khác không thể phát âm thanh khi Mornye đang giữ thiết bị. Tự động trộn và bản xem trước sẽ tắt ở chế độ này. Để có đầu ra chuẩn bit (bit-perfect), hãy giữ âm lượng ở mức 100% với bộ cân chỉnh âm thanh (equalizer) và tính năng chuẩn hóa (normalization) tắt.",
-  "exclusiveOutputDescriptionMacos": "Giữ thiết bị đầu ra chỉ dành riêng cho Mornye và chuyển đổi theo tần số lấy mẫu và độ sâu bit của từng bài hát, để Core Audio không thực hiện việc lấy mẫu lại. Các ứng dụng khác không thể phát âm thanh khi Mornye đang giữ thiết bị. Tự động trộn (AutoMix) và các bản xem trước sẽ tắt ở chế độ này. Để có đầu ra chuẩn bit (bit-perfect), hãy giữ âm lượng ở mức 100% với bộ cân chỉnh âm thanh (equalizer) và tính năng chuẩn hóa (normalization) tắt.\n",
+  "exclusiveOutputDescriptionWindows": "Bỏ qua bộ trộn Windows để đầu ra khớp với tần số lấy mẫu và độ sâu bit của từng bài hát. Các ứng dụng khác không thể phát âm thanh khi Munshid đang giữ thiết bị. Tự động trộn và bản xem trước sẽ tắt ở chế độ này. Để có đầu ra chuẩn bit (bit-perfect), hãy giữ âm lượng ở mức 100% với bộ cân chỉnh âm thanh (equalizer) và tính năng chuẩn hóa (normalization) tắt.",
+  "exclusiveOutputDescriptionMacos": "Giữ thiết bị đầu ra chỉ dành riêng cho Munshid và chuyển đổi theo tần số lấy mẫu và độ sâu bit của từng bài hát, để Core Audio không thực hiện việc lấy mẫu lại. Các ứng dụng khác không thể phát âm thanh khi Munshid đang giữ thiết bị. Tự động trộn (AutoMix) và các bản xem trước sẽ tắt ở chế độ này. Để có đầu ra chuẩn bit (bit-perfect), hãy giữ âm lượng ở mức 100% với bộ cân chỉnh âm thanh (equalizer) và tính năng chuẩn hóa (normalization) tắt.\n",
   "exclusiveOutputDescriptionLinux": "Phát trực tiếp tới thiết bị phần cứng ALSA, bỏ qua PipeWire hoặc PulseAudio, để đầu ra khớp với tần số lấy mẫu và độ sâu bit của từng bài hát. Thiết bị phải ở trạng thái rảnh: máy chủ âm thanh sẽ giải phóng card đang nhàn rỗi sau vài giây, hoặc đặt cấu hình của card thành Tắt. Tự động trộn (AutoMix) và các bản xem trước sẽ tắt ở chế độ này.",
   "exclusiveOutputPending": "Chiếm thiết bị khi phát",
   "exclusiveOutputActive": "Đang phát ở chế độ độc quyền",
@@ -325,7 +325,7 @@
   "cacheMotionArtworkDesc": "Video ảnh bìa động của album được lưu kèm khi tải nhạc. Nếu xóa chúng, các tệp nhạc và ảnh bìa tĩnh của bạn vẫn được giữ nguyên.",
   "nowPlayingVolume": "Âm lượng",
   "@nowPlayingVolume": {
-    "description": "System volume control label in the Mornye player"
+    "description": "System volume control label in the Munshid player"
   },
   "appearanceStyle": "Phong cách giao diện",
   "appearanceAccentRed": "Đỏ (mặc định)",
@@ -337,14 +337,14 @@
   "appearanceAccentPink": "Hồng",
   "appearanceGlassClarity": "Độ trong suốt hiệu ứng kính",
   "appearanceGlassOutlines": "Viền hiệu ứng kính",
-  "appearanceGlassOutlinesSubtitle": "Hiển thị đường viền trang trí quanh các khung kính của Mornye. Khi tắt, hiệu ứng làm mờ và khúc xạ vẫn được giữ nguyên.",
-  "appearanceGlassClaritySubtitle": "Điều chỉnh độ trong suốt của các menu và thanh điều hướng trong Mornye. Độ tương phản của chữ vẫn được giữ rõ nét.",
+  "appearanceGlassOutlinesSubtitle": "Hiển thị đường viền trang trí quanh các khung kính của Munshid. Khi tắt, hiệu ứng làm mờ và khúc xạ vẫn được giữ nguyên.",
+  "appearanceGlassClaritySubtitle": "Điều chỉnh độ trong suốt của các menu và thanh điều hướng trong Munshid. Độ tương phản của chữ vẫn được giữ rõ nét.",
   "appearanceGlassTinted": "Phủ màu",
   "appearanceGlassClear": "Xóa",
   "appearanceGlassClearPerformance": "Hiệu ứng kính trong suốt cao có thể tốn pin hơn và giảm độ mượt trên các máy đời cũ. Hãy giảm độ trong suốt nếu cần.",
   "appearanceGlassClarityBlurOff": "Hiệu ứng kính đang bị làm đục trên thiết bị này. Hãy bật “{setting}” để điều chỉnh độ trong suốt.",
   "@appearanceGlassClarityBlurOff": {
-    "description": "Shown under the disabled glass clarity slider when the device renders Mornye glass without blur. The placeholder is the name of the force-blur toggle.",
+    "description": "Shown under the disabled glass clarity slider when the device renders Munshid glass without blur. The placeholder is the name of the force-blur toggle.",
     "placeholders": {
       "setting": {
         "type": "String"
@@ -367,7 +367,7 @@
   },
   "@@locale": "vi",
   "@@last_modified": "2026-04-28",
-  "appName": "Mornye",
+  "appName": "Munshid",
   "@appName": {
     "description": "App name - DO NOT TRANSLATE"
   },
@@ -877,7 +877,7 @@
   },
   "aboutServiceStatus": "Trạng thái dịch vụ",
   "@aboutServiceStatus": {
-    "description": "Link to the status page of the Mornye online services"
+    "description": "Link to the status page of the Munshid online services"
   },
   "aboutReportIssue": "Báo lỗi / Sự cố",
   "@aboutReportIssue": {
@@ -1088,7 +1088,7 @@
   "@setupStorageRequired": {
     "description": "Title when storage permission needed"
   },
-  "setupStorageDescription": "Mornye cần quyền truy cập bộ nhớ để lưu các tệp nhạc đã tải về.",
+  "setupStorageDescription": "Munshid cần quyền truy cập bộ nhớ để lưu các tệp nhạc đã tải về.",
   "@setupStorageDescription": {
     "description": "Explanation for storage permission"
   },
@@ -1128,7 +1128,7 @@
   "@setupNearbyEnable": {
     "description": "Setup step title and button for the Android Nearby devices permission; Nearby devices is the Android permission name"
   },
-  "setupNearbyDescription": "Mornye Link dùng tính năng này để tìm máy tính của bạn trên cùng mạng, và lưu trữ mạng cần nó để kết nối tới máy chủ tại nhà.",
+  "setupNearbyDescription": "Munshid Link dùng tính năng này để tìm máy tính của bạn trên cùng mạng, và lưu trữ mạng cần nó để kết nối tới máy chủ tại nhà.",
   "@setupNearbyDescription": {
     "description": "Setup step explaining why Android's Nearby devices permission is needed"
   },
@@ -1152,17 +1152,17 @@
   "@whatsNewNearbyTitle": {
     "description": "Title of the What's New page that asks for Android's Nearby devices permission; use Android's name for this permission"
   },
-  "whatsNewNearbyDesc": "Android sẽ hỏi trước khi cho phép một ứng dụng truy cập các thiết bị khác trong mạng của bạn. Mornye cần quyền này để:",
+  "whatsNewNearbyDesc": "Android sẽ hỏi trước khi cho phép một ứng dụng truy cập các thiết bị khác trong mạng của bạn. Munshid cần quyền này để:",
   "@whatsNewNearbyDesc": {
     "description": "Description on the Nearby devices page of the What's New tour, followed by a list of uses"
   },
   "whatsNewNearbyLinkTitle": "Tìm máy tính của bạn",
   "@whatsNewNearbyLinkTitle": {
-    "description": "Use of the Nearby devices permission: Mornye Link finds the computer"
+    "description": "Use of the Nearby devices permission: Munshid Link finds the computer"
   },
-  "whatsNewNearbyLinkBody": "Mornye Link tìm kiếm máy tính của bạn trên cùng mạng Wi-Fi và duy trì kết nối với máy tính đó.",
+  "whatsNewNearbyLinkBody": "Munshid Link tìm kiếm máy tính của bạn trên cùng mạng Wi-Fi và duy trì kết nối với máy tính đó.",
   "@whatsNewNearbyLinkBody": {
-    "description": "Explains how Mornye Link uses the Nearby devices permission"
+    "description": "Explains how Munshid Link uses the Nearby devices permission"
   },
   "whatsNewNearbyStorageTitle": "Lưu trữ mạng",
   "@whatsNewNearbyStorageTitle": {
@@ -1176,11 +1176,11 @@
   "@whatsNewNearbyPrivateTitle": {
     "description": "Reassurance on the Nearby devices page of the What's New tour"
   },
-  "whatsNewNearbyPrivateBody": "Mornye chỉ dùng tính năng này để kết nối với các thiết bị trên mạng của bạn, chứ không bao giờ để tìm vị trí của bạn.",
+  "whatsNewNearbyPrivateBody": "Munshid chỉ dùng tính năng này để kết nối với các thiết bị trên mạng của bạn, chứ không bao giờ để tìm vị trí của bạn.",
   "@whatsNewNearbyPrivateBody": {
     "description": "Explains that the Nearby devices permission is not used for location"
   },
-  "whatsNewNearbyRefused": "Không được phép. Mornye Link và tính năng lưu trữ mạng vẫn tắt cho đến khi bạn cho phép thiết bị lân cận cho Mornye trong cài đặt Android.",
+  "whatsNewNearbyRefused": "Không được phép. Munshid Link và tính năng lưu trữ mạng vẫn tắt cho đến khi bạn cho phép thiết bị lân cận cho Munshid trong cài đặt Android.",
   "@whatsNewNearbyRefused": {
     "description": "Shown on the Nearby devices page of the What's New tour after the permission is refused"
   },
@@ -1832,15 +1832,15 @@
   "@updateStartingInstaller": {
     "description": "Update status on Windows - the downloaded installer is starting and the app will close"
   },
-  "updateMacInstallHint": "Tệp ảnh đĩa đã mở trong Finder. Hãy thoát Mornye, sau đó kéo Mornye từ ảnh đĩa vào Applications và thay thế bản cũ.",
+  "updateMacInstallHint": "Tệp ảnh đĩa đã mở trong Finder. Hãy thoát Munshid, sau đó kéo Munshid từ ảnh đĩa vào Applications và thay thế bản cũ.",
   "@updateMacInstallHint": {
     "description": "Update instructions on macOS after the downloaded disk image opens"
   },
-  "updateQuitApp": "Thoát Mornye",
+  "updateQuitApp": "Thoát Munshid",
   "@updateQuitApp": {
     "description": "Update button on macOS - quit the app so the new version can replace it"
   },
-  "updateReadyToRestart": "Bản cập nhật đã được cài đặt. Hãy khởi động lại Mornye để sử dụng.",
+  "updateReadyToRestart": "Bản cập nhật đã được cài đặt. Hãy khởi động lại Munshid để sử dụng.",
   "@updateReadyToRestart": {
     "description": "Update status on Linux after the AppImage was replaced"
   },
@@ -3124,7 +3124,7 @@
   "@libraryRemoveFolder": {
     "description": "Action to remove one indexed library source"
   },
-  "libraryRemoveFolderMessage": "Xóa thư mục này và các bài hát đã lập chỉ mục khỏi Mornye? Các tệp âm thanh trong bộ nhớ sẽ không bị xóa.",
+  "libraryRemoveFolderMessage": "Xóa thư mục này và các bài hát đã lập chỉ mục khỏi Munshid? Các tệp âm thanh trong bộ nhớ sẽ không bị xóa.",
   "@libraryRemoveFolderMessage": {
     "description": "Confirmation shown before removing a library source"
   },
@@ -3314,13 +3314,13 @@
   "@libraryStorageAccessRequired": {
     "description": "Dialog title for storage permission"
   },
-  "libraryStorageAccessMessage": "Mornye cần quyền truy cập bộ nhớ để quét thư viện nhạc của bạn. Vui lòng cấp quyền trong phần cài đặt.",
+  "libraryStorageAccessMessage": "Munshid cần quyền truy cập bộ nhớ để quét thư viện nhạc của bạn. Vui lòng cấp quyền trong phần cài đặt.",
   "@libraryStorageAccessMessage": {
     "description": "Dialog message for storage permission"
   },
   "librarySourceDownloaded": "Đã tải xuống",
   "@librarySourceDownloaded": {
-    "description": "Badge for tracks downloaded via Mornye"
+    "description": "Badge for tracks downloaded via Munshid"
   },
   "librarySourceLocal": "Trên máy",
   "@librarySourceLocal": {
@@ -3472,11 +3472,11 @@
       }
     }
   },
-  "tutorialWelcomeTitle": "Chào mừng bạn đến với Mornye!",
+  "tutorialWelcomeTitle": "Chào mừng bạn đến với Munshid!",
   "@tutorialWelcomeTitle": {
     "description": "Tutorial welcome page title"
   },
-  "tutorialWelcomeDesc": "Tìm hiểu cách tìm nhạc bằng các tiện ích mở rộng, chọn chất lượng mong muốn và quản lý tải xuống trong Mornye.",
+  "tutorialWelcomeDesc": "Tìm hiểu cách tìm nhạc bằng các tiện ích mở rộng, chọn chất lượng mong muốn và quản lý tải xuống trong Munshid.",
   "@tutorialWelcomeDesc": {
     "description": "Tutorial welcome page description"
   },
@@ -3572,7 +3572,7 @@
   "@tutorialReadyMessage": {
     "description": "Tutorial completion message"
   },
-  "whatsNewIntroTitle": "Mornye phiên bản {version} đã có",
+  "whatsNewIntroTitle": "Munshid phiên bản {version} đã có",
   "@whatsNewIntroTitle": {
     "description": "First page of the tour shown once after updating; version is like 5.3",
     "placeholders": {
@@ -3582,8 +3582,8 @@
     }
   },
   "whatsNewIntroDesc": "Bản cập nhật lớn nhất từ trước đến nay của chúng tôi. Dưới đây là cái nhìn nhanh về những điểm mới.",
-  "whatsNewLinkTitle": "Mornye Link",
-  "whatsNewLinkDesc": "Ghép đôi điện thoại và máy tính của bạn trên cùng một mạng. Mornye Link đang trong giai đoạn thử nghiệm.",
+  "whatsNewLinkTitle": "Munshid Link",
+  "whatsNewLinkDesc": "Ghép đôi điện thoại và máy tính của bạn trên cùng một mạng. Munshid Link đang trong giai đoạn thử nghiệm.",
   "whatsNewLinkPlayTitle": "Phát nhạc trên các thiết bị",
   "whatsNewLinkPlayBody": "Duyệt qua thư viện của máy tính trên điện thoại, điều khiển nội dung đang phát và chuyển đổi quá trình phát mà không bị mất vị trí.",
   "whatsNewLinkTransferTitle": "Chuyển bài hát theo cả hai hướng",
@@ -3597,7 +3597,7 @@
   "whatsNewHomeAutoplayTitle": "Tự động phát thông minh hơn",
   "whatsNewHomeAutoplayBody": "Tính năng tự động phát bám sát phiên nghe nhạc của bạn và học hỏi từ các bài hát yêu thích, danh sách phát cũng như các lượt phát lại.",
   "whatsNewHomeAnalysisTitle": "Phân tích bài hát",
-  "whatsNewHomeAnalysisBody": "Mornye có thể phân tích âm thanh của các bài hát để đưa ra lựa chọn phù hợp hơn. Tính năng này sẽ tắt cho đến khi bạn bật nó trong phần Cài đặt.",
+  "whatsNewHomeAnalysisBody": "Munshid có thể phân tích âm thanh của các bài hát để đưa ra lựa chọn phù hợp hơn. Tính năng này sẽ tắt cho đến khi bạn bật nó trong phần Cài đặt.",
   "whatsNewPlayerTitle": "Trình phát và lời bài hát",
   "whatsNewPlayerDesc": "Phát nhạc mượt mà hơn và hiển thị lời bài hát bằng bất kỳ ngôn ngữ nào.",
   "whatsNewPlayerGaplessTitle": "Phát liền mạch",
@@ -4667,7 +4667,7 @@
   "@safMigrationTitle": {
     "description": "Title of SAF migration dialog"
   },
-  "safMigrationMessage1": "Mornye hiện sử dụng Android Storage Access Framework (SAF) cho các lượt tải xuống. Điều này giúp khắc phục lỗi \"permission denied\" trên Android 10 trở lên.",
+  "safMigrationMessage1": "Munshid hiện sử dụng Android Storage Access Framework (SAF) cho các lượt tải xuống. Điều này giúp khắc phục lỗi \"permission denied\" trên Android 10 trở lên.",
   "@safMigrationMessage1": {
     "description": "First paragraph of SAF migration dialog"
   },
@@ -4747,7 +4747,7 @@
   "@backupRestoreFailed": {
     "description": "Snackbar when restore fails"
   },
-  "backupInvalidFile": "Tệp này không phải là bản sao lưu Mornye hợp lệ",
+  "backupInvalidFile": "Tệp này không phải là bản sao lưu Munshid hợp lệ",
   "@backupInvalidFile": {
     "description": "Snackbar when the chosen file is not a valid backup"
   },
@@ -4931,9 +4931,9 @@
     "description": "Subtitle shown in the download location picker sheet"
   },
   "storageAutomaticFolder": "Thư mục tự động",
-  "storageAutomaticDownloadFolder": "Sử dụng thư mục Download/Mornye khi có quyền ghi, nếu không sẽ dùng bộ nhớ của ứng dụng",
+  "storageAutomaticDownloadFolder": "Sử dụng thư mục Download/Munshid khi có quyền ghi, nếu không sẽ dùng bộ nhớ của ứng dụng",
   "storageSafRecommended": "Tự chọn thư mục (Khuyên dùng)",
-  "storageDownloadFolderHint": "Trong trình chọn thư mục của Android, hãy mở thư mục Download và chọn Mornye. Nếu chưa có, hãy tạo mới bằng nút \"Thư mục mới\", sau đó nhấn \"Dùng thư mục này\" để cấp quyền truy cập.",
+  "storageDownloadFolderHint": "Trong trình chọn thư mục của Android, hãy mở thư mục Download và chọn Munshid. Nếu chưa có, hãy tạo mới bằng nút \"Thư mục mới\", sau đó nhấn \"Dùng thư mục này\" để cấp quyền truy cập.",
   "downloadFolderAccessLostTitle": "Mất quyền truy cập thư mục tải xuống",
   "@downloadFolderAccessLostTitle": {
     "description": "Title of the warning banner shown in Files settings when the saved SAF folder grant is no longer valid"
@@ -5946,7 +5946,7 @@
       }
     }
   },
-  "notifDownloadingUpdate": "Đang tải xuống Mornye v{version}",
+  "notifDownloadingUpdate": "Đang tải xuống Munshid v{version}",
   "@notifDownloadingUpdate": {
     "description": "Notification title while downloading an app update",
     "placeholders": {
@@ -5974,7 +5974,7 @@
   "@notifUpdateReady": {
     "description": "Notification title when app update download is complete"
   },
-  "notifUpdateReadyBody": "Đã tải xuống Mornye v{version}. Nhấn để cài đặt.",
+  "notifUpdateReadyBody": "Đã tải xuống Munshid v{version}. Nhấn để cài đặt.",
   "@notifUpdateReadyBody": {
     "description": "Notification body when app update is ready to install",
     "placeholders": {
@@ -6742,7 +6742,7 @@
   "@extensionCustomUrlHandlingSubtitle": {
     "description": "Extension detail subtitle for custom URL handling"
   },
-  "extensionCustomUrlHandlingShareHint": "Chia sẻ liên kết từ các trang này tới Mornye và tiện ích mở rộng này sẽ xử lý chúng.",
+  "extensionCustomUrlHandlingShareHint": "Chia sẻ liên kết từ các trang này tới Munshid và tiện ích mở rộng này sẽ xử lý chúng.",
   "@extensionCustomUrlHandlingShareHint": {
     "description": "Extension detail hint explaining share-to-app URL handling"
   },
@@ -6952,7 +6952,7 @@
   "@libraryBuiltInPreviewPlayer": {
     "description": "Setting option to use the built-in preview player"
   },
-  "libraryBuiltInPreviewPlayerSubtitle": "Phát nhạc của bạn ngay trong Mornye",
+  "libraryBuiltInPreviewPlayerSubtitle": "Phát nhạc của bạn ngay trong Munshid",
   "@libraryBuiltInPreviewPlayerSubtitle": {
     "description": "Subtitle for built-in preview player option"
   },
@@ -7400,27 +7400,27 @@
   },
   "linkDevicesTitle": "Thiết bị",
   "@linkDevicesTitle": {
-    "description": "Mornye Link: title and button tooltip of the phone sheet that controls the paired desktop app"
+    "description": "Munshid Link: title and button tooltip of the phone sheet that controls the paired desktop app"
   },
   "linkConnectionConnected": "Đã kết nối",
   "@linkConnectionConnected": {
-    "description": "Mornye Link: the phone is connected to the paired desktop"
+    "description": "Munshid Link: the phone is connected to the paired desktop"
   },
   "linkConnectionConnecting": "Đang kết nối",
   "@linkConnectionConnecting": {
-    "description": "Mornye Link: the phone is connecting to the paired desktop"
+    "description": "Munshid Link: the phone is connecting to the paired desktop"
   },
   "linkConnectionDisconnected": "Không kết nối",
   "@linkConnectionDisconnected": {
-    "description": "Mornye Link: the paired desktop cannot be reached"
+    "description": "Munshid Link: the paired desktop cannot be reached"
   },
   "linkThisPhone": "Điện thoại này",
   "@linkThisPhone": {
-    "description": "Mornye Link: the phone's own row in the Devices sheet; choosing it plays music here again"
+    "description": "Munshid Link: the phone's own row in the Devices sheet; choosing it plays music here again"
   },
   "linkPlayingOn": "Phát trên {name}",
   "@linkPlayingOn": {
-    "description": "Mornye Link: shown in the player while the paired desktop plays in the phone's place",
+    "description": "Munshid Link: shown in the player while the paired desktop plays in the phone's place",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7429,7 +7429,7 @@
   },
   "linkDesktopDownloads": "Tải xuống trên {name}",
   "@linkDesktopDownloads": {
-    "description": "Mornye Link: heading of the paired desktop's download queue",
+    "description": "Munshid Link: heading of the paired desktop's download queue",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7438,7 +7438,7 @@
   },
   "linkHandoffStarted": "Phát trên {name}",
   "@linkHandoffStarted": {
-    "description": "Mornye Link: the paired desktop took over the phone's queue",
+    "description": "Munshid Link: the paired desktop took over the phone's queue",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7447,7 +7447,7 @@
   },
   "linkHandoffSending": "Đang gửi bài hát này tới {name}...",
   "@linkHandoffSending": {
-    "description": "Mornye Link: the phone uploads the current song, which the paired desktop lacks, before it plays there",
+    "description": "Munshid Link: the phone uploads the current song, which the paired desktop lacks, before it plays there",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7456,7 +7456,7 @@
   },
   "linkHandoffMissing": "Đang phát trên {name}. Không tìm thấy ở đó: {titles}",
   "@linkHandoffMissing": {
-    "description": "Mornye Link: the paired desktop took over the phone's queue but lacks some tracks, listed by title",
+    "description": "Munshid Link: the paired desktop took over the phone's queue but lacks some tracks, listed by title",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7468,7 +7468,7 @@
   },
   "linkHandoffNotFound": "{name} không có bài hát nào trong số này",
   "@linkHandoffNotFound": {
-    "description": "Mornye Link: the paired desktop has none of the tracks in the phone's queue",
+    "description": "Munshid Link: the paired desktop has none of the tracks in the phone's queue",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7477,11 +7477,11 @@
   },
   "linkHandoffNothingPlaying": "Nothing is playing on this phone",
   "@linkHandoffNothingPlaying": {
-    "description": "Mornye Link: Play on desktop needs a track playing on the phone"
+    "description": "Munshid Link: Play on desktop needs a track playing on the phone"
   },
   "linkContinueSkipped": "Not on this phone: {titles}",
   "@linkContinueSkipped": {
-    "description": "Mornye Link: tracks of the desktop queue the phone could not play, listed by title",
+    "description": "Munshid Link: tracks of the desktop queue the phone could not play, listed by title",
     "placeholders": {
       "titles": {
         "type": "String"
@@ -7490,11 +7490,11 @@
   },
   "linkContinueNotFound": "None of these tracks are on this phone",
   "@linkContinueNotFound": {
-    "description": "Mornye Link: the phone has none of the tracks of the desktop queue"
+    "description": "Munshid Link: the phone has none of the tracks of the desktop queue"
   },
   "linkRequestFailed": "Could not reach {name}",
   "@linkRequestFailed": {
-    "description": "Mornye Link: a request to the paired desktop failed",
+    "description": "Munshid Link: a request to the paired desktop failed",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7503,7 +7503,7 @@
   },
   "linkDownloadOnDesktop": "Download on {name}",
   "@linkDownloadOnDesktop": {
-    "description": "Mornye Link: queues a track, album or link for download in the paired desktop app",
+    "description": "Munshid Link: queues a track, album or link for download in the paired desktop app",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7512,7 +7512,7 @@
   },
   "linkDownloadQueuedOnDesktop": "{count, plural, =1{Queued 1 track on {name}} other{Queued {count} tracks on {name}}}",
   "@linkDownloadQueuedOnDesktop": {
-    "description": "Mornye Link: the paired desktop queued downloads",
+    "description": "Munshid Link: the paired desktop queued downloads",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7524,7 +7524,7 @@
   },
   "linkOpenOnDesktop": "Open on {name}",
   "@linkOpenOnDesktop": {
-    "description": "Mornye Link: opens a shared link in the paired desktop app",
+    "description": "Munshid Link: opens a shared link in the paired desktop app",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7533,7 +7533,7 @@
   },
   "linkOpenedOnDesktop": "Opened on {name}",
   "@linkOpenedOnDesktop": {
-    "description": "Mornye Link: the paired desktop opened the link",
+    "description": "Munshid Link: the paired desktop opened the link",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7542,7 +7542,7 @@
   },
   "linkSendToDesktop": "Send to {name}",
   "@linkSendToDesktop": {
-    "description": "Mornye Link: action on a shared link that offers to open or download it on the paired desktop",
+    "description": "Munshid Link: action on a shared link that offers to open or download it on the paired desktop",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7551,15 +7551,15 @@
   },
   "linkSaveToPhone": "Save to this phone",
   "@linkSaveToPhone": {
-    "description": "Mornye Link: downloads songs of the paired desktop's library into the phone's download folder"
+    "description": "Munshid Link: downloads songs of the paired desktop's library into the phone's download folder"
   },
   "linkSavingToPhone": "Saving to this phone",
   "@linkSavingToPhone": {
-    "description": "Mornye Link: title of the progress dialog while desktop songs are saved to the phone"
+    "description": "Munshid Link: title of the progress dialog while desktop songs are saved to the phone"
   },
   "linkSavedToPhone": "{count, plural, =1{Saved 1 song to this phone} other{Saved {count} songs to this phone}}",
   "@linkSavedToPhone": {
-    "description": "Mornye Link: desktop songs were saved to the phone",
+    "description": "Munshid Link: desktop songs were saved to the phone",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7568,7 +7568,7 @@
   },
   "linkSaveToPhoneFailed": "{count, plural, =1{1 song could not be saved} other{{count} songs could not be saved}}",
   "@linkSaveToPhoneFailed": {
-    "description": "Mornye Link: some desktop songs could not be saved to the phone",
+    "description": "Munshid Link: some desktop songs could not be saved to the phone",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7577,11 +7577,11 @@
   },
   "linkSaveToPhoneCancelled": "Saving stopped",
   "@linkSaveToPhoneCancelled": {
-    "description": "Mornye Link: the listener cancelled saving desktop songs to the phone"
+    "description": "Munshid Link: the listener cancelled saving desktop songs to the phone"
   },
   "linkTransferPhoneReceiving": "{count, plural, =1{Saving {title} from {name}} other{Saving {count} songs from {name}}}",
   "@linkTransferPhoneReceiving": {
-    "description": "Mornye Link: snackbar and notification when the phone starts copying songs from the paired computer into its download folder; title is the song's title when there is one song",
+    "description": "Munshid Link: snackbar and notification when the phone starts copying songs from the paired computer into its download folder; title is the song's title when there is one song",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7596,7 +7596,7 @@
   },
   "linkTransferPhoneOffered": "{count, plural, =1{{name} is sending {title} to this phone} other{{name} is sending {count} songs to this phone}}",
   "@linkTransferPhoneOffered": {
-    "description": "Mornye Link: snackbar when the paired computer starts sending songs to the phone; title is the song's title when there is one song",
+    "description": "Munshid Link: snackbar when the paired computer starts sending songs to the phone; title is the song's title when there is one song",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7611,11 +7611,11 @@
   },
   "linkTransferPhoneView": "View",
   "@linkTransferPhoneView": {
-    "description": "Mornye Link: snackbar action that opens the list of song transfers"
+    "description": "Munshid Link: snackbar action that opens the list of song transfers"
   },
   "linkTransferPhoneWith": "Transfer with {name}",
   "@linkTransferPhoneWith": {
-    "description": "Mornye Link: tooltip and sheet title of a playlist's button that sends its songs to the paired computer or saves the computer's songs to the phone",
+    "description": "Munshid Link: tooltip and sheet title of a playlist's button that sends its songs to the paired computer or saves the computer's songs to the phone",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7624,7 +7624,7 @@
   },
   "linkTransferPhoneNothing": "None of these songs are on {name}",
   "@linkTransferPhoneNothing": {
-    "description": "Mornye Link: Save to this phone found none of the chosen songs in the paired computer's library",
+    "description": "Munshid Link: Save to this phone found none of the chosen songs in the paired computer's library",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7633,7 +7633,7 @@
   },
   "linkSendSending": "{count, plural, =1{Sending {title} to {name}} other{Sending {count} songs to {name}}}",
   "@linkSendSending": {
-    "description": "Mornye Link: snackbar and notification when the phone starts copying its own songs to the paired computer; title is the song's title when there is one song",
+    "description": "Munshid Link: snackbar and notification when the phone starts copying its own songs to the paired computer; title is the song's title when there is one song",
     "placeholders": {
       "count": {
         "type": "int"
@@ -7648,7 +7648,7 @@
   },
   "linkSendNothing": "None of these songs can be sent to {name}",
   "@linkSendNothing": {
-    "description": "Mornye Link: none of the chosen songs is a file on this phone in a format the paired computer takes",
+    "description": "Munshid Link: none of the chosen songs is a file on this phone in a format the paired computer takes",
     "placeholders": {
       "name": {
         "type": "String"
@@ -7657,19 +7657,19 @@
   },
   "linkDownloadStatusQueued": "Waiting",
   "@linkDownloadStatusQueued": {
-    "description": "Mornye Link: a download on the paired desktop has not started"
+    "description": "Munshid Link: a download on the paired desktop has not started"
   },
   "linkDownloadStatusDownloading": "Downloading",
   "@linkDownloadStatusDownloading": {
-    "description": "Mornye Link: a download on the paired desktop is running"
+    "description": "Munshid Link: a download on the paired desktop is running"
   },
   "linkDownloadStatusDone": "Done",
   "@linkDownloadStatusDone": {
-    "description": "Mornye Link: a download on the paired desktop finished"
+    "description": "Munshid Link: a download on the paired desktop finished"
   },
   "linkDownloadStatusFailed": "Failed",
   "@linkDownloadStatusFailed": {
-    "description": "Mornye Link: a download on the paired desktop failed"
+    "description": "Munshid Link: a download on the paired desktop failed"
   },
   "announcementUnableToOpenLink": "Không thể mở liên kết. Vui lòng thử lại.",
   "@announcementUnableToOpenLink": {
@@ -7989,11 +7989,11 @@
   "@extensionVerificationHelpTitleWaiting": {
     "description": "Dialog title when verification is taking longer than expected"
   },
-  "extensionVerificationHelpMessageManual": "Mornye không thể tự động mở trình duyệt. Hãy mở liên kết này trong trình duyệt của bạn hoặc sao chép thủ công.",
+  "extensionVerificationHelpMessageManual": "Munshid không thể tự động mở trình duyệt. Hãy mở liên kết này trong trình duyệt của bạn hoặc sao chép thủ công.",
   "@extensionVerificationHelpMessageManual": {
     "description": "Dialog message when automatic browser launch for verification fails"
   },
-  "extensionVerificationHelpMessageWaiting": "Nếu trình duyệt không mở hoặc quá trình xác minh đã xong nhưng không tự quay lại Mornye, hãy mở lại liên kết này hoặc sao chép thủ công.",
+  "extensionVerificationHelpMessageWaiting": "Nếu trình duyệt không mở hoặc quá trình xác minh đã xong nhưng không tự quay lại Munshid, hãy mở lại liên kết này hoặc sao chép thủ công.",
   "@extensionVerificationHelpMessageWaiting": {
     "description": "Dialog message when verification may need manual browser help"
   },
@@ -8153,7 +8153,7 @@
   "@playerCoverStyleFullScreen": {
     "description": "Cover art style: artwork fills the top of the player"
   },
-  "playerCoverStyleFullScreenDescription": "Ảnh bìa tràn phần trên trình phát và chuyển mờ dần xuống dưới. Ảnh bìa động luôn hiển thị toàn màn hình trong Mornye",
+  "playerCoverStyleFullScreenDescription": "Ảnh bìa tràn phần trên trình phát và chuyển mờ dần xuống dưới. Ảnh bìa động luôn hiển thị toàn màn hình trong Munshid",
   "@playerCoverStyleFullScreenDescription": {
     "description": "Subtitle of the full screen cover art style"
   },
@@ -8822,7 +8822,7 @@
   "equalizerPresetName": "Tên cấu hình",
   "equalizerImport": "Nhập cấu hình",
   "equalizerExport": "Chia sẻ cấu hình",
-  "equalizerImportInvalid": "Chọn một tệp cấu hình bộ chỉnh âm Mornye hợp lệ (JSON, tối đa 64 KB).",
+  "equalizerImportInvalid": "Chọn một tệp cấu hình bộ chỉnh âm Munshid hợp lệ (JSON, tối đa 64 KB).",
   "equalizerSaved": "Đã lưu cấu hình",
   "equalizerResetTitle": "Đặt lại Equalizer về mặc định?",
   "equalizerResetDescription": "Đặt lại đường cong Eq phẳng cùng cài đặt âm sắc và dải động mặc định. Các cấu hình bạn đã lưu vẫn được giữ nguyên.",
@@ -8902,9 +8902,9 @@
   "audioInfoLocationLocal": "Bộ nhớ thiết bị",
   "audioInfoLocationShared": "Thư mục chia sẻ",
   "audioInfoLocationNetwork": "Ổ đĩa mạng (NAS)",
-  "audioInfoLocationLink": "{device} via Mornye Link",
+  "audioInfoLocationLink": "{device} via Munshid Link",
   "@audioInfoLocationLink": {
-    "description": "Audio info location of a song played from a paired computer or phone over Mornye Link; device is that device's name",
+    "description": "Audio info location of a song played from a paired computer or phone over Munshid Link; device is that device's name",
     "placeholders": {
       "device": {
         "type": "String"
@@ -8939,7 +8939,7 @@
   "audioInfoOff": "Tắt",
   "audioInfoBypassed": "Đã bị bỏ qua nhờ xuất âm thanh trực tiếp",
   "audioInfoPlayer": "Trình phát nhạc",
-  "audioInfoPlayerValue": "Trình phát tích hợp của Mornye",
+  "audioInfoPlayerValue": "Trình phát tích hợp của Munshid",
   "audioInfoSignalPath": "Chia sẻ",
   "audioInfoPathSystem": "Bộ trộn âm hệ thống",
   "audioInfoPathDirect": "Direct USB, bỏ qua bộ trộn âm hệ thống",
@@ -9000,7 +9000,7 @@
   "lyricsTextPreview": "Theo dõi từng câu hát trong bản nhạc yêu thích của bạn",
   "lyricsBlur": "Lyrics blur",
   "@lyricsBlur": {
-    "description": "Mornye setting: how strongly lyric lines around the current one are blurred"
+    "description": "Munshid setting: how strongly lyric lines around the current one are blurred"
   },
   "lyricsBlurSubtitle": "How much the lines around the current one soften",
   "lyricsBlurOff": "Off",
@@ -9167,15 +9167,15 @@
   "@desktopDownloadsCancel": {
     "description": "Tooltip of the button that cancels one download in the desktop downloads popover"
   },
-  "linkDesktopSettingsTitle": "Mornye on your phone",
+  "linkDesktopSettingsTitle": "Munshid on your phone",
   "@linkDesktopSettingsTitle": {
-    "description": "Desktop Settings page that shares this computer's library with the Mornye phone app over the local network"
+    "description": "Desktop Settings page that shares this computer's library with the Munshid phone app over the local network"
   },
   "linkDesktopSettingsSubtitle": "Stream your library and control playback from your phone",
   "@linkDesktopSettingsSubtitle": {
-    "description": "Subtitle of the Mornye on your phone entry in desktop Settings"
+    "description": "Subtitle of the Munshid on your phone entry in desktop Settings"
   },
-  "linkDesktopEnableTitle": "Share with Mornye on your phone",
+  "linkDesktopEnableTitle": "Share with Munshid on your phone",
   "@linkDesktopEnableTitle": {
     "description": "Switch that turns on the local server phones connect to"
   },
@@ -9205,7 +9205,7 @@
       }
     }
   },
-  "linkDesktopFirewallHint": "Your computer may ask whether Mornye can accept incoming network connections. Allow it so your phone can connect.",
+  "linkDesktopFirewallHint": "Your computer may ask whether Munshid can accept incoming network connections. Allow it so your phone can connect.",
   "@linkDesktopFirewallHint": {
     "description": "Hint shown while the phone link server is on, about the operating system firewall prompt"
   },
@@ -9359,7 +9359,7 @@
       }
     }
   },
-  "linkDesktopPairInstructions": "Open Mornye on your phone, choose this computer and enter this code.",
+  "linkDesktopPairInstructions": "Open Munshid on your phone, choose this computer and enter this code.",
   "@linkDesktopPairInstructions": {
     "description": "Instructions in the pairing dialog above the code"
   },
@@ -9454,7 +9454,7 @@
   },
   "linkTransferDesktopSendTo": "Send to {name}",
   "@linkTransferDesktopSendTo": {
-    "description": "Mornye Link desktop: song menu action that copies this computer's songs to the connected phone {name}",
+    "description": "Munshid Link desktop: song menu action that copies this computer's songs to the connected phone {name}",
     "placeholders": {
       "name": {
         "type": "String"
@@ -9463,11 +9463,11 @@
   },
   "linkTransferDesktopSaveHere": "Save to this computer",
   "@linkTransferDesktopSaveHere": {
-    "description": "Mornye Link desktop: song menu action that copies a connected phone's songs into this computer's download folder"
+    "description": "Munshid Link desktop: song menu action that copies a connected phone's songs into this computer's download folder"
   },
   "linkTransferDesktopSendingSong": "Sending \"{title}\" to {name}",
   "@linkTransferDesktopSendingSong": {
-    "description": "Mornye Link desktop: snackbar when one song starts copying to the phone {name}",
+    "description": "Munshid Link desktop: snackbar when one song starts copying to the phone {name}",
     "placeholders": {
       "title": {
         "type": "String"
@@ -9479,7 +9479,7 @@
   },
   "linkTransferDesktopSendingSongs": "{count, plural, =1{Sending 1 song to {name}} other{Sending {count} songs to {name}}}",
   "@linkTransferDesktopSendingSongs": {
-    "description": "Mornye Link desktop: snackbar when songs start copying to the phone {name}",
+    "description": "Munshid Link desktop: snackbar when songs start copying to the phone {name}",
     "placeholders": {
       "count": {
         "type": "int"
@@ -9491,7 +9491,7 @@
   },
   "linkTransferDesktopReceivingSong": "Receiving \"{title}\" from {name}",
   "@linkTransferDesktopReceivingSong": {
-    "description": "Mornye Link desktop: snackbar when one song of the phone {name} starts copying to this computer",
+    "description": "Munshid Link desktop: snackbar when one song of the phone {name} starts copying to this computer",
     "placeholders": {
       "title": {
         "type": "String"
@@ -9503,7 +9503,7 @@
   },
   "linkTransferDesktopReceivingSongs": "{count, plural, =1{Receiving 1 song from {name}} other{Receiving {count} songs from {name}}}",
   "@linkTransferDesktopReceivingSongs": {
-    "description": "Mornye Link desktop: snackbar when songs of the phone {name} start copying to this computer",
+    "description": "Munshid Link desktop: snackbar when songs of the phone {name} start copying to this computer",
     "placeholders": {
       "count": {
         "type": "int"
@@ -9515,15 +9515,15 @@
   },
   "linkTransferDesktopView": "View",
   "@linkTransferDesktopView": {
-    "description": "Mornye Link desktop: snackbar action that opens the list of song transfers"
+    "description": "Munshid Link desktop: snackbar action that opens the list of song transfers"
   },
   "linkTransferDesktopNothingToSend": "None of these songs can be sent right now",
   "@linkTransferDesktopNothingToSend": {
-    "description": "Mornye Link desktop: snackbar when Send to phone finds no song file on this computer to send"
+    "description": "Munshid Link desktop: snackbar when Send to phone finds no song file on this computer to send"
   },
   "linkTransferDesktopNothingToSave": "None of these songs can be saved right now",
   "@linkTransferDesktopNothingToSave": {
-    "description": "Mornye Link desktop: snackbar when Save to this computer finds no song of a connected phone"
+    "description": "Munshid Link desktop: snackbar when Save to this computer finds no song of a connected phone"
   },
   "desktopScrollBack": "Cuộn trở lại",
   "@desktopScrollBack": {
@@ -9553,19 +9553,19 @@
   "@desktopShortcutToggleSidebar": {
     "description": "Keyboard Shortcuts row for the shortcut that collapses or expands the desktop sidebar"
   },
-  "linkSettingsTitle": "Mornye on your computer",
+  "linkSettingsTitle": "Munshid on your computer",
   "@linkSettingsTitle": {
-    "description": "Phone Settings entry that pairs the phone with the Mornye desktop app on the local network"
+    "description": "Phone Settings entry that pairs the phone with the Munshid desktop app on the local network"
   },
   "linkSettingsSubtitle": "Play and control your computer's library",
   "@linkSettingsSubtitle": {
-    "description": "Subtitle of the Mornye on your computer entry in phone Settings"
+    "description": "Subtitle of the Munshid on your computer entry in phone Settings"
   },
   "linkPageTitle": "Computers",
   "@linkPageTitle": {
-    "description": "Title of the page listing computers running Mornye that the phone can pair with; kept short for the large title"
+    "description": "Title of the page listing computers running Munshid that the phone can pair with; kept short for the large title"
   },
-  "linkPageDescription": "Pair with Mornye on your computer to play its library on this phone and control what it plays. Both devices need to be on the same network.",
+  "linkPageDescription": "Pair with Munshid on your computer to play its library on this phone and control what it plays. Both devices need to be on the same network.",
   "@linkPageDescription": {
     "description": "Introduction at the top of the computers page"
   },
@@ -9595,7 +9595,7 @@
   },
   "linkNearbySection": "On this network",
   "@linkNearbySection": {
-    "description": "Section header for computers running Mornye found on the local network"
+    "description": "Section header for computers running Munshid found on the local network"
   },
   "linkSearching": "Looking for computers...",
   "@linkSearching": {
@@ -9605,9 +9605,9 @@
   "@linkNoneFoundTitle": {
     "description": "Row shown when the phone is not searching and found no computer"
   },
-  "linkNoneFound": "Open Mornye on your computer and turn on Share with Mornye on your phone in its settings.",
+  "linkNoneFound": "Open Munshid on your computer and turn on Share with Munshid on your phone in its settings.",
   "@linkNoneFound": {
-    "description": "Hint under the search row when no computer was found yet; Share with Mornye on your phone is the name of the desktop setting"
+    "description": "Hint under the search row when no computer was found yet; Share with Munshid on your phone is the name of the desktop setting"
   },
   "linkAddManually": "Add by address",
   "@linkAddManually": {
@@ -9619,9 +9619,9 @@
   },
   "linkManualPort": "Port",
   "@linkManualPort": {
-    "description": "Field label for the network port of the Mornye desktop server"
+    "description": "Field label for the network port of the Munshid desktop server"
   },
-  "linkManualMessage": "Mornye on your computer shows its address and port where you turn on sharing.",
+  "linkManualMessage": "Munshid on your computer shows its address and port where you turn on sharing.",
   "@linkManualMessage": {
     "description": "Explains where to find the address and port to type"
   },
@@ -9696,7 +9696,7 @@
       }
     }
   },
-  "linkPinNotOpen": "Pairing is not open yet. Start pairing in Mornye on your computer to show a PIN.",
+  "linkPinNotOpen": "Pairing is not open yet. Start pairing in Munshid on your computer to show a PIN.",
   "@linkPinNotOpen": {
     "description": "Note in the PIN dialog when the computer reports that no pairing window is open"
   },
@@ -9719,7 +9719,7 @@
   },
   "linkTransfersTitle": "Transfers",
   "@linkTransfersTitle": {
-    "description": "Mornye Link: title of the list of songs copied between this device and a linked phone or computer, and of the rows that open it"
+    "description": "Munshid Link: title of the list of songs copied between this device and a linked phone or computer, and of the rows that open it"
   },
   "linkTransfersInProgress": "In progress",
   "@linkTransfersInProgress": {
@@ -9988,11 +9988,11 @@
   "@linkErrorCertificate": {
     "description": "Warning shown when the certificate seen during the connection differs from the computer's reported fingerprint"
   },
-  "linkErrorIncompatible": "This computer runs a Mornye version that cannot pair with this phone. Update Mornye on both devices.",
+  "linkErrorIncompatible": "This computer runs a Munshid version that cannot pair with this phone. Update Munshid on both devices.",
   "@linkErrorIncompatible": {
-    "description": "Pairing error when the computer is not a compatible Mornye desktop"
+    "description": "Pairing error when the computer is not a compatible Munshid desktop"
   },
-  "linkErrorUnreachable": "The computer could not be reached. Check that Mornye is open on it and that both devices are on the same network.",
+  "linkErrorUnreachable": "The computer could not be reached. Check that Munshid is open on it and that both devices are on the same network.",
   "@linkErrorUnreachable": {
     "description": "Pairing error when the computer cannot be reached"
   },
@@ -10012,7 +10012,7 @@
   "@linkLocalNetworkTitle": {
     "description": "Title of the notice shown when the phone is not allowed to use the local network"
   },
-  "linkLocalNetworkMessage": "Mornye needs local network access to find your computer and connect to it.",
+  "linkLocalNetworkMessage": "Munshid needs local network access to find your computer and connect to it.",
   "@linkLocalNetworkMessage": {
     "description": "Explains why local network access is needed"
   },
@@ -10037,7 +10037,7 @@
       }
     }
   },
-  "linkIssueCertificate": "{name} presented a different security certificate. Pair again only if you reinstalled or reset Mornye on that computer.",
+  "linkIssueCertificate": "{name} presented a different security certificate. Pair again only if you reinstalled or reset Munshid on that computer.",
   "@linkIssueCertificate": {
     "description": "Warning when a paired computer's certificate changed",
     "placeholders": {
@@ -10046,7 +10046,7 @@
       }
     }
   },
-  "linkIssueIncompatible": "Update Mornye on this phone and on {name} to connect.",
+  "linkIssueIncompatible": "Update Munshid on this phone and on {name} to connect.",
   "@linkIssueIncompatible": {
     "description": "Notice when the paired computer speaks another protocol version",
     "placeholders": {
@@ -10233,7 +10233,7 @@
   "@recognizePermissionTitle": {
     "description": "Title when microphone permission was denied"
   },
-  "recognizePermissionMessage": "Mornye uses the microphone only while you identify a song.",
+  "recognizePermissionMessage": "Munshid uses the microphone only while you identify a song.",
   "@recognizePermissionMessage": {
     "description": "Explanation when microphone permission was denied"
   },
@@ -10241,11 +10241,11 @@
   "@recognizePermissionAllow": {
     "description": "Button that asks for microphone permission again"
   },
-  "recognizePlay": "Play in Mornye",
+  "recognizePlay": "Play in Munshid",
   "@recognizePlay": {
     "description": "Button that plays the identified song from the downloads or library"
   },
-  "recognizeSearch": "Search in Mornye",
+  "recognizeSearch": "Search in Munshid",
   "@recognizeSearch": {
     "description": "Button that searches for the identified song when it is not in the library"
   },
@@ -10303,7 +10303,7 @@
   },
   "reorganizeLibraryScanning": "Checking your files…",
   "@reorganizeLibraryScanning": {
-    "description": "Shown while Mornye works out which downloaded files need to move"
+    "description": "Shown while Munshid works out which downloaded files need to move"
   },
   "reorganizeLibraryBusy": "Wait for active downloads to finish before reorganizing files",
   "@reorganizeLibraryBusy": {
@@ -10313,7 +10313,7 @@
   "@reorganizeLibraryNothingTitle": {
     "description": "Dialog title when every downloaded file already follows the rules"
   },
-  "reorganizeLibraryNothingMessage": "{count, plural, =0{There are no tracks in your download folder to reorganize. Files Mornye did not download are included once the folder is added and scanned in Local Library.} =1{The track in your download folder already follows the current rules.} other{All {count} tracks in your download folder already follow the current rules.}}",
+  "reorganizeLibraryNothingMessage": "{count, plural, =0{There are no tracks in your download folder to reorganize. Files Munshid did not download are included once the folder is added and scanned in Local Library.} =1{The track in your download folder already follows the current rules.} other{All {count} tracks in your download folder already follow the current rules.}}",
   "@reorganizeLibraryNothingMessage": {
     "description": "Dialog message when there is nothing to move",
     "placeholders": {
@@ -10384,15 +10384,15 @@
       }
     }
   },
-  "reorganizeLibraryScanHint": "Files Mornye did not download are only included after their folder is added and scanned in Local Library.",
+  "reorganizeLibraryScanHint": "Files Munshid did not download are only included after their folder is added and scanned in Local Library.",
   "@reorganizeLibraryScanHint": {
     "description": "Hint in the reorganize confirmation dialog about which files are covered"
   },
-  "reorganizeLibraryKeepsPlaylistFolders": "Your folder rule uses the playlist name, which Mornye doesn't keep for past downloads, so files stay in their current folder and are only renamed.",
+  "reorganizeLibraryKeepsPlaylistFolders": "Your folder rule uses the playlist name, which Munshid doesn't keep for past downloads, so files stay in their current folder and are only renamed.",
   "@reorganizeLibraryKeepsPlaylistFolders": {
     "description": "Warning in the reorganize confirmation dialog when the folder rule depends on the playlist"
   },
-  "reorganizeLibraryDropsPlaylistFolders": "Mornye doesn't keep which playlist a past download came from, so tracks inside playlist folders will be moved out of them.",
+  "reorganizeLibraryDropsPlaylistFolders": "Munshid doesn't keep which playlist a past download came from, so tracks inside playlist folders will be moved out of them.",
   "@reorganizeLibraryDropsPlaylistFolders": {
     "description": "Warning in the reorganize confirmation dialog when playlist folders are enabled"
   },

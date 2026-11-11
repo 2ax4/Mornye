@@ -320,7 +320,7 @@ class _Arrival {
   }
 
   void close() {
-    if (!_done.isCompleted) _fail('Mornye Link stopped');
+    if (!_done.isCompleted) _fail('Munshid Link stopped');
     _timer.cancel();
   }
 }

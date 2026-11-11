@@ -4,14 +4,14 @@
   <id>com.zarz.mornye</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>LGPL-3.0-only</project_license>
-  <name>Mornye</name>
+  <name>Munshid</name>
   <summary>Play, organize and download your music library</summary>
   <developer id="io.github.zarzet">
     <name>zarzet</name>
   </developer>
   <description>
     <p>
-      Mornye is a music player and library manager. It plays local and
+      Munshid is a music player and library manager. It plays local and
       network music, edits metadata, and fetches tracks and lyrics through
       extensions you install.
     </p>

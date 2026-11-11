@@ -146,7 +146,7 @@ class MprisPlayerObject extends DBusObject {
     'CanQuit': DBusBoolean(false),
     'CanRaise': DBusBoolean(false),
     'HasTrackList': DBusBoolean(false),
-    'Identity': DBusString('Mornye'),
+    'Identity': DBusString('Munshid'),
     'DesktopEntry': DBusString('com.zarz.mornye'),
     'SupportedUriSchemes': DBusArray(DBusSignature('s')),
     'SupportedMimeTypes': DBusArray(DBusSignature('s')),

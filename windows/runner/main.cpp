@@ -22,7 +22,7 @@ void ForwardAudioToInstance() {
   HWND window = nullptr;
   // A second file-manager launch can arrive before the first window exists.
   for (int attempt = 0; attempt < 50 && window == nullptr; ++attempt) {
-    window = ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"Mornye");
+    window = ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"Munshid");
     if (window == nullptr) ::Sleep(100);
   }
   if (window == nullptr) return;
@@ -66,7 +66,7 @@ void RegisterUrlScheme() {
       ::_wcsicmp(current, command.c_str()) == 0) {
     return;
   }
-  SetUserRegistryString(kUrlSchemeKey, nullptr, L"URL:Mornye Protocol");
+  SetUserRegistryString(kUrlSchemeKey, nullptr, L"URL:Munshid Protocol");
   SetUserRegistryString(kUrlSchemeKey, L"URL Protocol", L"");
   SetUserRegistryString(L"Software\\Classes\\mornye\\DefaultIcon", nullptr,
                         executable + L",0");
@@ -115,7 +115,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 800);
-  if (!window.Create(L"Mornye", origin, size)) {
+  if (!window.Create(L"Munshid", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

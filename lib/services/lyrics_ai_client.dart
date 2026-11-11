@@ -359,7 +359,7 @@ LyricsAiRequest buildLyricsTranslationRequest(
           if (config.apiKey.isNotEmpty)
             'Authorization': 'Bearer ${config.apiKey}',
           if (config.provider == LyricsAiProvider.openRouter)
-            'X-Title': 'Mornye',
+            'X-Title': 'Munshid',
         },
         {
           'model': config.model,
