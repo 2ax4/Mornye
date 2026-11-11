@@ -597,26 +597,6 @@ class _EagerInitializationState extends ConsumerState<EagerInitialization>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Opening the glass: surfaces render solid until the first frame has
-    // rasterized, then pick up their blur and lens passes. A machine whose
-    // blur-free first frame still took this long rasterizes in software —
-    // backdrop sampling would stall every frame, so the session runs flat
-    // and the window keeps opening instantly.
-    final firstRaster = Stopwatch()..start();
-    unawaited(
-      WidgetsBinding.instance.waitUntilFirstFrameRasterized.then((_) {
-        if (!mounted) return;
-        ref.read(firstFrameRenderedProvider.notifier).markReady();
-        if (isDesktopPlatform &&
-            firstRaster.elapsed > const Duration(milliseconds: 500)) {
-          _log.w(
-            'First frame needed ${firstRaster.elapsedMilliseconds}ms; '
-            'backdrop effects are disabled for this session.',
-          );
-          ref.read(backdropBlurFeasibleProvider.notifier).markInfeasible();
-        }
-      }),
-    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _verificationNotificationSubscription =

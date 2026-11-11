@@ -44,11 +44,6 @@ enum MornyeGlassLevel {
 }
 
 final mornyeGlassLevelProvider = Provider<MornyeGlassLevel>((ref) {
-  // A machine that needed too long for its first frame renders backdrops in
-  // software; every blurred frame would stall it, so the session runs flat.
-  if (!ref.watch(backdropBlurFeasibleProvider)) {
-    return MornyeGlassLevel.flat;
-  }
   final lowEnd = ref.watch(lowEndDeviceProvider);
   if (!lowEnd && ref.watch(deviceSupportsLiquidGlassProvider)) {
     return MornyeGlassLevel.liquid;
@@ -58,72 +53,12 @@ final mornyeGlassLevelProvider = Provider<MornyeGlassLevel>((ref) {
   return lowEnd ? MornyeGlassLevel.flat : MornyeGlassLevel.frosted;
 });
 
-/// Backdrop blur for Mornye surfaces (frosted or liquid). Surfaces stay solid
-/// until the first frame has rasterized: sampling the backdrop is the most
-/// expensive pass a glass surface runs, and paying it on frame one is what
-/// turned slow machines' launches into a long dark window.
+/// Backdrop blur for Mornye surfaces (frosted or liquid).
 final mornyeBlurEnabledProvider = Provider<bool>(
-  (ref) =>
-      ref.watch(mornyeGlassLevelProvider) != MornyeGlassLevel.flat &&
-      ref.watch(firstFrameRenderedProvider),
+  (ref) => ref.watch(mornyeGlassLevelProvider) != MornyeGlassLevel.flat,
 );
 
 /// Higher-quality glass and continuously filtered artwork / lyric effects.
 final mornyeLiquidGlassProvider = Provider<bool>(
   (ref) => ref.watch(mornyeGlassLevelProvider) == MornyeGlassLevel.liquid,
 );
-
-/// Whether the liquid-glass backdrop pipeline has been rasterized once, so
-/// surfaces may render the lens. Until then they fall back to the shared
-/// frosted blur, keeping shader compilation off visible frames — without
-/// this, switching styles or starting with glass freezes the window while
-/// the pipeline compiles.
-class MornyeGlassWarmupReady extends Notifier<bool> {
-  MornyeGlassWarmupReady({this.initialValue = false});
-
-  /// Tests and the detached warmup rasterizer seed `true` so the lens
-  /// renders without running the preparation first.
-  final bool initialValue;
-
-  @override
-  bool build() => initialValue;
-
-  void markReady() => state = true;
-}
-
-final mornyeGlassWarmupReadyProvider =
-    NotifierProvider<MornyeGlassWarmupReady, bool>(MornyeGlassWarmupReady.new);
-
-/// Turns true once the first frame has rasterized. Glass surfaces watch it
-/// before sampling the backdrop, so the launch frames paint solid tinted
-/// panels and the blur passes only join once the window is already visible.
-class FirstFrameRendered extends Notifier<bool> {
-  FirstFrameRendered({this.initialValue = false});
-
-  /// Tests seed `true` so surfaces render their filtering without waiting
-  /// for a rasterized frame the test binding never produces.
-  final bool initialValue;
-
-  @override
-  bool build() => initialValue;
-
-  void markReady() => state = true;
-}
-
-final firstFrameRenderedProvider = NotifierProvider<FirstFrameRendered, bool>(
-  FirstFrameRendered.new,
-);
-
-/// False for the rest of the session when the first frame rasterized so
-/// slowly that the renderer is clearly running in software: every backdrop
-/// sample would then stall each frame, and a solid launch beats a frozen
-/// glass one.
-class BackdropBlurFeasible extends Notifier<bool> {
-  @override
-  bool build() => true;
-
-  void markInfeasible() => state = false;
-}
-
-final backdropBlurFeasibleProvider =
-    NotifierProvider<BackdropBlurFeasible, bool>(BackdropBlurFeasible.new);

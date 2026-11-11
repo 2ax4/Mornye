@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mornye/app.dart';
 import 'package:mornye/utils/desktop_platform.dart';
+import 'package:mornye/widgets/app_sliver_header.dart';
 
 void main() {
   void resetPlatform() {
@@ -162,7 +163,7 @@ void main() {
     );
   }
 
-  testWidgets('header collapse keeps the native jump', (tester) async {
+  testWidgets('a header notch leaves the body untouched', (tester) async {
     final outer = ScrollController();
     addTearDown(outer.dispose);
     await tester.pumpWidget(buildNestedSurface(outer));
@@ -177,11 +178,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // NestedScrollView builds its outer scrollable without chrome, so no
-    // wrapper guards the header: the notch lands natively and the body,
-    // which received nothing, does not move.
+    // The whole notch belongs to the header (which glides on its own); the
+    // body, which received nothing, does not move.
     expect(outer.offset, 120);
-    expect(inner.pixels, 0);
+    expect(inner.pixels, lessThan(0.001));
     resetPlatform();
   });
 
@@ -259,6 +259,133 @@ void main() {
     await tester.pumpAndSettle();
     expect(inner.pixels, afterFirstNotch + 200);
     expect(outer.offset, headerMax);
+    resetPlatform();
+  });
+
+  // The Settings tab and the Library Songs page open under a collapsing
+  // header, exactly like these two surfaces. A notch spent entirely on the
+  // header used to land as a native jump, which read as "smooth scrolling is
+  // broken outside home"; the header share glides now.
+  Widget buildSettingsLikeSurface() {
+    debugDesktopPlatformOverride = true;
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    return MaterialApp(
+      scrollBehavior: appScrollBehavior(
+        disableOverscrollEffects: false,
+        smoothScrolling: true,
+      ),
+      home: Scaffold(
+        body: CustomScrollView(
+          slivers: [
+            const AppSliverHeader.tabRoot(
+              title: 'Settings',
+              alignToContent: true,
+            ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) =>
+                    SizedBox(height: 80, child: Text('setting $index')),
+                childCount: 60,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  testWidgets('a collapsing header over a plain list glides', (tester) async {
+    await tester.pumpWidget(buildSettingsLikeSurface());
+    await tester.pumpAndSettle();
+
+    tester.binding.handlePointerEvent(
+      PointerScrollEvent(
+        position: tester.getCenter(find.text('setting 4')),
+        scrollDelta: const Offset(0, 100),
+      ),
+    );
+    await tester.pump();
+
+    final position = tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    expect(position.pixels, greaterThan(0));
+    expect(position.pixels, lessThan(100));
+    await tester.pumpAndSettle();
+    expect(position.pixels, 100);
+    resetPlatform();
+  });
+
+  Widget buildSongsLikeSurface() {
+    debugDesktopPlatformOverride = true;
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    return MaterialApp(
+      scrollBehavior: appScrollBehavior(
+        disableOverscrollEffects: false,
+        smoothScrolling: true,
+      ),
+      home: Scaffold(
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            const AppSliverHeader.page(title: 'Songs'),
+          ],
+          body: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) =>
+                      SizedBox(height: 80, child: Text('song $index')),
+                  childCount: 120,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  testWidgets('the songs page glides its header, then its body', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSongsLikeSurface());
+    await tester.pumpAndSettle();
+    final nested = tester.state<NestedScrollViewState>(
+      find.byType(NestedScrollView),
+    );
+    final headerMax = nested.outerController.position.maxScrollExtent;
+    expect(headerMax, greaterThan(0));
+
+    // The first notch is spent on the header entirely: it glides instead of
+    // collapsing in one jump.
+    tester.binding.handlePointerEvent(
+      PointerScrollEvent(
+        position: tester.getCenter(find.text('song 2')),
+        scrollDelta: const Offset(0, 100),
+      ),
+    );
+    await tester.pump();
+    expect(nested.outerController.offset, greaterThan(0));
+    expect(nested.outerController.offset, lessThan(100));
+    await tester.pumpAndSettle();
+    expect(nested.outerController.offset, 100);
+
+    // Collapse the rest of the header, then a body notch glides the list.
+    nested.outerController.jumpTo(headerMax);
+    await tester.pumpAndSettle();
+    tester.binding.handlePointerEvent(
+      PointerScrollEvent(
+        position: tester.getCenter(find.text('song 2')),
+        scrollDelta: const Offset(0, 100),
+      ),
+    );
+    await tester.pump();
+    final inner = Scrollable.of(tester.element(find.text('song 0'))).position;
+    expect(inner.pixels, greaterThan(0));
+    expect(inner.pixels, lessThan(100));
+    await tester.pumpAndSettle();
+    expect(inner.pixels, 100);
     resetPlatform();
   });
 }

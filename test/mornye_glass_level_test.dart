@@ -61,11 +61,6 @@ void main() {
                 settingsProvider.overrideWith(_Settings.new),
                 // A capable GPU must not implicitly override contrast.
                 deviceSupportsBackdropBlurProvider.overrideWithValue(true),
-                // Surfaces sample the backdrop without waiting for a real
-                // first frame the test binding never rasterizes.
-                firstFrameRenderedProvider.overrideWith(
-                  () => FirstFrameRendered(initialValue: true),
-                ),
               ],
               child: MaterialApp(
                 theme: MornyeTheme.build(brightness, glassClarity: 1),
@@ -290,11 +285,6 @@ void main() {
       late BuildContext context;
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            firstFrameRenderedProvider.overrideWith(
-              () => FirstFrameRendered(initialValue: true),
-            ),
-          ],
           child: MaterialApp(
             theme: MornyeTheme.build(Brightness.dark, glassClarity: clarity),
             home: Scaffold(
@@ -484,12 +474,6 @@ void main() {
       ProviderScope(
         overrides: [
           mornyeGlassLevelProvider.overrideWithValue(MornyeGlassLevel.liquid),
-          mornyeGlassWarmupReadyProvider.overrideWith(
-            () => MornyeGlassWarmupReady(initialValue: true),
-          ),
-          firstFrameRenderedProvider.overrideWith(
-            () => FirstFrameRendered(initialValue: true),
-          ),
         ],
         child: MaterialApp(
           theme: MornyeTheme.build(Brightness.dark),

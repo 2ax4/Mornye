@@ -468,11 +468,6 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          firstFrameRenderedProvider.overrideWith(
-            () => FirstFrameRendered(initialValue: true),
-          ),
-        ],
         child: MaterialApp(
           theme: MornyeTheme.build(Brightness.dark),
           home: MediaQuery(

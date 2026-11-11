@@ -94,11 +94,6 @@ void main() {
           ),
           // Low-end Android without forced blur renders flat, opaque glass.
           if (lowEnd) lowEndDeviceProvider.overrideWithValue(true),
-          // Glass tests expect the sampled surfaces, not the solid launch
-          // state the first-frame gate holds before any rasterized frame.
-          firstFrameRenderedProvider.overrideWith(
-            () => FirstFrameRendered(initialValue: true),
-          ),
         ],
         child: DynamicColorWrapper(
           builder: (light, dark, mode) => MaterialApp(

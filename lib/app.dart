@@ -28,7 +28,6 @@ import 'package:mornye/widgets/desktop/desktop_shortcuts.dart';
 import 'package:mornye/widgets/desktop/library_drop_target.dart';
 import 'package:mornye/widgets/desktop/smooth_wheel_scroll.dart';
 import 'package:mornye/widgets/link/link_actions.dart';
-import 'package:mornye/widgets/mornye_glass_preparation.dart';
 import 'package:mornye/widgets/playback_feedback.dart';
 import 'package:mornye/widgets/tv_navigation.dart';
 
@@ -263,7 +262,7 @@ class _AppMediaQuery extends StatelessWidget {
             ? NavigationMode.directional
             : mediaQuery.navigationMode,
       ),
-      child: MornyeGlassPreparation(child: AdaptiveUiScaler(child: child)),
+      child: AdaptiveUiScaler(child: child),
     );
   }
 }

@@ -21,9 +21,9 @@ import 'package:flutter/widgets.dart';
 /// on the header before the body: a rewind of the body's share would be
 /// re-routed into the header while it can still absorb it. So the wrapper
 /// glides the body only once the header rests fully collapsed — it then
-/// cannot absorb anything and every move lands on the body — while the
-/// header's own collapse keeps the native jump, like any collapsing-toolbar
-/// app.
+/// cannot absorb anything and every move lands on the body. A notch spent
+/// entirely on the header (the collapsing title on Library Songs and the
+/// pushed pages) glides the header itself instead of jumping.
 ///
 /// The chrome builds INSIDE the Scrollable element but ABOVE its
 /// _ScrollableScope, so inherited lookups return null here and a downward
@@ -119,6 +119,22 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
     final position = _findPosition();
     if (position == null || !position.hasContentDimensions) return;
     final before = position.pixels;
+    // Remember where a surrounding NestedScrollView's header rested, so a
+    // notch spent entirely on it can glide instead of jumping.
+    ScrollPosition? headerPosition;
+    double? headerBefore;
+    try {
+      final nested = context.findAncestorStateOfType<NestedScrollViewState>();
+      if (nested != null && nested.outerController.hasClients) {
+        final outer = nested.outerController.position;
+        if (outer.hasContentDimensions) {
+          headerPosition = outer;
+          headerBefore = outer.pixels;
+        }
+      }
+    } catch (_) {
+      // Best effort; scrolling must never break input handling.
+    }
     // Runs after the whole pointer-signal dispatch: by then the native
     // handler has applied its clamped jump (or not moved at all, which means
     // the event was handled by a nested scrollable, blocked, or already at an
@@ -127,36 +143,54 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
       try {
         if (!position.hasContentDimensions) return;
         final delta = position.pixels - before;
-        // A nested shelf or an edge consumed the event, or the surface
-        // scrolls horizontally with its own arrows: leave it native.
         if (delta == 0 ||
             axisDirectionToAxis(position.axisDirection) != Axis.vertical) {
+          // A nested shelf or an edge consumed the event, or the surface
+          // scrolls horizontally with its own arrows. Inside a
+          // NestedScrollView the coordinator may instead have spent the
+          // notch on the header: glide that share too, so the collapsing
+          // titles on the Library and pushed pages scroll smoothly.
+          if (headerPosition != null &&
+              headerBefore != null &&
+              headerPosition.hasContentDimensions) {
+            final headerDelta = headerPosition.pixels - headerBefore;
+            if (headerDelta != 0) {
+              _startGlide(headerPosition, headerBefore, headerDelta);
+            }
+          }
           return;
         }
         if (!_mayGlide(position)) return;
-        // Undo the native jump before this frame is painted; the glide below
-        // covers the same distance smoothly. pointerScroll clamps to the
-        // position's own extents, which restores `before` exactly because
-        // the native jump started there.
-        position.pointerScroll(-delta);
-        var target = (_target ?? before) + delta;
-        if (target < position.minScrollExtent) {
-          target = position.minScrollExtent;
-        } else if (target > position.maxScrollExtent) {
-          target = position.maxScrollExtent;
-        }
-        _target = target;
-        _position = position;
-        // A chained notch arrives while the glide is still running: start()
-        // on an active ticker would throw and silently kill the glide.
-        final ticker = _ticker ??= createTicker(_onTick);
-        if (!ticker.isActive) ticker.start();
+        _startGlide(position, before, delta);
       } catch (_) {
         // The position may be disposing between frames; scrolling is best
         // effort and must never break input handling.
         _cancel();
       }
     });
+  }
+
+  /// Rewinds the native jump [delta] on [position] and glides the same
+  /// distance from [before]. The pointerScroll rewind restores `before`
+  /// exactly because the native jump started there and clamps to the
+  /// position's own extents.
+  void _startGlide(ScrollPosition position, double before, double delta) {
+    position.pointerScroll(-delta);
+    // A notch on the other surface (header <-> body) restarts the glide
+    // there instead of inheriting the previous surface's target.
+    if (!identical(_position, position)) _target = null;
+    var target = (_target ?? before) + delta;
+    if (target < position.minScrollExtent) {
+      target = position.minScrollExtent;
+    } else if (target > position.maxScrollExtent) {
+      target = position.maxScrollExtent;
+    }
+    _target = target;
+    _position = position;
+    // A chained notch arrives while the glide is still running: start()
+    // on an active ticker would throw and silently kill the glide.
+    final ticker = _ticker ??= createTicker(_onTick);
+    if (!ticker.isActive) ticker.start();
   }
 
   void _onTick(Duration elapsed) {

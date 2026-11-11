@@ -99,11 +99,13 @@ bool FlutterWindow::OnCreate() {
                  result) { HandleWindowCall(call, std::move(result)); });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
-  // Show the window right away. Waiting for the first frame left a hidden
-  // window for seconds on some machines: a hidden view is not pumped by the
-  // compositor, so the first frame itself could rasterize late. An immediate
-  // show paints the dark class brush until Flutter content lands.
-  this->Show();
+  flutter_controller_->engine()->SetNextFrameCallback([&]() {
+    this->Show();
+  });
+
+  // Flutter can complete the first frame before the "show window" callback is
+  // registered. The following call ensures a frame is pending to ensure the
+  // window is shown. It is a no-op if the first frame hasn't completed yet.
   flutter_controller_->ForceRedraw();
 
   return true;

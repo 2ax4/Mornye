@@ -97,9 +97,7 @@ const wchar_t* WindowClassRegistrar::GetWindowClass() {
     window_class.hInstance = GetModuleHandle(nullptr);
     window_class.hIcon =
         LoadIcon(window_class.hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
-    // Dark, matching the app theme: the window becomes visible before
-    // Flutter's first frame, and a white system brush would flash there.
-    window_class.hbrBackground = ::CreateSolidBrush(RGB(16, 16, 16));
+    window_class.hbrBackground = 0;
     window_class.lpszMenuName = nullptr;
     window_class.lpfnWndProc = Win32Window::WndProc;
     RegisterClass(&window_class);

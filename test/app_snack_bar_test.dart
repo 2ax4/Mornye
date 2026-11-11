@@ -25,11 +25,6 @@ void main() {
       final capture = GlobalKey();
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            firstFrameRenderedProvider.overrideWith(
-              () => FirstFrameRendered(initialValue: true),
-            ),
-          ],
           child: MaterialApp(
             theme: MornyeTheme.build(brightness),
             builder: (_, child) => RepaintBoundary(
