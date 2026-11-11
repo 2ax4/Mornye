@@ -289,6 +289,10 @@ class MornyeGlass extends ConsumerWidget {
         firstInGroup &&
         lastInGroup &&
         level == MornyeGlassLevel.liquid &&
+        // The lens pipeline compiles on first use; surfaces stay frosted
+        // until the warmup rasterized it once, so a style switch or the
+        // first glass frame never stalls the window on shader compilation.
+        ref.watch(mornyeGlassWarmupReadyProvider) &&
         (debugShaderFilterSupport ?? ImageFilter.isShaderFilterSupported);
     // Clear glass softens the backdrop less. Keep the mid-range fallback at
     // its small blur budget, and reuse these filters in the lens renderer too.

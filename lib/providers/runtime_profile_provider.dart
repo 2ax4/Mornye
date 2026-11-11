@@ -62,3 +62,10 @@ final mornyeBlurEnabledProvider = Provider<bool>(
 final mornyeLiquidGlassProvider = Provider<bool>(
   (ref) => ref.watch(mornyeGlassLevelProvider) == MornyeGlassLevel.liquid,
 );
+
+/// Whether the liquid-glass backdrop pipeline has been rasterized once, so
+/// surfaces may render the lens. Until then they fall back to the shared
+/// frosted blur, keeping shader compilation off visible frames — without
+/// this, switching styles or starting with glass freezes the window while
+/// the pipeline compiles.
+final mornyeGlassWarmupReadyProvider = StateProvider<bool>((ref) => false);

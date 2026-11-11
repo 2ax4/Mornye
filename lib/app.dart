@@ -117,7 +117,14 @@ class _VerticalScrollbarBehavior extends MaterialScrollBehavior {
     if (axisDirectionToAxis(details.direction) == Axis.horizontal) {
       return child;
     }
-    final Widget scoped = smoothWheel ? SmoothWheelScroll(child: child) : child;
+    // The chrome builds outside the scrollable's scope, so the wrapper takes
+    // the position from the details controller (always attached by the
+    // scrollable) instead of an inherited lookup that would return null.
+    final positions = details.controller?.positions ?? const [];
+    final position = positions.length == 1 ? positions.single : null;
+    final Widget scoped = smoothWheel && position != null
+        ? SmoothWheelScroll(position: position, child: child)
+        : child;
     return super.buildScrollbar(context, scoped, details);
   }
 }

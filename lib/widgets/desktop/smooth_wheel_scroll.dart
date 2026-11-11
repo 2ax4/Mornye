@@ -12,12 +12,20 @@ import 'package:flutter/widgets.dart';
 /// that target every frame — 20% of the remaining distance per frame, capped
 /// at 80 logical pixels — so chained notches glide together instead of
 /// restarting a short animation on every event. The native jump is rewound
-/// in the same frame it arrives, so only the glide is ever visible. Nested
-/// scrollables keep their native behavior, because only a scrollable that
-/// actually moved is animated.
+/// in the same frame it arrives, so only the glide is ever visible.
+///
+/// The position is passed in from the scroll chrome ([ScrollableDetails]
+/// controller), because chrome builds OUTSIDE the scrollable's
+/// [_ScrollableScope]: an inherited lookup from here returns null and would
+/// silently disable the whole wrapper.
 class SmoothWheelScroll extends StatefulWidget {
-  const SmoothWheelScroll({super.key, required this.child});
+  const SmoothWheelScroll({
+    super.key,
+    required this.position,
+    required this.child,
+  });
 
+  final ScrollPosition position;
   final Widget child;
 
   @override
@@ -34,76 +42,68 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
   static const _snapThreshold = 0.5;
 
   Ticker? _ticker;
-  ScrollPosition? _position;
   double? _target;
+
+  ScrollPosition get _position => widget.position;
 
   void _cancel() {
     _ticker?.stop();
     _target = null;
-    _position = null;
   }
 
   void _onPointerDown(PointerDownEvent event) => _cancel();
 
   void _onPointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent || event.scrollDelta.dy == 0) return;
-    final scrollable = Scrollable.maybeOf(context);
-    if (scrollable == null) return;
     // Horizontal shelves have their own scroll arrows; leave them native.
-    if (axisDirectionToAxis(scrollable.widget.axisDirection) != Axis.vertical) {
-      return;
-    }
+    if (axisDirectionToAxis(_position.axisDirection) != Axis.vertical) return;
     if (MediaQuery.disableAnimationsOf(context)) return;
-    final position = scrollable.position;
-    if (!position.hasContentDimensions) return;
-    final before = position.pixels;
+    if (!_position.hasContentDimensions) return;
+    final before = _position.pixels;
     // Runs after the whole pointer-signal dispatch: by then the native
     // handler has applied its clamped jump (or not moved at all, which means
     // the event was handled by a nested scrollable, blocked, or already at an
     // edge) and this wrapper only animates the movement it observes.
     scheduleMicrotask(() {
       try {
-        if (!position.hasContentDimensions) return;
-        final delta = position.pixels - before;
+        if (!_position.hasContentDimensions) return;
+        final delta = _position.pixels - before;
         if (delta == 0) return;
         // Undo the native jump before this frame is painted; the glide below
         // covers the same distance smoothly.
-        position.jumpTo(before);
+        _position.jumpTo(before);
         var target = (_target ?? before) + delta;
-        if (target < position.minScrollExtent) {
-          target = position.minScrollExtent;
-        } else if (target > position.maxScrollExtent) {
-          target = position.maxScrollExtent;
+        if (target < _position.minScrollExtent) {
+          target = _position.minScrollExtent;
+        } else if (target > _position.maxScrollExtent) {
+          target = _position.maxScrollExtent;
         }
         _target = target;
-        _position = position;
         (_ticker ??= createTicker(_onTick)).start();
       } catch (_) {
         // The position may be disposing between frames; scrolling is best
         // effort and must never break input handling.
+        _cancel();
       }
     });
   }
 
   void _onTick(Duration elapsed) {
-    final position = _position;
     final target = _target;
-    if (position == null ||
-        target == null ||
-        !position.hasContentDimensions) {
+    if (target == null || !_position.hasContentDimensions) {
       _cancel();
       return;
     }
     // A drag, scrollbar pull or trackpad pan took over the position: yield
     // to it instead of fighting the user's own motion.
-    if (position.isScrollingNotifier.value) {
+    if (_position.isScrollingNotifier.value) {
       _cancel();
       return;
     }
-    final current = position.pixels;
+    final current = _position.pixels;
     final diff = target - current;
     if (diff.abs() <= _snapThreshold) {
-      position.jumpTo(target);
+      _position.jumpTo(target);
       _cancel();
       return;
     }
@@ -112,7 +112,7 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
       step = step.isNegative ? -_maxStepPerFrame : _maxStepPerFrame;
     }
     try {
-      position.jumpTo(current + step);
+      _position.jumpTo(current + step);
     } catch (_) {
       // The position may be disposing between frames; scrolling is best
       // effort and must never break input handling.
