@@ -496,6 +496,43 @@ void main() {
       expect(playbackExclusiveStatus.value, ExclusiveOutputStatus.pending);
     });
 
+    test('a pause gives the device back and a play takes it again', () async {
+      playbackExclusiveOutput.value = true;
+      await deck.configureOutput();
+      await deck.setFileSource('/song.flac');
+      await deck.resume();
+      await _settle();
+      expect(engine.properties['audio-exclusive'], 'yes');
+      expect(playbackExclusiveStatus.value, ExclusiveOutputStatus.active);
+      expect(reloads(), 0);
+
+      // The pause hands the device back so other apps can use it.
+      await deck.pause();
+      await _settle();
+      expect(engine.properties['audio-exclusive'], 'no');
+      expect(reloads(), 1);
+      expect(playbackExclusiveStatus.value, ExclusiveOutputStatus.pending);
+
+      // Resuming takes it again without reopening the source.
+      await deck.resume();
+      await _settle();
+      expect(engine.properties['audio-exclusive'], 'yes');
+      expect(reloads(), 2);
+      expect(playbackExclusiveStatus.value, ExclusiveOutputStatus.active);
+      expect(engine.calls.where((call) => call[0] == 'open'), hasLength(1));
+    });
+
+    test('a pause while exclusive is off leaves the output alone', () async {
+      await deck.configureOutput();
+      await deck.setFileSource('/song.flac');
+      await deck.resume();
+      await deck.pause();
+      await _settle();
+      expect(engine.properties['audio-exclusive'], 'no');
+      expect(reloads(), 0);
+      expect(playbackExclusiveStatus.value, ExclusiveOutputStatus.pending);
+    });
+
     test('a refused device plays the source through the mixer', () async {
       engine.refuseExclusive = true;
       final errors = <Object>[];

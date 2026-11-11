@@ -88,19 +88,25 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
     final mornye = context.isMornye;
     final foreground =
         widget.foreground ?? Theme.of(context).colorScheme.onSurface;
-    Widget content = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          key: const ValueKey('desktop-player-volume-popover'),
-          height: 48,
-          child: PlayerVolumeControl(foreground: foreground),
-        ),
-        if (playbackPitchSupported) ...[
-          _pitchRow(context, foreground),
-          _speedRow(context, foreground),
+    Widget content = Padding(
+      // Keep the rows clear of the host's rounded edges: the glass panel and
+      // the liquid lens clip their content to the panel shape, so a row that
+      // touches the top edge loses its upper half at the corners.
+      padding: const EdgeInsets.only(top: 10, bottom: 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            key: const ValueKey('desktop-player-volume-popover'),
+            height: 48,
+            child: PlayerVolumeControl(foreground: foreground),
+          ),
+          if (playbackPitchSupported) ...[
+            _pitchRow(context, foreground),
+            _speedRow(context, foreground),
+          ],
         ],
-      ],
+      ),
     );
     if (!mornye) {
       content = Material(
@@ -205,7 +211,7 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
                 value: tempo.clamp(0.5, 2.0),
                 min: 0.5,
                 max: 2.0,
-                divisions: 30,
+                // Continuous, so a tempo such as ×0.92 or ×0.98 is reachable.
                 label: '×${tempo.toStringAsFixed(2)}',
                 onChanged: drag,
                 onChangeEnd: (value) {

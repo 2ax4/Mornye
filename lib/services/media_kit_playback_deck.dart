@@ -746,6 +746,7 @@ class MediaKitPlaybackDeck
     if (failure != null) {
       Error.throwWithStackTrace(failure.error, failure.stackTrace);
     }
+    await _retakeExclusive();
     await _engine.play();
     _setState(PlaybackDeckState.playing);
   }
@@ -754,6 +755,50 @@ class MediaKitPlaybackDeck
   Future<void> pause() async {
     await _engine.pause();
     _setState(PlaybackDeckState.paused);
+    await _releaseExclusiveForPause();
+  }
+
+  /// Exclusive mode holds the output device, which keeps every other app
+  /// silent. Holding it through a pause would block them for nothing, so a
+  /// pause hands the device back and the next play takes it again. mpv keeps
+  /// the output open while a source sits paused, hence the reload.
+  Future<void> _releaseExclusiveForPause() async {
+    if (_disposed || !_exclusive || _state != PlaybackDeckState.paused) return;
+    final shared = _outputFor(exclusive: false);
+    _output = shared;
+    _exclusive = false;
+    playbackExclusiveStatus.value = ExclusiveOutputStatus.pending;
+    try {
+      await _engine.setProperty(shared.name, shared.value);
+      await _engine.command(const ['ao-reload']);
+    } catch (error) {
+      _log.w('Exclusive release: $error');
+    }
+  }
+
+  /// Takes the device back for exclusive output after a pause released it.
+  /// A driver that refuses the retake reports through the mpv log, whose
+  /// handler falls back to the shared output for this source.
+  Future<void> _retakeExclusive() async {
+    if (_disposed ||
+        _exclusive ||
+        !playbackExclusiveOutput.value ||
+        _state == PlaybackDeckState.stopped) {
+      return;
+    }
+    final target = _outputFor(exclusive: true);
+    _output = target;
+    _exclusive = true;
+    playbackExclusiveStatus.value = ExclusiveOutputStatus.pending;
+    try {
+      await _engine.setProperty(target.name, target.value);
+      await _engine.command(const ['ao-reload']);
+      if (!_disposed && _exclusive && _output == target) {
+        playbackExclusiveStatus.value = ExclusiveOutputStatus.active;
+      }
+    } catch (error) {
+      _log.w('Exclusive retake: $error');
+    }
   }
 
   @override
@@ -770,6 +815,12 @@ class MediaKitPlaybackDeck
     await _engine.stop();
     _duration = null;
     _setState(PlaybackDeckState.stopped);
+    // The closed output gave the device back; the status reads as "takes the
+    // device when a track plays" until one does.
+    if (playbackExclusiveOutput.value &&
+        playbackExclusiveStatus.value == ExclusiveOutputStatus.active) {
+      playbackExclusiveStatus.value = ExclusiveOutputStatus.pending;
+    }
   }
 
   /// Each deck owns its own libmpv instance, which cannot hand its output to

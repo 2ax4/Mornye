@@ -107,6 +107,14 @@ class _VerticalScrollbarBehavior extends MaterialScrollBehavior {
 
   final bool smoothWheel;
 
+  // ScrollConfiguration.updateShouldNotify ignores instance changes unless
+  // shouldNotify agrees, and the framework default is false: without this,
+  // an already-mounted Scrollable (the Settings list, open while the toggle
+  // flips) keeps the behavior it was built with until it is recreated.
+  @override
+  bool shouldNotify(covariant _VerticalScrollbarBehavior oldDelegate) =>
+      oldDelegate.smoothWheel != smoothWheel;
+
   @override
   Widget buildScrollbar(
     BuildContext context,
