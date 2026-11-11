@@ -14,12 +14,13 @@ import 'package:flutter/widgets.dart';
 /// restarting a short animation on every event. The native jump is rewound
 /// in the same frame it arrives, so only the glide is ever visible.
 ///
-/// The chrome builds OUTSIDE the scrollable's scope, so inherited lookups
-/// return null here. Instead the position is resolved at wheel time by
-/// walking down to the nearest scrollable, which works with and without
-/// page-provided controllers. Events the nearest scrollable did not act on
-/// (a nested shelf consumed them, the list is at an edge, or the surface
-/// scrolls horizontally) keep their native behavior.
+/// The chrome builds INSIDE the Scrollable element but ABOVE its
+/// _ScrollableScope, so inherited lookups return null here and a downward
+/// walk only reaches nested shelves inside the content. Instead the position
+/// is resolved at wheel time by walking UP to the owning ScrollableState,
+/// which works with and without page-provided controllers. Events the owner
+/// did not act on (a nested shelf consumed them, the list is at an edge, or
+/// the surface scrolls horizontally) keep their native behavior.
 class SmoothWheelScroll extends StatefulWidget {
   const SmoothWheelScroll({super.key, required this.child});
 
@@ -50,30 +51,31 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
 
   void _onPointerDown(PointerDownEvent event) => _cancel();
 
-  /// Walks down from the chrome to the scrollable the wheel event will act
-  /// on. Visiting elements is only allowed outside build, so this runs in
-  /// the pointer-signal handler, never during layout.
+  /// Walks up from the chrome to the ScrollableState that owns this
+  /// wrapper. The chrome sits between the Scrollable element and its
+  /// _ScrollableScope, so the owner is always the first ScrollableState
+  /// ancestor; walking down would only find nested shelves in the content.
+  /// Visiting elements is only allowed outside build, so this runs in the
+  /// pointer-signal handler, never during layout.
   ScrollPosition? _findPosition() {
-    ScrollableState? scrollable;
-    void visit(Element element) {
-      if (scrollable != null) return;
-      if (element is StatefulElement && element.state is ScrollableState) {
-        scrollable = element.state as ScrollableState;
-        return;
-      }
-      element.visitChildElements(visit);
-    }
-
+    ScrollPosition? position;
     try {
-      context.visitChildElements(visit);
+      context.visitAncestorElements((element) {
+        if (element is StatefulElement && element.state is ScrollableState) {
+          try {
+            position = (element.state as ScrollableState).position;
+          } catch (_) {
+            // A ScrollableState mid-disposal has no position; scrolling is
+            // best effort and must never break input handling.
+          }
+          return false;
+        }
+        return true;
+      });
     } catch (_) {
       return null;
     }
-    try {
-      return scrollable?.position;
-    } catch (_) {
-      return null;
-    }
+    return position;
   }
 
   void _onPointerSignal(PointerSignalEvent event) {

@@ -68,6 +68,15 @@ void main() {
   if (const bool.fromEnvironment('CORE_BACKEND_STARTUP_BENCHMARK')) {
     _startupBenchmark = _StartupBenchmark();
   }
+  final startupWatch = Stopwatch()..start();
+  // Phase timings ride on WARN because INFO entries are dropped unless the
+  // user turned logging on, and a slow launch is exactly when they have not.
+  // Each line lands in the desktop log file with its wall-clock offset, so a
+  // slow start on one machine pinpoints the phase without a debugger.
+  void logStartupPhase(String phase) {
+    _log.w('[startup] $phase at ${startupWatch.elapsedMilliseconds}ms');
+  }
+
   // Catch uncaught Dart errors so a failing async path is logged, not fatal.
   // Native backend crashes still can't be caught here.
   runZonedGuarded(
@@ -95,6 +104,7 @@ void main() {
       // Desktop: log files and the unclean-exit marker, before the error
       // hooks below start writing to them.
       await DesktopDiagnostics.initialize();
+      logStartupPhase('diagnostics ready');
       LicenseRegistry.addLicense(() async* {
         yield LicenseEntryWithLineBreaks(
           const [AppInfo.appName],
@@ -163,6 +173,7 @@ void main() {
       };
 
       final prefs = await preferences;
+      logStartupPhase('preferences ready');
       var bootstrapSettings = loadBootstrapSettings(prefs);
       // The SAF check overlaps the install marker read. An installation
       // reset rewrites the settings, so its result is then replaced.
@@ -184,10 +195,12 @@ void main() {
       );
       final runtimeProfile = await _resolveRuntimeProfile(prefs);
       _configureImageCache(runtimeProfile);
+      logStartupPhase('runtime profile ready');
       await orientation;
       // Usually answered by now. The first frame then has the final theme,
       // with no fade from the seed colors; a late answer still applies.
       await dynamicColors.settle(const Duration(milliseconds: 100));
+      logStartupPhase('launch preparation done');
 
       runApp(
         ProviderScope(
@@ -231,6 +244,11 @@ void main() {
             ),
           ),
         ),
+      );
+      unawaited(
+        WidgetsBinding.instance.waitUntilFirstFrameRasterized.then((_) {
+          logStartupPhase('first frame rasterized');
+        }),
       );
       musicPlayerRuntime.prepareCovers();
       // Waits until startup settles, then analyzes how songs sound for
@@ -823,7 +841,11 @@ class _EagerInitializationState extends ConsumerState<EagerInitialization>
 
   Future<void> _initializeExtensions() async {
     try {
+      final extensionsWatch = Stopwatch()..start();
       await ref.read(extensionProvider.notifier).ensureInitialized();
+      _log.w(
+        '[startup] extensions ready at +${extensionsWatch.elapsedMilliseconds}ms',
+      );
       _startupBenchmark?.extensionsReady(
         ref.read(extensionProvider),
         ref.read(settingsProvider),
