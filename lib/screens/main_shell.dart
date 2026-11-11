@@ -496,6 +496,10 @@ class _MainShellState extends ConsumerState<MainShell>
         // The glass pill owns the tab transition. Sliding/fading the whole
         // page at the same time continuously invalidates its live backdrop.
         _tabJumpTransitionController.value = 1;
+      } else if (isDesktopPlatform) {
+        // The desktop tab view swaps instantly (and survives style switches
+        // without remounting); the short fade keeps the jump readable.
+        _tabJumpTransitionController.forward(from: 0);
       } else if (isNonAdjacentJump) {
         _pageController.jumpToPage(index);
         _tabJumpTransitionController.forward(from: 0);
@@ -864,7 +868,8 @@ class _MainShellState extends ConsumerState<MainShell>
         heroAnimationsEnabled: heroAnimationsEnabled,
         child: _LibraryTabRoot(isTabActive: _currentIndex == 1),
       ),
-      if (!context.isMornye) const SettingsTab(),
+      if (!context.isMornye)
+        const SettingsTab(key: ValueKey('tab-settings')),
       if (context.isMornye)
         _TabNavigator(
           key: const ValueKey('tab-search'),
@@ -903,27 +908,32 @@ class _MainShellState extends ConsumerState<MainShell>
           child: child,
         );
 
+    // Desktop hosts both styles in the same LazyTabView so switching styles
+    // rematches the keyed tabs instead of remounting them: a remount would
+    // re-query the library and re-decode covers behind a frozen frame. The
+    // fade/scale wrappers stay on every path so the shape never changes; the
+    // controller rests at 1 where a style animates its own transition.
     final pageView = KeyedSubtree(
       key: _pageViewKey,
-      child: context.isMornye || isAndroidTv
-          ? LazyTabView(
-              index: selectedDestination,
-              preloadKeys: isAndroidTv
-                  ? const {}
-                  : {const ValueKey('tab-search')},
-              children: [
-                for (var index = 0; index < tabs.length; index++)
-                  KeyedSubtree(
-                    key: tabs[index].key,
-                    child: observeScroll(tabs[index], index),
-                  ),
-              ],
-            )
-          : FadeTransition(
-              opacity: _tabJumpOpacity,
-              child: ScaleTransition(
-                scale: _tabJumpScale,
-                child: PageView.builder(
+      child: FadeTransition(
+        opacity: _tabJumpOpacity,
+        child: ScaleTransition(
+          scale: _tabJumpScale,
+          child: context.isMornye || isAndroidTv || isDesktopPlatform
+              ? LazyTabView(
+                  index: selectedDestination,
+                  preloadKeys: isAndroidTv
+                      ? const {}
+                      : {const ValueKey('tab-search')},
+                  children: [
+                    for (var index = 0; index < tabs.length; index++)
+                      KeyedSubtree(
+                        key: tabs[index].key,
+                        child: observeScroll(tabs[index], index),
+                      ),
+                  ],
+                )
+              : PageView.builder(
                   controller: _pageController,
                   itemCount: tabs.length,
                   onPageChanged: _onPageChanged,
@@ -939,8 +949,8 @@ class _MainShellState extends ConsumerState<MainShell>
                     ),
                   ),
                 ),
-              ),
-            ),
+        ),
+      ),
     );
 
     // From here only the navigation chrome follows the window size and the
