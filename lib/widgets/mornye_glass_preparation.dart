@@ -23,13 +23,26 @@ class MornyeGlassPreparation extends ConsumerWidget {
             MediaQuery.highContrastOf(context),
           ),
         )) {
+      // Capture the notifier up front: the callback below outlives this
+      // widget, and a disposed WidgetRef must never be touched.
+      final readiness = ref.read(mornyeGlassWarmupReadyProvider.notifier);
       unawaited(
-        MornyeGlassWarmup.prepare(View.of(context)).then((_) {
+        MornyeGlassWarmup.prepare(View.of(context)).then((_) async {
           // Preparation may bail (view gone, app not resumed) and retry
           // later; only a completed rasterization may open the lens gate.
-          if (MornyeGlassWarmup.isReady) {
-            ref.read(mornyeGlassWarmupReadyProvider.notifier).markReady();
+          if (!MornyeGlassWarmup.isReady) return;
+          // Turning every glass surface to the lens is a heavy frame; land
+          // it in a frame-free moment instead of on the entrance or a
+          // scroll, capping the wait for UIs that never fully rest.
+          final binding = WidgetsBinding.instance;
+          for (var attempt = 0; attempt < 30; attempt++) {
+            if (!binding.hasScheduledFrame &&
+                binding.transientCallbackCount == 0) {
+              break;
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 100));
           }
+          readiness.markReady();
         }),
       );
     }

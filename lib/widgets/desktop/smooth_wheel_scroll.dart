@@ -14,18 +14,15 @@ import 'package:flutter/widgets.dart';
 /// restarting a short animation on every event. The native jump is rewound
 /// in the same frame it arrives, so only the glide is ever visible.
 ///
-/// The position is passed in from the scroll chrome ([ScrollableDetails]
-/// controller), because chrome builds OUTSIDE the scrollable's
-/// [_ScrollableScope]: an inherited lookup from here returns null and would
-/// silently disable the whole wrapper.
+/// The chrome builds OUTSIDE the scrollable's scope, so inherited lookups
+/// return null here. Instead the position is resolved at wheel time by
+/// walking down to the nearest scrollable, which works with and without
+/// page-provided controllers. Events the nearest scrollable did not act on
+/// (a nested shelf consumed them, the list is at an edge, or the surface
+/// scrolls horizontally) keep their native behavior.
 class SmoothWheelScroll extends StatefulWidget {
-  const SmoothWheelScroll({
-    super.key,
-    required this.position,
-    required this.child,
-  });
+  const SmoothWheelScroll({super.key, required this.child});
 
-  final ScrollPosition position;
   final Widget child;
 
   @override
@@ -42,43 +39,74 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
   static const _snapThreshold = 0.5;
 
   Ticker? _ticker;
+  ScrollPosition? _position;
   double? _target;
-
-  ScrollPosition get _position => widget.position;
 
   void _cancel() {
     _ticker?.stop();
     _target = null;
+    _position = null;
   }
 
   void _onPointerDown(PointerDownEvent event) => _cancel();
 
+  /// Walks down from the chrome to the scrollable the wheel event will act
+  /// on. Visiting elements is only allowed outside build, so this runs in
+  /// the pointer-signal handler, never during layout.
+  ScrollPosition? _findPosition() {
+    ScrollableState? scrollable;
+    void visit(Element element) {
+      if (scrollable != null) return;
+      if (element is StatefulElement && element.state is ScrollableState) {
+        scrollable = element.state as ScrollableState;
+        return;
+      }
+      element.visitChildElements(visit);
+    }
+
+    try {
+      context.visitChildElements(visit);
+    } catch (_) {
+      return null;
+    }
+    try {
+      return scrollable?.position;
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _onPointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent || event.scrollDelta.dy == 0) return;
-    // Horizontal shelves have their own scroll arrows; leave them native.
-    if (axisDirectionToAxis(_position.axisDirection) != Axis.vertical) return;
     if (MediaQuery.disableAnimationsOf(context)) return;
-    if (!_position.hasContentDimensions) return;
-    final before = _position.pixels;
+    final position = _findPosition();
+    if (position == null || !position.hasContentDimensions) return;
+    final before = position.pixels;
     // Runs after the whole pointer-signal dispatch: by then the native
     // handler has applied its clamped jump (or not moved at all, which means
     // the event was handled by a nested scrollable, blocked, or already at an
     // edge) and this wrapper only animates the movement it observes.
     scheduleMicrotask(() {
       try {
-        if (!_position.hasContentDimensions) return;
-        final delta = _position.pixels - before;
-        if (delta == 0) return;
+        if (!position.hasContentDimensions) return;
+        final delta = position.pixels - before;
+        // A nested shelf or an edge consumed the event, or the surface
+        // scrolls horizontally with its own arrows: leave it native.
+        if (delta == 0 ||
+            axisDirectionToAxis(position.axisDirection) != Axis.vertical) {
+          return;
+        }
         // Undo the native jump before this frame is painted; the glide below
         // covers the same distance smoothly.
-        _position.jumpTo(before);
+        position.jumpTo(before);
         var target = (_target ?? before) + delta;
-        if (target < _position.minScrollExtent) {
-          target = _position.minScrollExtent;
-        } else if (target > _position.maxScrollExtent) {
-          target = _position.maxScrollExtent;
+        if (target < position.minScrollExtent) {
+          target = position.minScrollExtent;
+        } else if (target > position.maxScrollExtent) {
+          target = position.maxScrollExtent;
         }
         _target = target;
+        _position = position;
         (_ticker ??= createTicker(_onTick)).start();
       } catch (_) {
         // The position may be disposing between frames; scrolling is best
@@ -89,21 +117,22 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
   }
 
   void _onTick(Duration elapsed) {
+    final position = _position;
     final target = _target;
-    if (target == null || !_position.hasContentDimensions) {
+    if (position == null || target == null || !position.hasContentDimensions) {
       _cancel();
       return;
     }
     // A drag, scrollbar pull or trackpad pan took over the position: yield
     // to it instead of fighting the user's own motion.
-    if (_position.isScrollingNotifier.value) {
+    if (position.isScrollingNotifier.value) {
       _cancel();
       return;
     }
-    final current = _position.pixels;
+    final current = position.pixels;
     final diff = target - current;
     if (diff.abs() <= _snapThreshold) {
-      _position.jumpTo(target);
+      position.jumpTo(target);
       _cancel();
       return;
     }
@@ -112,7 +141,7 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
       step = step.isNegative ? -_maxStepPerFrame : _maxStepPerFrame;
     }
     try {
-      _position.jumpTo(current + step);
+      position.jumpTo(current + step);
     } catch (_) {
       // The position may be disposing between frames; scrolling is best
       // effort and must never break input handling.

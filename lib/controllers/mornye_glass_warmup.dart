@@ -35,6 +35,12 @@ class MornyeGlassWarmup {
       LiquidGlassShaders.ensureLoaded(),
       WidgetsBinding.instance.waitUntilFirstFrameRasterized,
     ]);
+    // Compiling the lens pipeline stalls the raster thread for a while.
+    // Starting straight after the first frame turned the whole launch into a
+    // long white or frozen window, so let the shell settle first: a floor
+    // past startup, then a frame-free moment before the rasterization.
+    await Future<void>.delayed(const Duration(seconds: 2));
+    await _waitForFrameQuiet(30);
     // Do not compete with an entrance, theme switch or scrolling animation.
     await SchedulerBinding.instance.scheduleTask(
       () async {
@@ -50,6 +56,19 @@ class MornyeGlassWarmup {
       Priority.idle,
       debugLabel: 'Prepare Mornye glass backdrop',
     );
+  }
+
+  /// Waits through at most [maxAttempts] 100 ms gaps for a moment without a
+  /// scheduled frame or a running animation, so one-off heavy work does not
+  /// land mid-motion. A busy UI never goes perfectly quiet, hence the cap.
+  static Future<void> _waitForFrameQuiet(int maxAttempts) async {
+    final binding = SchedulerBinding.instance;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      if (!binding.hasScheduledFrame && binding.transientCallbackCount == 0) {
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
   }
 }
 
