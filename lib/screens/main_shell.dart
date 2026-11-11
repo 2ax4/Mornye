@@ -868,8 +868,7 @@ class _MainShellState extends ConsumerState<MainShell>
         heroAnimationsEnabled: heroAnimationsEnabled,
         child: _LibraryTabRoot(isTabActive: _currentIndex == 1),
       ),
-      if (!context.isMornye)
-        const SettingsTab(key: ValueKey('tab-settings')),
+      if (!context.isMornye) const SettingsTab(key: ValueKey('tab-settings')),
       if (context.isMornye)
         _TabNavigator(
           key: const ValueKey('tab-search'),

@@ -286,9 +286,14 @@ void main() {
           ),
         );
         if (mornye) {
-          // The glass runs the window's height over a pane that stays put.
+          // The glass runs the pane's height over a pane that stays put; the
+          // compact top strip takes the rest of the window while the sidebar
+          // is off.
           expect(content.right, 1400);
-          expect(tester.getRect(upNext).height, 800);
+          expect(
+            tester.getRect(upNext).height,
+            800 - desktopTopNavigationHeight,
+          );
         } else {
           expect(content.right, tester.getRect(upNext).left);
         }
@@ -319,7 +324,10 @@ void main() {
           await pressShortcut(tester, LogicalKeyboardKey.keyU);
           final upNext = find.byKey(const ValueKey('desktop-inspector-upNext'));
           expect(tester.getSize(upNext).width, desktopInspectorWidth);
-          expect(tester.getRect(upNext).height, 800);
+          expect(
+            tester.getRect(upNext).height,
+            800 - desktopTopNavigationHeight,
+          );
           expect(tester.takeException(), isNull);
         });
       }

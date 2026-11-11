@@ -581,6 +581,10 @@ int _positionOf(List<DesktopDestination> destinations, ShellTab tab) =>
 /// The compact strip that keeps the app reachable while the sidebar is off:
 /// the destinations as pills in a row at the top of the window, in both
 /// styles, including Settings, which brings the sidebar back.
+/// Height of the compact strip that keeps every destination in reach while
+/// the Mornye sidebar is off.
+const double desktopTopNavigationHeight = 48;
+
 class DesktopTopNavigation extends StatelessWidget {
   const DesktopTopNavigation({
     super.key,
@@ -601,7 +605,7 @@ class DesktopTopNavigation extends StatelessWidget {
           ? DesktopSidebar.panelColor(context, null)
           : Theme.of(context).colorScheme.surfaceContainer,
       child: SizedBox(
-        height: 48,
+        height: desktopTopNavigationHeight,
         child: Row(
           children: [
             // Keep the traffic lights clear where the title bar lives in
