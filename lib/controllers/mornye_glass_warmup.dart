@@ -38,8 +38,10 @@ class MornyeGlassWarmup {
     // Compiling the lens pipeline stalls the raster thread for a while.
     // Starting straight after the first frame turned the whole launch into a
     // long white or frozen window, so let the shell settle first: a floor
-    // past startup, then a frame-free moment before the rasterization.
-    await Future<void>.delayed(const Duration(seconds: 2));
+    // past startup, then a frame-free moment before the rasterization. The
+    // launch frames render without backdrop sampling, so a shorter floor is
+    // safe now and the glass arrives sooner.
+    await Future<void>.delayed(const Duration(seconds: 1));
     await _waitForFrameQuiet(30);
     // Do not compete with an entrance, theme switch or scrolling animation.
     await SchedulerBinding.instance.scheduleTask(
@@ -100,6 +102,11 @@ Future<void> _rasterize(ui.FlutterView view) async {
           // it renders the lens regardless of the global readiness gate.
           mornyeGlassWarmupReadyProvider.overrideWith(
             () => MornyeGlassWarmupReady(initialValue: true),
+          ),
+          // Backdrop sampling also waits for the first frame; the detached
+          // tree rasterizes outside any real frame and must sample.
+          firstFrameRenderedProvider.overrideWith(
+            () => FirstFrameRendered(initialValue: true),
           ),
         ],
         child: Directionality(

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mornye/providers/runtime_profile_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/widgets/app_alert_dialog.dart';
@@ -14,6 +15,11 @@ void main() {
         (tester) async {
           await tester.pumpWidget(
             ProviderScope(
+              overrides: [
+                firstFrameRenderedProvider.overrideWith(
+                  () => FirstFrameRendered(initialValue: true),
+                ),
+              ],
               child: MaterialApp(
                 theme: MornyeTheme.build(brightness),
                 builder: (context, child) => MediaQuery(

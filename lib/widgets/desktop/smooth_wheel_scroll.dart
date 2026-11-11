@@ -14,6 +14,17 @@ import 'package:flutter/widgets.dart';
 /// restarting a short animation on every event. The native jump is rewound
 /// in the same frame it arrives, so only the glide is ever visible.
 ///
+/// Every move — rewind and glide steps alike — goes through
+/// [ScrollPosition.pointerScroll], the same clamped relative move the
+/// framework's own wheel handler applies. On a NestedScrollView (the Library
+/// tab) that routes through the coordinator, which spends a downward wheel
+/// on the header before the body: a rewind of the body's share would be
+/// re-routed into the header while it can still absorb it. So the wrapper
+/// glides the body only once the header rests fully collapsed — it then
+/// cannot absorb anything and every move lands on the body — while the
+/// header's own collapse keeps the native jump, like any collapsing-toolbar
+/// app.
+///
 /// The chrome builds INSIDE the Scrollable element but ABOVE its
 /// _ScrollableScope, so inherited lookups return null here and a downward
 /// walk only reaches nested shelves inside the content. Instead the position
@@ -38,6 +49,10 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
   static const _smoothing = 0.20;
   static const _maxStepPerFrame = 80.0;
   static const _snapThreshold = 0.5;
+
+  /// An outer NestedScrollView position tolerates half a pixel of rounding
+  /// before the body is considered to have the wheel to itself.
+  static const _headerSettledEpsilon = 0.5;
 
   Ticker? _ticker;
   ScrollPosition? _position;
@@ -78,6 +93,26 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
     return position;
   }
 
+  /// Whether [position] may glide where it sits. Inside a NestedScrollView
+  /// only the body glides, and only once its header is fully collapsed; see
+  /// the class documentation for the coordinator routing behind this.
+  bool _mayGlide(ScrollPosition position) {
+    final NestedScrollViewState? nested;
+    try {
+      nested = context.findAncestorStateOfType<NestedScrollViewState>();
+    } catch (_) {
+      return false;
+    }
+    if (nested == null) return true;
+    final outerController = nested.outerController;
+    if (!outerController.hasClients) return false;
+    final outer = outerController.position;
+    if (!outer.hasContentDimensions) return false;
+    // With the header at its maximum it cannot absorb another pixel, so the
+    // rewind and every glide step land on the body exactly.
+    return outer.pixels >= outer.maxScrollExtent - _headerSettledEpsilon;
+  }
+
   void _onPointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent || event.scrollDelta.dy == 0) return;
     if (MediaQuery.disableAnimationsOf(context)) return;
@@ -98,9 +133,12 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
             axisDirectionToAxis(position.axisDirection) != Axis.vertical) {
           return;
         }
+        if (!_mayGlide(position)) return;
         // Undo the native jump before this frame is painted; the glide below
-        // covers the same distance smoothly.
-        position.jumpTo(before);
+        // covers the same distance smoothly. pointerScroll clamps to the
+        // position's own extents, which restores `before` exactly because
+        // the native jump started there.
+        position.pointerScroll(-delta);
         var target = (_target ?? before) + delta;
         if (target < position.minScrollExtent) {
           target = position.minScrollExtent;
@@ -109,7 +147,10 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
         }
         _target = target;
         _position = position;
-        (_ticker ??= createTicker(_onTick)).start();
+        // A chained notch arrives while the glide is still running: start()
+        // on an active ticker would throw and silently kill the glide.
+        final ticker = _ticker ??= createTicker(_onTick);
+        if (!ticker.isActive) ticker.start();
       } catch (_) {
         // The position may be disposing between frames; scrolling is best
         // effort and must never break input handling.
@@ -126,7 +167,9 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
       return;
     }
     // A drag, scrollbar pull or trackpad pan took over the position: yield
-    // to it instead of fighting the user's own motion.
+    // to it instead of fighting the user's own motion. Our own pointerScroll
+    // steps end idle under the desktop clamping physics, so this only fires
+    // for someone else's gesture.
     if (position.isScrollingNotifier.value) {
       _cancel();
       return;
@@ -134,7 +177,11 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
     final current = position.pixels;
     final diff = target - current;
     if (diff.abs() <= _snapThreshold) {
-      position.jumpTo(target);
+      try {
+        if (diff != 0) position.pointerScroll(diff);
+      } catch (_) {
+        // The position may be disposing between frames.
+      }
       _cancel();
       return;
     }
@@ -143,7 +190,7 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
       step = step.isNegative ? -_maxStepPerFrame : _maxStepPerFrame;
     }
     try {
-      position.jumpTo(current + step);
+      position.pointerScroll(step);
     } catch (_) {
       // The position may be disposing between frames; scrolling is best
       // effort and must never break input handling.
