@@ -474,7 +474,9 @@ void main() {
       ProviderScope(
         overrides: [
           mornyeGlassLevelProvider.overrideWithValue(MornyeGlassLevel.liquid),
-          mornyeGlassWarmupReadyProvider.overrideWithValue(true),
+          mornyeGlassWarmupReadyProvider.overrideWith(
+            () => MornyeGlassWarmupReady(initialValue: true),
+          ),
         ],
         child: MaterialApp(
           theme: MornyeTheme.build(Brightness.dark),

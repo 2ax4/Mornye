@@ -68,4 +68,20 @@ final mornyeLiquidGlassProvider = Provider<bool>(
 /// frosted blur, keeping shader compilation off visible frames — without
 /// this, switching styles or starting with glass freezes the window while
 /// the pipeline compiles.
-final mornyeGlassWarmupReadyProvider = StateProvider<bool>((ref) => false);
+class MornyeGlassWarmupReady extends Notifier<bool> {
+  MornyeGlassWarmupReady({this.initialValue = false});
+
+  /// Tests and the detached warmup rasterizer seed `true` so the lens
+  /// renders without running the preparation first.
+  final bool initialValue;
+
+  @override
+  bool build() => initialValue;
+
+  void markReady() => state = true;
+}
+
+final mornyeGlassWarmupReadyProvider =
+    NotifierProvider<MornyeGlassWarmupReady, bool>(
+      MornyeGlassWarmupReady.new,
+    );

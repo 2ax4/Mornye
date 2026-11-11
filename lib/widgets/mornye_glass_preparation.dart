@@ -28,7 +28,7 @@ class MornyeGlassPreparation extends ConsumerWidget {
           // Preparation may bail (view gone, app not resumed) and retry
           // later; only a completed rasterization may open the lens gate.
           if (MornyeGlassWarmup.isReady) {
-            ref.read(mornyeGlassWarmupReadyProvider.notifier).state = true;
+            ref.read(mornyeGlassWarmupReadyProvider.notifier).markReady();
           }
         }),
       );

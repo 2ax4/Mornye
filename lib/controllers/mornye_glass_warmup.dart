@@ -79,7 +79,9 @@ Future<void> _rasterize(ui.FlutterView view) async {
           mornyeGlassLevelProvider.overrideWithValue(MornyeGlassLevel.liquid),
           // The warmup tree is exactly where the lens pipeline compiles, so
           // it renders the lens regardless of the global readiness gate.
-          mornyeGlassWarmupReadyProvider.overrideWithValue(true),
+          mornyeGlassWarmupReadyProvider.overrideWith(
+            () => MornyeGlassWarmupReady(initialValue: true),
+          ),
         ],
         child: Directionality(
           textDirection: TextDirection.ltr,
