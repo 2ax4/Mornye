@@ -12,7 +12,6 @@ import 'package:mornye/services/custom_font_service.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/widgets/mornye_chrome.dart';
 import 'package:mornye/widgets/mornye_context_menu.dart';
-import 'package:mornye/widgets/mornye_glass_preparation.dart';
 
 import 'performance_probe.dart';
 
@@ -52,10 +51,7 @@ void main() {
               glassClarity: 1,
               fontFamily: family,
             ),
-            builder: (_, child) => RepaintBoundary(
-              key: capture,
-              child: MornyeGlassPreparation(child: child!),
-            ),
+            builder: (_, child) => RepaintBoundary(key: capture, child: child!),
             home: Scaffold(
               body: Stack(
                 fit: StackFit.expand,

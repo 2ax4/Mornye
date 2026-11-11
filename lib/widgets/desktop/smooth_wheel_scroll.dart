@@ -96,6 +96,10 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
   /// Whether [position] may glide where it sits. Inside a NestedScrollView
   /// only the body glides, and only once its header is fully collapsed; see
   /// the class documentation for the coordinator routing behind this.
+  /// A wrapper sitting on the outer scrollable itself never glides it: the
+  /// coordinator already spends wheel notches on the header through the
+  /// body's wrapper, so gliding the outer position here too would rewind
+  /// the header mid-flight and animate every header notch twice.
   bool _mayGlide(ScrollPosition position) {
     final NestedScrollViewState? nested;
     try {
@@ -108,6 +112,7 @@ class _SmoothWheelScrollState extends State<SmoothWheelScroll>
     if (!outerController.hasClients) return false;
     final outer = outerController.position;
     if (!outer.hasContentDimensions) return false;
+    if (identical(outer, position)) return false;
     // With the header at its maximum it cannot absorb another pixel, so the
     // rewind and every glide step land on the body exactly.
     return outer.pixels >= outer.maxScrollExtent - _headerSettledEpsilon;

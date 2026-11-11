@@ -90,9 +90,7 @@ jobs:
         run: rustup show
 
       - name: Install Rust binding generator dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libclang-dev
+        run: bash scripts/ci_apt_install.sh libclang-dev
 
       - name: Cache Gradle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -528,12 +526,13 @@ jobs:
       # Same build dependencies as desktop.yml, plus the desktop entry and
       # AppStream validators and dpkg-shlibdeps for the deb.
       - name: Install Linux build dependencies
+        # ci_apt_install.sh retries around the runner image's flaky Azure
+        # apt mirror (transient DNS failures broke this step before). The
+        # image's libunwind-14-dev conflicts with GStreamer's libunwind-dev
+        # dependency; apt replaces the LLVM one in the same transaction.
         run: |
-          sudo apt-get update
-          # The image's libunwind-14-dev blocks GStreamer's libunwind-dev
-          # dependency; asking for it first lets apt replace the LLVM one.
-          sudo apt-get install -y libunwind-dev
-          sudo apt-get install -y \
+          bash scripts/ci_apt_install.sh \
+            libunwind-dev \
             clang cmake ninja-build pkg-config zip file \
             libgtk-3-dev liblzma-dev libsecret-1-dev libstdc++-12-dev \
             libjson-glib-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \

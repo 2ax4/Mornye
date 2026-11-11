@@ -145,8 +145,7 @@ jobs:
 
       - name: Install media test tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          bash scripts/ci_apt_install.sh ffmpeg
           ffmpeg -version
           ffprobe -version
 
@@ -179,9 +178,7 @@ jobs:
           restore-keys: cargo-${{ runner.os }}-rust-${{ hashFiles('rust_backend/rust-toolchain.toml') }}-
 
       - name: Install C binding generator dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libclang-dev
+        run: bash scripts/ci_apt_install.sh libclang-dev
 
       # The Android libraries are built once, by Gradle in the android job.
       - name: Rust formatting, Clippy and unit tests
@@ -323,8 +320,7 @@ jobs:
         run: |
           cd rust_backend
           rustup show
-          sudo apt-get update
-          sudo apt-get install -y libclang-dev ffmpeg
+          bash "$GITHUB_WORKSPACE/scripts/ci_apt_install.sh" libclang-dev ffmpeg
           ffmpeg -version
           echo "MORNYE_TEST_FFMPEG=$(command -v ffmpeg)" >> "$GITHUB_ENV"
 

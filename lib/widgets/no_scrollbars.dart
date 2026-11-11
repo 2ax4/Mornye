@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 /// Hides the desktop scrollbars below it, for panes that read as chrome
 /// (settings, side panels, the sidebar) rather than long lists. Scrolling
-/// and its physics are unchanged.
+/// and its physics are unchanged, and the app's wheel glide keeps working:
+/// it attaches on the scroll behavior's overscroll hook, which this widget
+/// never touches.
 class NoScrollbars extends StatelessWidget {
   const NoScrollbars({super.key, required this.child});
 

@@ -116,13 +116,32 @@ class _VerticalScrollbarBehavior extends MaterialScrollBehavior {
     if (axisDirectionToAxis(details.direction) == Axis.horizontal) {
       return child;
     }
-    // The chrome builds outside the scrollable's scope, so the wrapper
-    // resolves the position at wheel time by walking down to the scrollable;
-    // pages never need to hold a controller for the glide to work.
-    final Widget scoped = smoothWheel
-        ? SmoothWheelScroll(child: child)
-        : child;
-    return super.buildScrollbar(context, scoped, details);
+    return super.buildScrollbar(context, child, details);
+  }
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    if (axisDirectionToAxis(details.direction) == Axis.horizontal ||
+        !smoothWheel) {
+      return super.buildOverscrollIndicator(context, child, details);
+    }
+    // The glide attaches on the overscroll hook, not the scrollbar hook.
+    // Hiding a scrollbar (NoScrollbars, the library fast scroller) wraps the
+    // subtree in copyWith(scrollbars: false), and the framework then never
+    // calls buildScrollbar at all — which used to drop the glide wrapper
+    // with it, leaving Settings and the long library lists with native
+    // per-notch jumps. The overscroll flag stays true on those surfaces, so
+    // a wrapper here survives scrollbar suppression. The desktop Material
+    // behavior draws no overscroll indicator, so nothing changes visually.
+    return super.buildOverscrollIndicator(
+      context,
+      SmoothWheelScroll(child: child),
+      details,
+    );
   }
 }
 

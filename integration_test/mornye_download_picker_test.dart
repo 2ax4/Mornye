@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:mornye/controllers/mornye_glass_warmup.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/models/settings.dart';
 import 'package:mornye/providers/extension_provider.dart';
@@ -18,7 +17,6 @@ import 'package:mornye/widgets/app_snack_bar.dart';
 import 'package:mornye/widgets/download_service_picker.dart';
 import 'package:mornye/widgets/mornye_chrome.dart';
 import 'package:mornye/widgets/mornye_context_menu.dart';
-import 'package:mornye/widgets/mornye_glass_preparation.dart';
 import 'package:mornye/widgets/track_detail_actions.dart';
 
 import 'performance_probe.dart';
@@ -70,10 +68,6 @@ void main() {
   const glassOverride = String.fromEnvironment('DOWNLOAD_GLASS_LEVEL');
   const brightnessOverride = String.fromEnvironment('DOWNLOAD_BRIGHTNESS');
   const preloadGlass = bool.fromEnvironment('DOWNLOAD_PRELOAD_GLASS');
-  const warmupGlass = bool.fromEnvironment(
-    'DOWNLOAD_WARMUP_GLASS',
-    defaultValue: true,
-  );
   const shellGlass = bool.fromEnvironment('DOWNLOAD_SHELL_GLASS');
   const traceFirstOpen = bool.fromEnvironment('DOWNLOAD_TRACE_FIRST_OPEN');
   final binding = PerformanceTestBinding.ensureInitialized();
@@ -120,11 +114,7 @@ void main() {
               supportedLocales: AppLocalizations.supportedLocales,
               builder: (_, child) => RepaintBoundary(
                 key: capture,
-                child: warmupGlass
-                    ? MornyeGlassPreparation(
-                        child: AppScaffoldMessenger(child: child!),
-                      )
-                    : AppScaffoldMessenger(child: child!),
+                child: AppScaffoldMessenger(child: child!),
               ),
               home: Scaffold(
                 body: Builder(
@@ -190,22 +180,9 @@ void main() {
         if (traceFirstOpen) {
           await tester.runAsync(() => binding.enableTimeline());
         }
-        // Give both baseline and prepared processes the same idle interval;
-        // opening the route never waits for preparation to complete.
+        // Give every variant the same idle interval; opening the route
+        // never waits on background work to complete.
         await probe.wait(const Duration(milliseconds: 1500));
-        if (warmupGlass &&
-            (glassOverride.isEmpty || glassOverride == 'liquid')) {
-          expect(MornyeGlassWarmup.isReady, isTrue);
-          final view = binding.platformDispatcher.views.first;
-          expect(
-            identical(
-              MornyeGlassWarmup.prepare(view),
-              MornyeGlassWarmup.prepare(view),
-            ),
-            isTrue,
-            reason: 'Multiple callers must share one preparation',
-          );
-        }
         final shadersLoadedBeforeOpen = LiquidGlassShaders.isLoaded;
         Future<void> open() async {
           await tester.tap(find.text('Open download'));
@@ -247,8 +224,6 @@ void main() {
               'shaders_loaded_before_open': shadersLoadedBeforeOpen,
               'preload_glass': preloadGlass,
               'trace_first_open': traceFirstOpen,
-              'warmup_glass': warmupGlass,
-              'warmup_ready': MornyeGlassWarmup.isReady,
               'shell_glass': shellGlass,
             },
           );
@@ -379,8 +354,6 @@ void main() {
             'shaders_loaded_before_open': shadersLoadedBeforeOpen,
             'preload_glass': preloadGlass,
             'trace_first_open': traceFirstOpen,
-            'warmup_glass': warmupGlass,
-            'warmup_ready': MornyeGlassWarmup.isReady,
             'shell_glass': shellGlass,
             'pose_layers': poses,
             'glass_level_override': glassOverride,

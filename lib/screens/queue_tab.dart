@@ -2,7 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'package:mornye/widgets/open_audio_button.dart';
 import 'package:flutter/foundation.dart'
-    show ValueListenable, listEquals, setEquals;
+    show
+        TargetPlatform,
+        ValueListenable,
+        defaultTargetPlatform,
+        listEquals,
+        setEquals;
 import 'package:flutter/material.dart';
 import 'package:mornye/widgets/app_alert_dialog.dart';
 import 'package:mornye/widgets/app_choice_chip.dart';
@@ -876,12 +881,18 @@ class _QueueTabState extends ConsumerState<QueueTab> {
       },
       child: Stack(
         children: [
-          // ScrollConfiguration disables stretch overscroll to fix _StretchController exception
-          // This is a known Flutter issue with NestedScrollView + Material 3 stretch indicator
+          // The Material 3 stretch overscroll crashes with NestedScrollView
+          // (_StretchController exception), so it stays disabled on the
+          // platforms that build the indicator. Everywhere else the flag
+          // stays untouched: suppressing it here would also suppress the
+          // glide wrapper the app attaches in the overscroll hook, killing
+          // smooth wheel scrolling for every list on this tab.
           ScrollConfiguration(
-            behavior: ScrollConfiguration.of(
-              context,
-            ).copyWith(overscroll: false),
+            behavior:
+                defaultTargetPlatform == TargetPlatform.android ||
+                    defaultTargetPlatform == TargetPlatform.fuchsia
+                ? ScrollConfiguration.of(context).copyWith(overscroll: false)
+                : ScrollConfiguration.of(context),
             child: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 if (widget.librarySection == null)

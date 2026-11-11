@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mornye/app.dart';
 import 'package:mornye/utils/desktop_platform.dart';
 import 'package:mornye/widgets/app_sliver_header.dart';
+import 'package:mornye/widgets/no_scrollbars.dart';
 
 void main() {
   void resetPlatform() {
@@ -372,6 +373,137 @@ void main() {
     expect(nested.outerController.offset, 100);
 
     // Collapse the rest of the header, then a body notch glides the list.
+    nested.outerController.jumpTo(headerMax);
+    await tester.pumpAndSettle();
+    tester.binding.handlePointerEvent(
+      PointerScrollEvent(
+        position: tester.getCenter(find.text('song 2')),
+        scrollDelta: const Offset(0, 100),
+      ),
+    );
+    await tester.pump();
+    final inner = Scrollable.of(tester.element(find.text('song 0'))).position;
+    expect(inner.pixels, greaterThan(0));
+    expect(inner.pixels, lessThan(100));
+    await tester.pumpAndSettle();
+    expect(inner.pixels, 100);
+    resetPlatform();
+  });
+
+  // Regression: the Settings tab wraps its list in NoScrollbars, which is
+  // copyWith(scrollbars: false). The framework then never calls
+  // buildScrollbar, so a glide attached there used to vanish and the list
+  // fell back to native per-notch jumps.
+  testWidgets('a scrollbar-less list still glides', (tester) async {
+    debugDesktopPlatformOverride = true;
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    await tester.pumpWidget(
+      MaterialApp(
+        scrollBehavior: appScrollBehavior(
+          disableOverscrollEffects: false,
+          smoothScrolling: true,
+        ),
+        home: Scaffold(
+          body: NoScrollbars(
+            child: ListView.builder(
+              itemExtent: 80,
+              itemCount: 60,
+              itemBuilder: (context, index) => Text('item $index'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(RawScrollbar), findsNothing);
+
+    tester.binding.handlePointerEvent(
+      PointerScrollEvent(
+        position: tester.getCenter(find.text('item 3')),
+        scrollDelta: const Offset(0, 100),
+      ),
+    );
+    await tester.pump();
+
+    final position = tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    expect(position.pixels, greaterThan(0));
+    expect(position.pixels, lessThan(100));
+
+    await tester.pumpAndSettle();
+    expect(position.pixels, 100);
+    resetPlatform();
+  });
+
+  // Regression: the library's long lists hide their scrollbar through the
+  // fast scroller — copyWith(scrollbars: false) again — while the tab's
+  // NestedScrollView runs under the ambient behavior. The body list must
+  // keep gliding once the header rests collapsed.
+  Widget buildSongsWithHiddenScrollbarSurface() {
+    debugDesktopPlatformOverride = true;
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    return MaterialApp(
+      scrollBehavior: appScrollBehavior(
+        disableOverscrollEffects: false,
+        smoothScrolling: true,
+      ),
+      home: Scaffold(
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            const AppSliverHeader.page(title: 'Songs'),
+          ],
+          body: ScrollConfiguration(
+            behavior: appScrollBehavior(
+              disableOverscrollEffects: false,
+              smoothScrolling: true,
+            ).copyWith(scrollbars: false),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) =>
+                        SizedBox(height: 80, child: Text('song $index')),
+                    childCount: 120,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  testWidgets('the songs list glides with its scrollbar hidden', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSongsWithHiddenScrollbarSurface());
+    await tester.pumpAndSettle();
+    final nested = tester.state<NestedScrollViewState>(
+      find.byType(NestedScrollView),
+    );
+    final headerMax = nested.outerController.position.maxScrollExtent;
+    expect(headerMax, greaterThan(0));
+    expect(find.byType(RawScrollbar), findsNothing);
+
+    // The first notch is spent on the header entirely: it glides instead of
+    // collapsing in one jump.
+    tester.binding.handlePointerEvent(
+      PointerScrollEvent(
+        position: tester.getCenter(find.text('song 2')),
+        scrollDelta: const Offset(0, 100),
+      ),
+    );
+    await tester.pump();
+    expect(nested.outerController.offset, greaterThan(0));
+    expect(nested.outerController.offset, lessThan(100));
+    await tester.pumpAndSettle();
+    expect(nested.outerController.offset, 100);
+
+    // Collapse the rest of the header, then a body notch glides the list
+    // even though its scrollbar is suppressed.
     nested.outerController.jumpTo(headerMax);
     await tester.pumpAndSettle();
     tester.binding.handlePointerEvent(
