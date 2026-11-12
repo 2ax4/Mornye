@@ -1443,6 +1443,43 @@ void main() {
   );
 
   test(
+    'the dismissed queue preview waits for the startup restore to settle',
+    () async {
+      final store = _ResumeSessionStore()
+        ..preview = {
+          'media': PlayableMedia(
+            id: 'saved',
+            source: 'network://nas/song.flac',
+            title: 'Saved',
+            artist: 'Artist',
+          ).toJson(),
+          'positionMs': 23000,
+        };
+      final runtime = _runtime(sessionDatabase: store);
+      final container = ProviderContainer(
+        overrides: [musicPlayerRuntimeProvider.overrideWithValue(runtime)],
+      );
+      addTearDown(container.dispose);
+
+      // While the startup restore has not settled, the preview stays
+      // unloaded, so the Home card cannot flash the dismissed song.
+      var loaded = false;
+      final preview = container.read(playbackResumeProvider.future).then((
+        value,
+      ) {
+        loaded = true;
+        return value;
+      });
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(loaded, isFalse, reason: 'the card must wait for the restore');
+
+      await runtime.restoreSession();
+      expect((await preview)?.media.id, 'saved');
+    },
+  );
+
+  test(
     'deleting a saved source refreshes an already loaded Resume card',
     () async {
       final directory = await Directory.systemTemp.createTemp('resume-delete-');
@@ -1469,6 +1506,9 @@ void main() {
         overrides: [musicPlayerRuntimeProvider.overrideWithValue(runtime)],
       );
       addTearDown(container.dispose);
+      // The app settles the startup session restore before the Home card
+      // reads the row; nothing restores here, so settle at once.
+      await runtime.restoreSession();
       expect(await container.read(playbackResumeProvider.future), isNotNull);
       expect(await deleteFile(file.path, deletionEvents: events), isTrue);
       expect(await container.read(playbackResumeProvider.future), isNull);

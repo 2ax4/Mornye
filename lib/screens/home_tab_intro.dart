@@ -671,8 +671,13 @@ class _HomeContinueListeningCardState
 
   @override
   Widget build(BuildContext context) {
+    // The startup session restore decides what Home continues with, so no
+    // row of this card may read the dismissed player's archive until it
+    // settles — a stale preview from an older dismissal would flash for a
+    // few frames before the restore's own song replaced it.
+    final settled = ref.watch(playbackRestoreSettledProvider).hasValue;
     final current = ref.watch(currentMediaItemProvider).value;
-    final resume = ref.watch(playbackResumeProvider).value;
+    final resume = settled ? ref.watch(playbackResumeProvider).value : null;
     final mediaItem = current ?? resume?.media.toMediaItem();
     if (mediaItem == null) return const SizedBox.shrink();
 

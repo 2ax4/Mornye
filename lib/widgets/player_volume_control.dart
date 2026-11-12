@@ -45,6 +45,8 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
   bool _dragging = false;
   bool _writing = false;
 
+  static String _percentage(double volume) => '${(volume * 100).round()}%';
+
   /// Leaves the focus the gesture gave the slider, so keyboard shortcuts
   /// (Space, the arrow keys) reach the app again after the drag.
   void _releaseSliderFocus() {
@@ -114,7 +116,6 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
         ? usb.fraction
         : null;
     final value = (_preview ?? volume ?? 0).clamp(0.0, 1.0);
-    String percentage(double volume) => '${(volume * 100).round()}%';
     final control = Semantics(
       label: usb == null
           ? context.l10n.nowPlayingVolume
@@ -122,13 +123,13 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
       slider: true,
       enabled: volume != null,
       excludeSemantics: true,
-      value: volume == null ? null : percentage(value),
+      value: volume == null ? null : _percentage(value),
       increasedValue: volume == null
           ? null
-          : percentage((value + 0.05).clamp(0, 1)),
+          : _percentage((value + 0.05).clamp(0, 1)),
       decreasedValue: volume == null
           ? null
-          : percentage((value - 0.05).clamp(0, 1)),
+          : _percentage((value - 0.05).clamp(0, 1)),
       onIncrease: volume == null
           ? null
           : () => _setVolume((value + 0.05).clamp(0, 1)),
@@ -137,25 +138,26 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
           : () => _setVolume((value - 0.05).clamp(0, 1)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: SliderValueBubble(
-          visible: _dragging,
-          label: volume == null ? '' : percentage(value),
-          child: !context.isMornye
-              ? _materialSlider(context, value, enabled: volume != null)
-              : Row(
-                  children: [
-                    Icon(
-                      CupertinoIcons.speaker_fill,
-                      size: 16,
-                      color: widget.foreground.withValues(alpha: 0.54),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) => IgnorePointer(
-                          ignoring: volume == null,
-                          child: Opacity(
-                            opacity: volume == null ? 0.4 : 1,
+        child: !context.isMornye
+            ? _materialSlider(context, value, enabled: volume != null)
+            : Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.speaker_fill,
+                    size: 16,
+                    color: widget.foreground.withValues(alpha: 0.54),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => IgnorePointer(
+                        ignoring: volume == null,
+                        child: Opacity(
+                          opacity: volume == null ? 0.4 : 1,
+                          child: SliderValueBubble(
+                            visible: _dragging,
+                            label: volume == null ? '' : _percentage(value),
+                            progress: value,
                             child: MornyePlayerSlider(
                               value: value,
                               activeColor: widget.foreground.withValues(
@@ -176,15 +178,15 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Icon(
-                      CupertinoIcons.speaker_3_fill,
-                      size: 16,
-                      color: widget.foreground.withValues(alpha: 0.54),
-                    ),
-                  ],
-                ),
-        ),
+                  ),
+                  const SizedBox(width: 10),
+                  Icon(
+                    CupertinoIcons.speaker_3_fill,
+                    size: 16,
+                    color: widget.foreground.withValues(alpha: 0.54),
+                  ),
+                ],
+              ),
       ),
     );
     return DesktopVolumeScroll(child: control);
@@ -234,11 +236,12 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
                 onPointerDown: (_) => _dragging = true,
                 onPointerUp: (_) => release(),
                 onPointerCancel: (_) => release(),
-                child: ClipRect(
-                  // The expressive slider paints its built-in value bubble
-                  // above the track, where the panel's rounded clip cuts it
-                  // in half. Clip it here and let the floating bubble name
-                  // the value instead.
+                // The percentage bubble rides above the thumb through the
+                // overlay, clear of the panel's rounded and glass clips.
+                child: SliderValueBubble(
+                  visible: _dragging,
+                  label: enabled ? _percentage(value) : '',
+                  progress: value,
                   child: AppSlider(
                     // As thin as the seek bar above it, with a shorter
                     // handle, so volume stays secondary to it.

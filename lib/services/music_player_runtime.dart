@@ -333,6 +333,7 @@ class MusicPlayerRuntime {
   void Function()? _unsubscribeSourceMetadata;
   Future<MusicPlayerHandler>? _initFuture;
   Future<void>? _restoreFuture;
+  Completer<void>? _restoreSettled;
   final _handlers = StreamController<MusicPlayerHandler?>.broadcast(sync: true);
   final _mutedPlaybackEvents = StreamController<void>.broadcast();
   final _unplayableSongs = StreamController<UnplayableSong>.broadcast();
@@ -618,9 +619,31 @@ class MusicPlayerRuntime {
     }
   }
 
+  /// Completes when the startup session restore settles, whether or not it
+  /// restored a session. Home's dismissed-player card waits for it: while
+  /// the last session is still restoring, that session is what the app
+  /// continues with, and the dismissed row would flash the wrong song first.
+  Future<void> get restoreSettled {
+    _restoreSettled ??= Completer<void>();
+    return _restoreSettled!.future;
+  }
+
+  void _settleRestore() {
+    final settled = _restoreSettled;
+    if (settled != null && !settled.isCompleted) settled.complete();
+  }
+
   Future<void> restoreSession() {
-    if (_settings.playerMode != 'internal') return Future.value();
-    return _restoreFuture ??= restorePlaybackSession(this).then<void>((_) {});
+    // Create the settle signal before the restore runs, so a completion
+    // that lands before anyone awaits it is not lost.
+    restoreSettled;
+    if (_settings.playerMode != 'internal') {
+      _settleRestore();
+      return Future.value();
+    }
+    return _restoreFuture ??= restorePlaybackSession(
+      this,
+    ).then<void>((_) => _settleRestore());
   }
 
   /// [MusicPlayerHandler.recoverRestoredArtwork] after [restoreSession].

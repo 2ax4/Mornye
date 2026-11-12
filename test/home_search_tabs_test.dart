@@ -1013,6 +1013,8 @@ void main() {
                 position: Duration(seconds: 10),
               ),
             ),
+            // The startup restore settled before this test reads the row.
+            playbackRestoreSettledProvider.overrideWith((ref) async {}),
           ],
           child: MaterialApp(
             theme: MornyeTheme.build(Brightness.dark),
@@ -1121,6 +1123,8 @@ Future<void> _pumpStartupHome(
           (ref, notifier) => Stream.value(null),
         ),
         playbackResumeProvider.overrideWith((ref) async => resume),
+        // The startup restore settled before this test reads the row.
+        playbackRestoreSettledProvider.overrideWith((ref) async {}),
       ],
       if (controller != null)
         musicPlayerControllerProvider.overrideWithValue(controller),

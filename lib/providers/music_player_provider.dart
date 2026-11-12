@@ -98,8 +98,18 @@ class LocalMediaItemNotifier extends CurrentMediaItemNotifier {
       ref.watch(musicPlayerRuntimeProvider).mediaItemEvents();
 }
 
+/// The startup session restore's completion. Home's dismissed-player card
+/// waits for it: while the last session is still being restored, that
+/// session is what the app continues with, and the dismissed row would
+/// flash the wrong song first.
+final playbackRestoreSettledProvider = FutureProvider<void>((ref) {
+  return ref.watch(musicPlayerRuntimeProvider).restoreSettled;
+});
+
 /// A dismissed session stays available on Home without restoring the player.
-final playbackResumeProvider = FutureProvider<PlaybackResumePreview?>((ref) {
+final playbackResumeProvider = FutureProvider<PlaybackResumePreview?>(((
+  ref,
+) async {
   if (!ref.watch(settingsProvider.select((s) => s.playerMode == 'internal'))) {
     return null;
   }
@@ -109,6 +119,9 @@ final playbackResumeProvider = FutureProvider<PlaybackResumePreview?>((ref) {
   if (hasCurrent || ref.watch(activeRemotePlaybackProvider) != null) {
     return null;
   }
+  // The dismissed player's row must not show while the last session is
+  // still restoring: the restore decides what Home continues with.
+  await ref.watch(playbackRestoreSettledProvider.future);
   final runtime = ref.watch(musicPlayerRuntimeProvider);
   ref.onDispose(
     runtime.dependencies.sourceDeletionEvents.subscribe((_) async {
@@ -116,7 +129,7 @@ final playbackResumeProvider = FutureProvider<PlaybackResumePreview?>((ref) {
     }),
   );
   return loadPlaybackResumePreview(runtime);
-});
+}));
 
 /// [libraryItemForMedia] with the download History the app has loaded.
 Future<UnifiedLibraryItem?> _libraryItemForMedia(

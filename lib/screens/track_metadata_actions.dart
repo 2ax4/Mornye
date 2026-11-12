@@ -75,8 +75,13 @@ extension _TrackMetadataFileActions on _TrackMetadataScreenState {
   }
 
   Map<String, String> _metadataEditorValues(Map<String, dynamic>? metadata) {
-    String val(String key, String? fallback) =>
-        metadata?[key]?.toString() ?? fallback ?? '';
+    // The reader returns '' for absent tags; only a real value overrides what
+    // the library shows, and "Unknown" placeholders never become field values.
+    String val(String key, String? fallback) {
+      final value = metadata?[key]?.toString();
+      if (value != null && value.isNotEmpty) return value;
+      return editableTagValue(fallback);
+    }
 
     return {
       'title': val('title', trackName),

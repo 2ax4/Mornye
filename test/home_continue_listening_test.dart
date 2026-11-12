@@ -57,6 +57,8 @@ Widget _home({bool saved = true}) => ProviderScope(
             )
           : null,
     ),
+    // The startup restore settled before these tests read the row.
+    playbackRestoreSettledProvider.overrideWith((ref) async {}),
   ],
   child: MaterialApp(
     theme: AppTheme.dark(),

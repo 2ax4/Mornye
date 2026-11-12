@@ -1,3 +1,21 @@
+/// Placeholder literals the library scan stores for files with no artist or
+/// album tag. They describe the absence of a tag, never tag data, so editable
+/// tag fields must not offer them back as values.
+const String unknownArtistPlaceholder = 'Unknown Artist';
+const String unknownAlbumPlaceholder = 'Unknown Album';
+
+/// [value] as an editable tag field's fallback: empty strings and the scan's
+/// "Unknown" placeholders become '' so a save never writes them into the file.
+String editableTagValue(String? value) {
+  final normalized = normalizeOptionalString(value);
+  if (normalized == null ||
+      normalized == unknownArtistPlaceholder ||
+      normalized == unknownAlbumPlaceholder) {
+    return '';
+  }
+  return normalized;
+}
+
 String? normalizeOptionalString(String? value) {
   if (value == null) return null;
   final trimmed = value.trim();

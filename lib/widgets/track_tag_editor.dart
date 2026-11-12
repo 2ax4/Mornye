@@ -56,8 +56,14 @@ Future<void> showTrackTagEditor(
   }
   if (!context.mounted) return;
 
-  String val(String key, String? fallback) =>
-      fileMetadata?[key]?.toString() ?? fallback ?? '';
+  // The reader returns '' for absent tags; only a real value overrides what
+  // the library shows, so the editor opens with the list's name and keeps
+  // "Unknown" placeholders out of the fields a save would write.
+  String val(String key, String? fallback) {
+    final value = fileMetadata?[key]?.toString();
+    if (value != null && value.isNotEmpty) return value;
+    return editableTagValue(fallback);
+  }
 
   final local = item.localItem;
   final history = item.historyItem;
@@ -127,9 +133,16 @@ Future<void> _refreshStoredTrack(
     final String value? => value,
     _ => null,
   };
-  final name = text('title') ?? item.trackName;
-  final artist = text('artist') ?? item.artistName;
-  final album = text('album') ?? item.albumName;
+  // '' means the tag is absent, exactly like a missing key: keep the
+  // library's name instead of storing an empty row.
+  String textOr(String key, String fallback) {
+    final value = text(key);
+    return value == null || value.isEmpty ? fallback : value;
+  }
+
+  final name = textOr('title', item.trackName);
+  final artist = textOr('artist', item.artistName);
+  final album = textOr('album', item.albumName);
 
   if (history != null) {
     await ref

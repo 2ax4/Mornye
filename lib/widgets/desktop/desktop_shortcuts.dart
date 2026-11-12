@@ -43,7 +43,8 @@ class DesktopShortcuts extends ConsumerStatefulWidget {
   ConsumerState<DesktopShortcuts> createState() => _DesktopShortcutsState();
 }
 
-class _DesktopShortcutsState extends ConsumerState<DesktopShortcuts> {
+class _DesktopShortcutsState extends ConsumerState<DesktopShortcuts>
+    with WidgetsBindingObserver {
   static const _volumeStep = 0.05;
 
   // Holds focus while no control or page has it, so shortcuts still reach
@@ -62,9 +63,52 @@ class _DesktopShortcutsState extends ConsumerState<DesktopShortcuts> {
           .currentState;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    FocusManager.instance.addListener(_keepFocusReachable);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    FocusManager.instance.removeListener(_keepFocusReachable);
     _idleFocus.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The manager parks the focus on the root scope while the window is out
+    // and restores it on resume — unless the suspended node left the tree
+    // while the window was blurred (a layer a timer or the queue closed).
+    // That restore failure strands the focus on the root scope, whose key
+    // events never pass through the [Shortcuts] below, and no focus change
+    // ever fires again to wake [_keepFocusReachable]: every shortcut dies
+    // until the next click. Once the window is back — and after the
+    // manager's own restore had its turn — pull the focus back in.
+    if (state == AppLifecycleState.resumed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _keepFocusReachable();
+      });
+    }
+  }
+
+  /// Focus that falls to a scope above this layer leaves the shortcuts
+  /// unreachable: key events start at the primary focus and bubble up
+  /// through its ancestors, so a scope over the app (the view or root scope,
+  /// where focus lands after a layer that held it closes) never passes them
+  /// through the [Shortcuts] below. Pull the focus back to the idle node,
+  /// which sits beneath them.
+  void _keepFocusReachable() {
+    // The manager itself parks the focus on the root scope while the app is
+    // inactive and restores it on resume; leave that cycle alone.
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
+    final focus = FocusManager.instance.primaryFocus;
+    if (focus == null || focus == _idleFocus) return;
+    if (focus.ancestors.contains(_idleFocus)) return;
+    _idleFocus.requestFocus();
   }
 
   bool get _editingText =>
@@ -205,11 +249,15 @@ class _DesktopShortcutsState extends ConsumerState<DesktopShortcuts> {
     }
   }
 
-  /// Closes pages above the shell (Now Playing, Settings) before switching
-  /// destinations, stopping at a dialog or sheet.
+  /// Closes pages above the shell (Now Playing, Settings) together with any
+  /// dialog, sheet or context menu over them, before switching destinations.
+  /// The key press asks for a destination; a prompt left floating above a tab
+  /// that changed under it would keep holding the focus — and with it the
+  /// transport shortcuts, which stay out while anything but a scope holds
+  /// them — so the app would look broken until the prompt was closed.
   void _closePages() {
     _rootNavigator?.popUntil(
-      (route) => route.isFirst || route is! PageRoute<dynamic>,
+      (route) => route.isFirst || (route is! PageRoute && route is! PopupRoute),
     );
   }
 

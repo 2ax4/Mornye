@@ -131,7 +131,10 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
       content = Material(
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(14),
-        clipBehavior: Clip.antiAlias,
+        // Unclipped, so the volume slider's value bubble can rise over the
+        // panel's top edge instead of being cut in half by the rounded
+        // shape. The background still rounds through the border radius.
+        clipBehavior: Clip.none,
         child: content,
       );
     }
