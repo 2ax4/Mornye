@@ -24,6 +24,7 @@ List<List<ContextMenuAction>> libraryTrackMenuGroups(
   required List<UnifiedLibraryItem> items,
   VoidCallback? onPlay,
   VoidCallback? onOpenDetails,
+  VoidCallback? onEditTags,
   VoidCallback? onDone,
   VoidCallback? onReEnrich,
   VoidCallback? onConvert,
@@ -97,6 +98,15 @@ List<List<ContextMenuAction>> libraryTrackMenuGroups(
           onSelected: () {
             onDone?.call();
             onOpenDetails();
+          },
+        ),
+      if (onEditTags != null && count == 1)
+        ContextMenuAction(
+          icon: Icons.edit_outlined,
+          label: l10n.trackEditMetadata,
+          onSelected: () {
+            onDone?.call();
+            onEditTags();
           },
         ),
       if (onReEnrich != null)

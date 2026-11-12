@@ -76,7 +76,12 @@ class _DesktopShortcutsState extends ConsumerState<DesktopShortcuts> {
   /// keeps Space for activation.
   bool get _nothingFocused {
     final focus = FocusManager.instance.primaryFocus;
-    return focus == null || focus is FocusScopeNode || focus == _idleFocus;
+    if (focus == null || focus is FocusScopeNode || focus == _idleFocus) {
+      return true;
+    }
+    // A Material slider holds focus after a tap or drag but uses only the
+    // arrow keys itself, so Space still belongs to the shortcuts.
+    return focus.context?.findAncestorStateOfType<State<Slider>>() != null;
   }
 
   bool _playerCommand(DesktopCommand command) => switch (command) {

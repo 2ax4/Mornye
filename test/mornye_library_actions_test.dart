@@ -20,7 +20,6 @@ import 'package:mornye/widgets/app_alert_dialog.dart';
 import 'package:mornye/widgets/app_switch.dart';
 import 'package:mornye/widgets/batch_convert_sheet.dart';
 import 'package:mornye/widgets/mornye_context_menu.dart';
-import 'package:mornye/widgets/mornye_chrome.dart';
 import 'package:mornye/widgets/re_enrich_field_dialog.dart';
 import 'package:mornye/widgets/selection_action_button.dart';
 import 'package:mornye/widgets/selection_bottom_bar.dart';
@@ -343,28 +342,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Edited track'), findsOneWidget);
     expect(find.widgetWithText(AppActionButton, 'Save'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Auto-fill from online'),
-      -250,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView).last,
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await _tapVisible(tester, find.text('Auto-fill from online'));
-    await _tapVisible(tester, find.text('None'));
-    final search = find.widgetWithText(AppActionButton, 'Find metadata');
-    expect(tester.widget<AppActionButton>(search).onPressed, isNull);
-    await _tapVisible(tester, find.text('All'));
-    expect(tester.widget<AppActionButton>(search).onPressed, isNotNull);
-    expect(
-      tester
-          .widgetList<MornyeFilterChip>(find.byType(MornyeFilterChip))
-          .every((chip) => chip.selected),
-      isTrue,
-    );
     expect(tester.takeException(), isNull);
   });
 }

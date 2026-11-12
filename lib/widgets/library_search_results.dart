@@ -25,6 +25,7 @@ import 'package:mornye/widgets/cached_cover_image.dart';
 import 'package:mornye/widgets/desktop/context_menu.dart';
 import 'package:mornye/widgets/desktop/hover_play_button.dart';
 import 'package:mornye/widgets/desktop/library_track_menu.dart';
+import 'package:mornye/widgets/track_tag_editor.dart';
 import 'package:mornye/widgets/library_track_selection_bar.dart';
 import 'package:mornye/widgets/library_selection_playback_actions.dart';
 import 'package:mornye/widgets/selection_bottom_bar.dart';
@@ -273,6 +274,9 @@ class _LibrarySearchResultsState extends ConsumerState<LibrarySearchResults> {
         items: items,
         onPlay: () => _open(hit, play: true),
         onOpenDetails: () => _open(hit),
+        onEditTags: items.length == 1 && canEditTrackTags(items.single)
+            ? () => showTrackTagEditor(context, ref, items.single)
+            : null,
         onDone: _exitSelection,
         onReEnrich: () => reEnrichLibraryTracks(
           context,

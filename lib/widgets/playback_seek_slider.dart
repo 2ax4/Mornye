@@ -72,6 +72,9 @@ class _PlaybackSeekSliderState extends State<PlaybackSeekSlider> {
       if (mounted && generation == _gestureGeneration) {
         setState(() => _previewMs = null);
       }
+      // Leave the focus the gesture gave the slider, so Space and the arrow
+      // keys reach the keyboard shortcuts again after the seek.
+      FocusManager.instance.primaryFocus?.unfocus();
     }
   }
 

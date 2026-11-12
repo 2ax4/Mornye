@@ -38,6 +38,7 @@ import 'package:mornye/widgets/desktop/desktop_selection.dart';
 import 'package:mornye/widgets/desktop/detail_header.dart';
 import 'package:mornye/widgets/desktop/hover_play_button.dart';
 import 'package:mornye/widgets/desktop/library_track_menu.dart';
+import 'package:mornye/widgets/track_tag_editor.dart';
 import 'package:mornye/widgets/desktop/track_table.dart';
 import 'package:mornye/widgets/error_card.dart';
 import 'package:mornye/widgets/expressive_button.dart';
@@ -374,6 +375,9 @@ class _LibraryDirectoryViewState extends ConsumerState<LibraryDirectoryView>
         items: items,
         onPlay: () => _play(_items, start: item),
         onOpenDetails: () => _openDetails(item),
+        onEditTags: items.length == 1 && canEditTrackTags(items.single)
+            ? () => showTrackTagEditor(context, ref, items.single)
+            : null,
         onDone: exitSelectionMode,
         onReEnrich: () => _reEnrich(items),
         onConvert: () => showBatchConvertSheet(

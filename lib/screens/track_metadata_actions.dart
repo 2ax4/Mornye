@@ -9,7 +9,11 @@ extension _TrackMetadataFileActions on _TrackMetadataScreenState {
     final sourcePath = cleanFilePath;
     Map<String, dynamic>? fileMetadata;
     try {
-      final result = await readPlaybackFileMetadataWithRetry(sourcePath);
+      // A hung native read must never leave the editor unopened: the sheet
+      // falls back to the library's values after a few seconds.
+      final result = await readPlaybackFileMetadataWithRetry(
+        sourcePath,
+      ).timeout(const Duration(seconds: 4));
       if (result['error'] == null) {
         fileMetadata = result;
       }

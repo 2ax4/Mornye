@@ -112,15 +112,19 @@ extension _QueueTabSelectionActions on _QueueTabState {
       _applyDesktopClick(item.id, DesktopClick.replace, const []);
       _hideSelectionOverlay();
     }
+    final menuItems = _selectedItemsFromAll(libraryItems);
     final chosen = await showContextMenu(
       context,
       position: position,
       groups: libraryTrackMenuGroups(
         context,
         ref,
-        items: _selectedItemsFromAll(libraryItems),
+        items: menuItems,
         onPlay: () => _playLibraryItem(item, libraryItems),
         onOpenDetails: onOpenDetails,
+        onEditTags: menuItems.length == 1 && canEditTrackTags(menuItems.single)
+            ? () => showTrackTagEditor(context, ref, menuItems.single)
+            : null,
         onDone: _exitSelectionMode,
         onReEnrich: () => _reEnrichSelectedFromQueue(libraryItems),
         onConvert: () => _showBatchConvertSheet(this.context, libraryItems),

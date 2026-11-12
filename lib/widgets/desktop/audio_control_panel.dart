@@ -33,6 +33,19 @@ double _pitchFromSemitones(double semitones) =>
 double _semitonesFromPitch(double pitch) =>
     (math.log(pitch <= 0 ? 1 : pitch) / math.log(2)) * 12;
 
+/// The tempo slider spans ×0.5–×2.0 over a log scale, so ×1.00 sits at the
+/// middle of the track, exactly where the pitch slider's ×1.00 (0 semitones)
+/// sits. The ratio from the slowest to the fastest tempo is ×4.
+const double _tempoMin = 0.5;
+const double _tempoRatio = 4.0;
+
+double tempoFromSliderPosition(double position) =>
+    _tempoMin * math.pow(_tempoRatio, position.clamp(0.0, 1.0));
+
+double sliderPositionForTempo(double tempo) =>
+    math.log(tempo.clamp(_tempoMin, _tempoMin * _tempoRatio) / _tempoMin) /
+    math.log(_tempoRatio);
+
 /// The audio control panel: the volume slider with the pitch and speed
 /// sliders under it. The player bar's tune button opens it as a popover, and
 /// the pitch shift and tempo reach the libmpv decks through [playbackPitch]
@@ -54,6 +67,12 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
   /// The slider position while the gesture runs; null reads the notifier.
   double? _preview;
   double? _speedPreview;
+
+  /// Leaves the focus the gesture gave the slider, so keyboard shortcuts
+  /// (Space, the arrow keys) reach the app again after the drag.
+  void _releaseSliderFocus() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
 
   void _commit(double semitones) {
     playbackPitch.value = _pitchFromSemitones(semitones);
@@ -156,6 +175,7 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
                 onChangeEnd: (value) {
                   setState(() => _preview = null);
                   unawaited(_savePitch(value));
+                  _releaseSliderFocus();
                 },
               ),
             ),
@@ -189,7 +209,8 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
 
     // Every drag tick changes the speed at once; only the preference save
     // waits for the gesture to end.
-    void drag(double value) {
+    void drag(double position) {
+      final value = tempoFromSliderPosition(position);
       setState(() => _speedPreview = value);
       playbackTempo.value = value;
     }
@@ -208,15 +229,18 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
               label: l10n.audioControlSpeed,
               child: Slider(
                 key: const ValueKey('audio-control-speed'),
-                value: tempo.clamp(0.5, 2.0),
-                min: 0.5,
-                max: 2.0,
+                // The logarithmic position keeps ×1.00 centered, like the
+                // pitch slider.
+                value: sliderPositionForTempo(tempo),
+                min: 0,
+                max: 1,
                 // Continuous, so a tempo such as ×0.92 or ×0.98 is reachable.
                 label: '×${tempo.toStringAsFixed(2)}',
                 onChanged: drag,
                 onChangeEnd: (value) {
                   setState(() => _speedPreview = null);
-                  unawaited(_saveTempo(value));
+                  unawaited(_saveTempo(tempoFromSliderPosition(value)));
+                  _releaseSliderFocus();
                 },
               ),
             ),

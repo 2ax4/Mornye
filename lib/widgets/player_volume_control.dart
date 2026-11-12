@@ -11,6 +11,7 @@ import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/app_slider.dart';
 import 'package:mornye/widgets/desktop/desktop_volume_scroll.dart';
 import 'package:mornye/widgets/mornye_player_slider.dart';
+import 'package:mornye/widgets/slider_value_bubble.dart';
 import 'package:mornye/utils/logger.dart';
 import 'package:mornye/services/music_playback_deck.dart';
 
@@ -43,6 +44,12 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
   double? _pendingVolume;
   bool _dragging = false;
   bool _writing = false;
+
+  /// Leaves the focus the gesture gave the slider, so keyboard shortcuts
+  /// (Space, the arrow keys) reach the app again after the drag.
+  void _releaseSliderFocus() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
 
   void _setVolume(double value) {
     if (value > 0) volumeBeforeMute.value = value;
@@ -130,49 +137,54 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
           : () => _setVolume((value - 0.05).clamp(0, 1)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: !context.isMornye
-            ? _materialSlider(context, value, enabled: volume != null)
-            : Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.speaker_fill,
-                    size: 16,
-                    color: widget.foreground.withValues(alpha: 0.54),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) => IgnorePointer(
-                        ignoring: volume == null,
-                        child: Opacity(
-                          opacity: volume == null ? 0.4 : 1,
-                          child: MornyePlayerSlider(
-                            value: value,
-                            activeColor: widget.foreground.withValues(
-                              alpha: 0.70,
+        child: SliderValueBubble(
+          visible: _dragging,
+          label: volume == null ? '' : percentage(value),
+          child: !context.isMornye
+              ? _materialSlider(context, value, enabled: volume != null)
+              : Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.speaker_fill,
+                      size: 16,
+                      color: widget.foreground.withValues(alpha: 0.54),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) => IgnorePointer(
+                          ignoring: volume == null,
+                          child: Opacity(
+                            opacity: volume == null ? 0.4 : 1,
+                            child: MornyePlayerSlider(
+                              value: value,
+                              activeColor: widget.foreground.withValues(
+                                alpha: 0.70,
+                              ),
+                              inactiveColor: widget.foreground.withValues(
+                                alpha: 0.12,
+                              ),
+                              onChangeStart: (_) => _dragging = true,
+                              onChanged: _setVolume,
+                              onChangeEnd: (value) {
+                                _dragging = false;
+                                _setVolume(value);
+                                _releaseSliderFocus();
+                              },
                             ),
-                            inactiveColor: widget.foreground.withValues(
-                              alpha: 0.12,
-                            ),
-                            onChangeStart: (_) => _dragging = true,
-                            onChanged: _setVolume,
-                            onChangeEnd: (value) {
-                              _dragging = false;
-                              _setVolume(value);
-                            },
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Icon(
-                    CupertinoIcons.speaker_3_fill,
-                    size: 16,
-                    color: widget.foreground.withValues(alpha: 0.54),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 10),
+                    Icon(
+                      CupertinoIcons.speaker_3_fill,
+                      size: 16,
+                      color: widget.foreground.withValues(alpha: 0.54),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
     return DesktopVolumeScroll(child: control);
@@ -222,14 +234,23 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
                 onPointerDown: (_) => _dragging = true,
                 onPointerUp: (_) => release(),
                 onPointerCancel: (_) => release(),
-                child: AppSlider(
-                  // As thin as the seek bar above it, with a shorter handle,
-                  // so volume stays secondary to it.
-                  trackThickness: 4,
-                  thumbLength: 20,
-                  value: value,
-                  onChanged: enabled ? _setVolume : null,
-                  onChangeEnd: _setVolume,
+                child: ClipRect(
+                  // The expressive slider paints its built-in value bubble
+                  // above the track, where the panel's rounded clip cuts it
+                  // in half. Clip it here and let the floating bubble name
+                  // the value instead.
+                  child: AppSlider(
+                    // As thin as the seek bar above it, with a shorter
+                    // handle, so volume stays secondary to it.
+                    trackThickness: 4,
+                    thumbLength: 20,
+                    value: value,
+                    onChanged: enabled ? _setVolume : null,
+                    onChangeEnd: (value) {
+                      _setVolume(value);
+                      _releaseSliderFocus();
+                    },
+                  ),
                 ),
               ),
             ),

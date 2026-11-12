@@ -8,6 +8,7 @@ import 'package:mornye/widgets/app_icon_button.dart';
 import 'package:mornye/widgets/collection_scaffold.dart';
 import 'package:mornye/utils/desktop_platform.dart';
 import 'package:mornye/widgets/desktop/context_menu.dart';
+import 'package:mornye/widgets/track_tag_editor.dart';
 import 'package:mornye/widgets/desktop/desktop_link_transfer_actions.dart';
 import 'package:mornye/widgets/desktop/desktop_selection.dart';
 import 'package:mornye/widgets/desktop/track_list_table.dart';
@@ -27,6 +28,7 @@ import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/models/track.dart';
 import 'package:mornye/services/m3u_playlist_service.dart';
 import 'package:mornye/services/downloaded_embedded_cover_resolver.dart';
+import 'package:mornye/models/unified_library_item.dart';
 import 'package:mornye/utils/file_access.dart';
 import 'package:mornye/providers/download_queue_provider.dart';
 import 'package:mornye/providers/collection_track_files_provider.dart';
@@ -693,6 +695,15 @@ class _LibraryTracksFolderScreenState
               onSelected: () {
                 exitSelectionMode();
                 _openCollectionTrack(this.context, ref, tracks[index]);
+              },
+            ),
+          if (count == 1)
+            ContextMenuAction(
+              icon: Icons.edit_outlined,
+              label: l10n.trackEditMetadata,
+              onSelected: () {
+                exitSelectionMode();
+                _editCollectionTrackTags(this.context, ref, tracks[index]);
               },
             ),
         ],
@@ -1539,6 +1550,50 @@ class _CollectionTrackTile extends ConsumerWidget {
 
 /// Opens the metadata of [track]'s downloaded or library file, or downloads
 /// it when there is none.
+/// Opens the tag editor for the tapped collection entry, resolving the
+/// song's own file the way the details screen does.
+Future<void> _editCollectionTrackTags(
+  BuildContext context,
+  WidgetRef ref,
+  Track track,
+) async {
+  final historyNotifier = ref.read(downloadHistoryProvider.notifier);
+  var historyItem = await historyNotifier.getBySpotifyIdAsync(track.id);
+  if (!context.mounted) return;
+  if (historyItem == null && (track.isrc?.isNotEmpty ?? false)) {
+    historyItem = await historyNotifier.getByIsrcAsync(track.isrc!);
+    if (!context.mounted) return;
+  }
+  historyItem ??= await historyNotifier.findByTrackAndArtistAsync(
+    track.name,
+    track.artistName,
+  );
+  if (!context.mounted) return;
+
+  final UnifiedLibraryItem item;
+  if (historyItem != null) {
+    item = UnifiedLibraryItem.fromDownloadHistory(historyItem);
+  } else {
+    final localItem = ref.read(settingsProvider).localLibraryEnabled
+        ? await ref
+              .read(localLibraryProvider.notifier)
+              .findExistingAsync(
+                isrc: track.isrc,
+                trackName: track.name,
+                artistName: track.artistName,
+              )
+        : null;
+    if (!context.mounted) return;
+    if (localItem == null) {
+      await _openCollectionTrack(context, ref, track);
+      return;
+    }
+    item = UnifiedLibraryItem.fromLocalLibrary(localItem);
+  }
+  if (!context.mounted || !canEditTrackTags(item)) return;
+  await showTrackTagEditor(context, ref, item);
+}
+
 Future<void> _openCollectionTrack(
   BuildContext context,
   WidgetRef ref,
