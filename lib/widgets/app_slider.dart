@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:mornye/theme/material_expressive.dart';
 
+const Color _transparent = Color(0x00000000);
+
 /// Settings slider with the Material 3 Expressive track and handle.
 /// Mornye and reduced motion keep the standard [Slider].
 class AppSlider extends StatelessWidget {
@@ -20,6 +22,7 @@ class AppSlider extends StatelessWidget {
     this.centered = false,
     this.vertical = false,
     this.semanticLabel,
+    this.showValueIndicator = true,
   });
 
   final double value;
@@ -50,6 +53,12 @@ class AppSlider extends StatelessWidget {
   /// value bubble.
   final String? semanticLabel;
 
+  /// Whether the expressive slider raises its own value indicator while the
+  /// handle is held. A slider that names its value some other way — the
+  /// volume slider's floating percentage bubble — turns it off, or the
+  /// value would show twice.
+  final bool showValueIndicator;
+
   @override
   Widget build(BuildContext context) {
     final slider = _buildSlider(context);
@@ -74,62 +83,80 @@ class AppSlider extends StatelessWidget {
       return vertical ? RotatedBox(quarterTurns: 3, child: slider) : slider;
     }
     final enabled = onChanged != null;
-    final slider = MaterialExpressiveScope(
-      child: switch ((vertical, centered)) {
-        (true, true) => M3ESlider.verticalCentered(
-          value: value,
-          min: min,
-          max: max,
-          divisions: divisions,
-          label: label,
-          semanticFormatterCallback: semanticFormatterCallback,
-          trackThickness: trackThickness,
-          thumbLength: thumbLength,
-          enabled: enabled,
-          onChanged: onChanged,
-          onChangeEnd: onChangeEnd,
-        ),
-        (true, false) => M3ESlider.vertical(
-          value: value,
-          min: min,
-          max: max,
-          divisions: divisions,
-          label: label,
-          semanticFormatterCallback: semanticFormatterCallback,
-          trackThickness: trackThickness,
-          thumbLength: thumbLength,
-          enabled: enabled,
-          onChanged: onChanged,
-          onChangeEnd: onChangeEnd,
-        ),
-        (false, true) => M3ESlider.centered(
-          value: value,
-          min: min,
-          max: max,
-          divisions: divisions,
-          label: label,
-          semanticFormatterCallback: semanticFormatterCallback,
-          trackThickness: trackThickness,
-          thumbLength: thumbLength,
-          enabled: enabled,
-          onChanged: onChanged,
-          onChangeEnd: onChangeEnd,
-        ),
-        (false, false) => M3ESlider(
-          value: value,
-          min: min,
-          max: max,
-          divisions: divisions,
-          label: label,
-          semanticFormatterCallback: semanticFormatterCallback,
-          trackThickness: trackThickness,
-          thumbLength: thumbLength,
-          enabled: enabled,
-          onChanged: onChanged,
-          onChangeEnd: onChangeEnd,
-        ),
-      },
+    Widget expressive(Widget widget) => MaterialExpressiveScope(
+      child: showValueIndicator
+          ? widget
+          : // The expressive slider paints its indicator in the inverse
+            // roles with no switch to turn it off; an expressive theme whose
+            // inverse roles are transparent hides it for this slider alone.
+            Builder(
+              builder: (context) {
+                final theme = M3ETheme.of(context);
+                final scheme = theme.colorScheme.copyWith(
+                  inverseSurface: _transparent,
+                  onInverseSurface: _transparent,
+                );
+                return M3ETheme(
+                  data: theme.copyWith(colorScheme: scheme),
+                  child: widget,
+                );
+              },
+            ),
     );
+    final slider = expressive(switch ((vertical, centered)) {
+      (true, true) => M3ESlider.verticalCentered(
+        value: value,
+        min: min,
+        max: max,
+        divisions: divisions,
+        label: label,
+        semanticFormatterCallback: semanticFormatterCallback,
+        trackThickness: trackThickness,
+        thumbLength: thumbLength,
+        enabled: enabled,
+        onChanged: onChanged,
+        onChangeEnd: onChangeEnd,
+      ),
+      (true, false) => M3ESlider.vertical(
+        value: value,
+        min: min,
+        max: max,
+        divisions: divisions,
+        label: label,
+        semanticFormatterCallback: semanticFormatterCallback,
+        trackThickness: trackThickness,
+        thumbLength: thumbLength,
+        enabled: enabled,
+        onChanged: onChanged,
+        onChangeEnd: onChangeEnd,
+      ),
+      (false, true) => M3ESlider.centered(
+        value: value,
+        min: min,
+        max: max,
+        divisions: divisions,
+        label: label,
+        semanticFormatterCallback: semanticFormatterCallback,
+        trackThickness: trackThickness,
+        thumbLength: thumbLength,
+        enabled: enabled,
+        onChanged: onChanged,
+        onChangeEnd: onChangeEnd,
+      ),
+      (false, false) => M3ESlider(
+        value: value,
+        min: min,
+        max: max,
+        divisions: divisions,
+        label: label,
+        semanticFormatterCallback: semanticFormatterCallback,
+        trackThickness: trackThickness,
+        thumbLength: thumbLength,
+        enabled: enabled,
+        onChanged: onChanged,
+        onChangeEnd: onChangeEnd,
+      ),
+    });
     // The expressive slider lays out 44 dp across; stretch it to the 48 dp
     // touch target the standard Slider already has.
     return vertical

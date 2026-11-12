@@ -141,6 +141,58 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('the volume bubble reaches the ends of the track', (
+    tester,
+  ) async {
+    final volumes = StreamController<double>();
+    addTearDown(volumes.close);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          systemVolumeProvider.overrideWith((ref) => volumes.stream),
+          systemVolumeWriterProvider.overrideWith((ref) => (value) async {}),
+        ],
+        child: MaterialApp(
+          theme: MornyeTheme.build(Brightness.dark),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: PlayerVolumeControl()),
+        ),
+      ),
+    );
+    volumes.add(0.5);
+    await tester.pumpAndSettle();
+
+    final sliderRect = tester.getRect(find.byType(MornyePlayerSlider));
+    final slider = tester.widget<MornyePlayerSlider>(
+      find.byType(MornyePlayerSlider),
+    );
+
+    Future<double> bubbleCenter(double value) async {
+      slider.onChangeStart!(value);
+      slider.onChanged!(value);
+      // One pump builds the bubble portal, the next paints its overlay.
+      await tester.pump();
+      await tester.pump();
+      return tester.getRect(find.text('${(value * 100).round()}%')).center.dx;
+    }
+
+    // The bubble rides the thumb all the way: 0% sits at the track's zero
+    // end and 100% at its other end, not a step short of each.
+    expect(
+      await bubbleCenter(0.0),
+      moreOrLessEquals(sliderRect.left, epsilon: 4),
+    );
+    expect(
+      await bubbleCenter(1.0),
+      moreOrLessEquals(sliderRect.right, epsilon: 4),
+    );
+
+    slider.onChangeEnd!(1.0);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('releasing a slider leaves no focus that blocks shortcuts', (
     tester,
   ) async {

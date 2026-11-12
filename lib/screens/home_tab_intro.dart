@@ -366,6 +366,13 @@ class _HomeSections extends ConsumerWidget {
     final hasResume =
         showPlayer &&
         ref.watch(playbackResumeProvider.select((s) => s.value != null));
+    // The saved session's own track counts too, so the section stands with
+    // the rest of Home while the startup restore is still settling.
+    final hasSessionPreview =
+        showPlayer &&
+        ref.watch(
+          playbackSessionPreviewProvider.select((s) => s.value != null),
+        );
     final recentlyAdded = ref.watch(
       homeRecentlyAddedProvider.select((s) => s.value),
     );
@@ -374,7 +381,7 @@ class _HomeSections extends ConsumerWidget {
     final mixes =
         ref.watch(libraryMixesProvider.select((s) => s.value)) ?? const [];
 
-    final showContinue = hasMediaItem || hasResume;
+    final showContinue = hasMediaItem || hasResume || hasSessionPreview;
 
     final mornye = context.isMornye;
     final recentlyPlayed = mornye
@@ -671,14 +678,21 @@ class _HomeContinueListeningCardState
 
   @override
   Widget build(BuildContext context) {
-    // The startup session restore decides what Home continues with, so no
-    // row of this card may read the dismissed player's archive until it
-    // settles — a stale preview from an older dismissal would flash for a
-    // few frames before the restore's own song replaced it.
+    // The startup session restore decides what Home continues with, so the
+    // dismissed player's archive may not show before it settles — a stale
+    // preview from an older dismissal would flash for a few frames before
+    // the restore's own song replaced it. While it runs, the card previews
+    // the saved session's own current track instead: the restore lands on
+    // that same song, so the card shows the right one from the first
+    // frames, at the pace of the rest of Home.
     final settled = ref.watch(playbackRestoreSettledProvider).hasValue;
     final current = ref.watch(currentMediaItemProvider).value;
     final resume = settled ? ref.watch(playbackResumeProvider).value : null;
-    final mediaItem = current ?? resume?.media.toMediaItem();
+    final sessionPreview = current == null && !settled
+        ? ref.watch(playbackSessionPreviewProvider).value
+        : null;
+    final saved = resume ?? sessionPreview;
+    final mediaItem = current ?? saved?.media.toMediaItem();
     if (mediaItem == null) return const SizedBox.shrink();
 
     final isPlaying = current != null && ref.watch(playbackPlayingProvider);
@@ -730,7 +744,7 @@ class _HomeContinueListeningCardState
     );
     final progress = _HomeContinueListeningProgress(
       duration: mediaItem.duration ?? Duration.zero,
-      savedPosition: current == null ? resume?.position : null,
+      savedPosition: current == null ? saved?.position : null,
     );
     final playButton = Tooltip(
       message: isPlaying ? context.l10n.actionPause : context.l10n.tooltipPlay,

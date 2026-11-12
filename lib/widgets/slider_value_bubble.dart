@@ -84,12 +84,8 @@ class _SliderValueBubbleState extends State<SliderValueBubble> {
         child: CompositedTransformFollower(
           link: _link,
           // The point above the thumb: the track's fraction the value names,
-          // with a little margin so the bubble's nose never slides off the
-          // slider's edge.
-          targetAnchor: Alignment(
-            (widget.progress.clamp(0.0, 1.0) * 2 - 1).clamp(-0.9, 0.9),
-            -1,
-          ),
+          // edge to edge, so 0% and 100% reach the track's own ends.
+          targetAnchor: Alignment(widget.progress.clamp(0.0, 1.0) * 2 - 1, -1),
           followerAnchor: Alignment.bottomCenter,
           offset: const Offset(0, -6),
           child: IgnorePointer(

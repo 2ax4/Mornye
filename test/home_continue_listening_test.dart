@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart' show MediaItem;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,51 +24,68 @@ import 'support/fixed_settings.dart';
 const _cover = 'network://nas/Album/cover.jpg';
 
 /// The Material Home without a feed, resuming a saved song unless
-/// [saved] is false.
-Widget _home({bool saved = true}) => ProviderScope(
-  overrides: [
-    settingsProvider.overrideWith(
-      () => FixedSettingsNotifier(
-        const AppSettings(
-          searchProvider: 'example',
-          homeFeedProvider: AppSettings.homeFeedProviderOff,
-          hasSearchedBefore: true,
+/// [saved] is false. [settled] false keeps the startup restore running, and
+/// [sessionSong] stands in as the saved session's own current track.
+Widget _home({bool saved = true, bool settled = true, String? sessionSong}) =>
+    ProviderScope(
+      overrides: [
+        settingsProvider.overrideWith(
+          () => FixedSettingsNotifier(
+            const AppSettings(
+              searchProvider: 'example',
+              homeFeedProvider: AppSettings.homeFeedProviderOff,
+              hasSearchedBefore: true,
+            ),
+          ),
         ),
-      ),
-    ),
-    extensionProvider.overrideWith(_Extensions.new),
-    exploreProvider.overrideWith(_Explore.new),
-    downloadHistoryProvider.overrideWith(_History.new),
-    recentAccessProvider.overrideWith(_Recent.new),
-    libraryMixesProvider.overrideWith((ref) async => const []),
-    playerUiEnabledProvider.overrideWithValue(true),
-    currentMediaItemProvider.overrideWithBuild(
-      (ref, notifier) => Stream<MediaItem?>.value(null),
-    ),
-    playbackResumeProvider.overrideWith(
-      (ref) async => saved
-          ? (
-              media: const PlayableMedia(
-                id: 'network://nas/Album/song.flac',
-                source: 'network://nas/Album/song.flac',
-                title: 'Saved song',
+        extensionProvider.overrideWith(_Extensions.new),
+        exploreProvider.overrideWith(_Explore.new),
+        downloadHistoryProvider.overrideWith(_History.new),
+        recentAccessProvider.overrideWith(_Recent.new),
+        libraryMixesProvider.overrideWith((ref) async => const []),
+        playerUiEnabledProvider.overrideWithValue(true),
+        currentMediaItemProvider.overrideWithBuild(
+          (ref, notifier) => Stream<MediaItem?>.value(null),
+        ),
+        playbackResumeProvider.overrideWith(
+          (ref) async => saved
+              ? (
+                  media: const PlayableMedia(
+                    id: 'network://nas/Album/song.flac',
+                    source: 'network://nas/Album/song.flac',
+                    title: 'Saved song',
+                    artist: 'Artist',
+                    networkArtworkSource: _cover,
+                  ),
+                  position: const Duration(seconds: 23),
+                )
+              : null,
+        ),
+        if (sessionSong != null)
+          playbackSessionPreviewProvider.overrideWith(
+            (ref) async => (
+              media: PlayableMedia(
+                id: 'network://nas/Album/session.flac',
+                source: 'network://nas/Album/session.flac',
+                title: sessionSong,
                 artist: 'Artist',
                 networkArtworkSource: _cover,
               ),
-              position: const Duration(seconds: 23),
-            )
-          : null,
-    ),
-    // The startup restore settled before these tests read the row.
-    playbackRestoreSettledProvider.overrideWith((ref) async {}),
-  ],
-  child: MaterialApp(
-    theme: AppTheme.dark(),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: const HomeTab(mode: HomeTabMode.combined),
-  ),
-);
+              position: const Duration(seconds: 40),
+            ),
+          ),
+        playbackRestoreSettledProvider.overrideWith((ref) async {
+          if (settled) return;
+          return Completer<void>().future;
+        }),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const HomeTab(mode: HomeTabMode.combined),
+      ),
+    );
 
 /// Opens [_home] in a [width] wide window, as the desktop app when
 /// [desktop] is true.
@@ -181,6 +200,36 @@ void main() {
         ),
     };
     expect({for (final tile in tiles) (tile.top, tile.height)}, hasLength(1));
+  });
+
+  testWidgets("the restore's own song stands in while the restore runs", (
+    tester,
+  ) async {
+    // The dismissed player's archive is older than the session the restore
+    // is bringing back: the card must hold it back and preview the
+    // session's own track instead.
+    await tester.pumpWidget(
+      _home(settled: false, saved: true, sessionSong: 'Session song'),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Session song'), findsOneWidget);
+    expect(find.text('Saved song'), findsNothing);
+    expect(find.text('Continue listening'), findsOneWidget);
+  });
+
+  testWidgets('the saved session alone holds the section open pre-restore', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _home(settled: false, saved: false, sessionSong: 'Session song'),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Continue listening'), findsOneWidget);
+    expect(find.text('Session song'), findsOneWidget);
   });
 
   testWidgets('phones keep two columns of shortcuts under the card', (

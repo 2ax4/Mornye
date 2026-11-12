@@ -63,6 +63,52 @@ Future<PlaybackResumePreview?> loadPlaybackResumePreview(
   }
 }
 
+/// The saved session's own current track, for a preview while the startup
+/// restore is still settling: the restore continues from this same row, so
+/// Home can show its song from the first frames instead of waiting for the
+/// deck to load it. Unlike the dismissed player's archived preview, this row
+/// is never older than what the restore will land on.
+Future<PlaybackResumePreview?> loadPlaybackSessionPreview(
+  MusicPlayerRuntime runtime,
+) async {
+  try {
+    final session = await runtime.dependencies.sessionDatabase
+        .getPlaybackSession();
+    if (session == null) return null;
+    final rawMedia = session['media'];
+    if (rawMedia is! List || rawMedia.isEmpty) return null;
+    final index = ((session['index'] as num?)?.toInt() ?? 0).clamp(
+      0,
+      rawMedia.length - 1,
+    );
+    final entry = rawMedia[index];
+    if (entry is! Map) return null;
+    final documents = runtime.dependencies.isIOS
+        ? (await getApplicationDocumentsDirectory()).path
+        : null;
+    final saved = PlayableMedia.fromJson(
+      Map<String, dynamic>.from(entry),
+      iosDocumentsPath: documents,
+    );
+    if (saved == null) return null;
+    // As on restore, a loopback URL or a temporary cover file of earlier
+    // versions does not show.
+    final artwork = durableCoverReference(saved.artUri);
+    final media = artwork == saved.artUri
+        ? saved
+        : PlayableMedia.fromJson({...saved.toJson(), 'artUri': artwork})!;
+    return (
+      media: media,
+      position: Duration(
+        milliseconds: (session['positionMs'] as num?)?.toInt() ?? 0,
+      ),
+    );
+  } catch (error) {
+    _log.w('Failed to load the saved session preview: $error');
+    return null;
+  }
+}
+
 /// Resolve a saved queue in bounded groups, retaining its original order even
 /// when later file checks finish first. File existence is shared across tracks
 /// with the same artwork for this restore only, with a bounded LRU cache.

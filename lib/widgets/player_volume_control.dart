@@ -208,21 +208,22 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
 
     return Row(
       children: [
+        // No hover tooltip on the glyph: it sits against the slider's zero
+        // end, where reaching the thumb sweeps the pointer over it and the
+        // tooltip would rise next to the percentage bubble mid-drag. The
+        // whole control is labelled for screen readers below.
         GestureDetector(
           onTap: enabled ? () => _toggleMute(value) : null,
-          child: Tooltip(
-            message: context.l10n.nowPlayingVolume,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              child: AppIcon(
-                value <= 0
-                    ? Icons.volume_off_rounded
-                    : value < 0.5
-                    ? Icons.volume_down_rounded
-                    : Icons.volume_up_rounded,
-                size: 22,
-                color: colors.onSurfaceVariant,
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: AppIcon(
+              value <= 0
+                  ? Icons.volume_off_rounded
+                  : value < 0.5
+                  ? Icons.volume_down_rounded
+                  : Icons.volume_up_rounded,
+              size: 22,
+              color: colors.onSurfaceVariant,
             ),
           ),
         ),
@@ -237,7 +238,10 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
                 onPointerUp: (_) => release(),
                 onPointerCancel: (_) => release(),
                 // The percentage bubble rides above the thumb through the
-                // overlay, clear of the panel's rounded and glass clips.
+                // overlay, clear of the panel's rounded and glass clips, and
+                // the slider's own value indicator stands down while it
+                // does — the value would otherwise show twice, once clipped
+                // behind the panel's edge.
                 child: SliderValueBubble(
                   visible: _dragging,
                   label: enabled ? _percentage(value) : '',
@@ -247,6 +251,7 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
                     // handle, so volume stays secondary to it.
                     trackThickness: 4,
                     thumbLength: 20,
+                    showValueIndicator: false,
                     value: value,
                     onChanged: enabled ? _setVolume : null,
                     onChangeEnd: (value) {

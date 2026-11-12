@@ -106,6 +106,27 @@ final playbackRestoreSettledProvider = FutureProvider<void>((ref) {
   return ref.watch(musicPlayerRuntimeProvider).restoreSettled;
 });
 
+/// The saved session's own current track while the startup restore is still
+/// settling. The restore continues from that same row, so Home shows its
+/// song from the first frames — at the pace of the rest of Home — instead
+/// of holding the card back until the deck has loaded it. Once the restore
+/// settles, the live player (or, with the player dismissed, the archived
+/// preview) takes over.
+final playbackSessionPreviewProvider = FutureProvider<PlaybackResumePreview?>((
+  ref,
+) async {
+  if (!ref.watch(settingsProvider.select((s) => s.playerMode == 'internal'))) {
+    return null;
+  }
+  final hasCurrent = ref.watch(
+    currentMediaItemProvider.select((state) => state.value != null),
+  );
+  if (hasCurrent || ref.watch(activeRemotePlaybackProvider) != null) {
+    return null;
+  }
+  return loadPlaybackSessionPreview(ref.watch(musicPlayerRuntimeProvider));
+});
+
 /// A dismissed session stays available on Home without restoring the player.
 final playbackResumeProvider = FutureProvider<PlaybackResumePreview?>(((
   ref,
@@ -514,6 +535,11 @@ class MusicPlayerController {
     if (remote != null || _runtime.settings.playerMode != 'internal') {
       return false;
     }
+    // The startup restore owns the saved session until it settles. Joining
+    // it first keeps a resume tap from racing it — and from playing the
+    // dismissed player's older archive over the session the restore is
+    // bringing back.
+    await _runtime.restoreSession();
     final handler = await ensureInitialized();
     if (handler == null) return false;
     final generation = handler.playbackRequestGeneration;

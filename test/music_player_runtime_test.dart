@@ -38,6 +38,7 @@ import 'package:mornye/services/music_player_service.dart';
 import 'package:mornye/services/network_metadata_service.dart';
 import 'package:mornye/services/network_playback_cache.dart';
 import 'package:mornye/services/network_storage_service.dart';
+import 'package:mornye/services/playback_session_restore.dart';
 import 'package:mornye/services/playback_deck.dart';
 import 'package:mornye/services/playback_notification.dart';
 import 'package:mornye/services/source_deletion_events.dart';
@@ -374,6 +375,16 @@ class _SessionStore implements AppStateDatabase {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// A session store holding one saved session row, as the startup restore
+/// and the pre-restore preview read it.
+class _SessionRowStore extends _SessionStore {
+  _SessionRowStore(this.row);
+  final Map<String, dynamic>? row;
+
+  @override
+  Future<Map<String, dynamic>?> getPlaybackSession() async => row;
 }
 
 class _PositionLog extends _SessionStore {
@@ -763,6 +774,47 @@ const _track = PlayableMedia(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    "the saved session preview reads the restore's own current track",
+    () async {
+      final store = _SessionRowStore({
+        'version': 2,
+        'media': [
+          _track.toJson(),
+          const PlayableMedia(
+            id: 'two',
+            source: '/two.flac',
+            title: 'Two',
+            artist: 'Artist',
+          ).toJson(),
+          const PlayableMedia(
+            id: 'three',
+            source: '/three.flac',
+            title: 'Three',
+            artist: 'Artist',
+          ).toJson(),
+        ],
+        'index': 1,
+        'positionMs': 42000,
+        'shuffle': false,
+        'repeat': 'none',
+      });
+      final preview = await loadPlaybackSessionPreview(
+        _runtime(sessionDatabase: store),
+      );
+      expect(preview, isNotNull);
+      expect(preview!.media.title, 'Two');
+      expect(preview.position, const Duration(seconds: 42));
+    },
+  );
+
+  test('the saved session preview stands down without a session', () async {
+    final preview = await loadPlaybackSessionPreview(
+      _runtime(sessionDatabase: _SessionRowStore(null)),
+    );
+    expect(preview, isNull);
+  });
 
   test('exclusive gapless advances metadata on one continuous deck', () async {
     final deck = _QueuedDeck();

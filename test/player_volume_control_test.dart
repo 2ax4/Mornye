@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/services/playback_deck.dart';
@@ -130,6 +131,60 @@ void main() {
     volumes.add(0.3);
     await tester.pumpAndSettle();
     expect(slider().value, 0.3);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the expressive volume slider raises no second value bubble', (
+    tester,
+  ) async {
+    final volumes = StreamController<double>();
+    addTearDown(volumes.close);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          systemVolumeProvider.overrideWith((ref) => volumes.stream),
+          systemVolumeWriterProvider.overrideWith((ref) => (value) async {}),
+        ],
+        child: MaterialApp(
+          // The Material expressive slider paints its own value indicator
+          // while its handle is held.
+          theme: ThemeData(brightness: Brightness.dark),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: PlayerVolumeControl()),
+        ),
+      ),
+    );
+    volumes.add(0.5);
+    await tester.pumpAndSettle();
+
+    final sliderRect = tester.getRect(find.byType(AppSlider));
+    final gesture = await tester.startGesture(sliderRect.center);
+    await tester.pump();
+    // Drag left in steps, past the track's zero end.
+    for (var i = 0; i < 12; i++) {
+      await gesture.moveBy(const Offset(-40, 0));
+      await tester.pump();
+    }
+    await tester.pump();
+
+    // The floating bubble names the level alone: the expressive slider's
+    // own indicator stands down for it, the volume glyph raises no hover
+    // tooltip to join it, and 0% sits at the track's zero end.
+    expect(find.text('0%'), findsOneWidget);
+    expect(
+      tester.getRect(find.text('0%')).center.dx,
+      moreOrLessEquals(sliderRect.left, epsilon: 4),
+    );
+    final context = tester.element(find.byType(M3ESlider));
+    expect(
+      M3ETheme.of(context).colorScheme.inverseSurface,
+      const Color(0x00000000),
+    );
+    expect(find.byType(Tooltip), findsNothing);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 
