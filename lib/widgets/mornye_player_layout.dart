@@ -1,8 +1,7 @@
 import 'package:audio_service/audio_service.dart';
-import 'package:flutter/foundation.dart' show ValueListenable;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoIcons;
 import 'package:mornye/controllers/player_metadata_controller.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/music_player_provider.dart';
@@ -11,6 +10,7 @@ import 'package:mornye/routes/now_playing_route.dart';
 import 'package:mornye/utils/playback_seek_preview.dart';
 import 'package:mornye/widgets/mornye_context_menu.dart';
 import 'package:mornye/widgets/mornye_landscape_player.dart';
+import 'package:mornye/widgets/mornye_player_background.dart';
 import 'package:mornye/widgets/mornye_player_favorite_button.dart';
 import 'package:mornye/widgets/mornye_player_queue.dart';
 import 'package:mornye/widgets/player_volume_control.dart';
@@ -90,9 +90,9 @@ class MornyePlayerLayout extends ConsumerWidget {
             );
     }
 
-    final motion = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 380);
+    // Opening a panel moves the cover and the panels as content, in step
+    // with the background behind them.
+    final motion = mornyePlayerPanelMotion(context);
     final queue = ref.watch(playQueueProvider).value ?? const <MediaItem>[];
     final currentIndex = ref.watch(currentQueueIndexProvider);
     final showVolume = ref.watch(
@@ -111,6 +111,9 @@ class MornyePlayerLayout extends ConsumerWidget {
           compactCoverSize,
           double.infinity,
         );
+        // Made once per layout, so the panel switch moves the same panels on
+        // every frame instead of rebuilding their rows.
+        late final queuePanel = MornyePlayerQueue(colorScheme: colorScheme);
         Widget stage({
           bool artworkOnly = false,
           double progress = 0,
@@ -152,9 +155,9 @@ class MornyePlayerLayout extends ConsumerWidget {
                     child: ExcludeSemantics(
                       excluding: !compact,
                       child: AnimatedSwitcher(
-                        duration: motion,
-                        switchInCurve: Curves.easeInOutCubic,
-                        switchOutCurve: Curves.easeInOutCubic,
+                        duration: motion.duration,
+                        switchInCurve: motion.curve,
+                        switchOutCurve: motion.leaving,
                         transitionBuilder: (child, animation) => FadeTransition(
                           opacity: animation,
                           child: SlideTransition(
@@ -209,8 +212,8 @@ class MornyePlayerLayout extends ConsumerWidget {
                               ? 1
                               : 0.73,
                         ),
-                        duration: motion,
-                        curve: Curves.easeInOutCubic,
+                        duration: motion.duration,
+                        curve: motion.curve,
                         builder: (context, scale, child) => Positioned.fromRect(
                           // Both cover layers travel to the actual resting size,
                           // including the smaller cover used while paused.
@@ -347,18 +350,15 @@ class MornyePlayerLayout extends ConsumerWidget {
           0.0,
           controlsHeadroom,
         );
-        Widget controls() => AnimatedBuilder(
-          animation: artworkForeground,
-          builder: (context, _) => PlayerPlaybackControls(
-            key: artworkKeys.controls,
-            mediaId: mediaItem.id,
-            duration: mediaItem.duration ?? Duration.zero,
-            seekPreview: seekPreview,
-            colorScheme: foreground('controls'),
-            metadata: metadata,
-            compact: landscape,
-            transportTopPadding: 16 + transportShift,
-          ),
+        Widget controls() => PlayerPlaybackControls(
+          key: artworkKeys.controls,
+          mediaId: mediaItem.id,
+          duration: mediaItem.duration ?? Duration.zero,
+          seekPreview: seekPreview,
+          colorScheme: foreground,
+          metadata: metadata,
+          compact: landscape,
+          transportTopPadding: 16 + transportShift,
         );
 
         if (landscape) {
@@ -394,12 +394,11 @@ class MornyePlayerLayout extends ConsumerWidget {
                 id: _PlayerHeaderSlot.header,
                 child: KeyedSubtree(
                   key: const ValueKey('player-track-header'),
-                  child: AnimatedBuilder(
+                  child: KeyedSubtree(
                     key: artworkKeys.header,
-                    animation: artworkForeground,
-                    builder: (context, _) => _trackHeader(
+                    child: _trackHeader(
                       context,
-                      foreground('header'),
+                      foreground,
                       compactProgress: progress,
                     ),
                   ),
@@ -458,84 +457,108 @@ class MornyePlayerLayout extends ConsumerWidget {
         ? (page == 0 ? 24.0 : _mornyeCompactIconSize)
         : 24 + (_mornyeCompactIconSize - 24) * progress;
     return Builder(
-      builder: (context) => Row(
+      builder: (context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: PlayerTrackSwipeTitles(
-              current: mediaItem,
-              builder: (mediaItem) => Builder(
-                builder: (titleContext) => InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap:
-                      (mediaItem.artist ?? '').trim().isEmpty &&
-                          (mediaItem.album ?? '').trim().isEmpty
-                      ? null
-                      : () => onTrackNavigation(titleContext, mediaItem),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      OverflowMarquee(
-                        resetKey: (mediaItem.id, mediaItem.title),
-                        child: PlayerMetadataTitle(
-                          mediaItem: mediaItem,
-                          metadata: metadata,
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: 22 - 4 * progress,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      OverflowMarquee(
-                        resetKey: (mediaItem.id, mediaItem.artist),
-                        child: Text(
-                          mediaItem.artist ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 20 - 4 * progress,
-                            color: colorScheme.onSurface.withValues(
-                              alpha: 0.72,
+          Row(
+            children: [
+              Expanded(
+                child: PlayerTrackSwipeTitles(
+                  current: mediaItem,
+                  builder: (mediaItem) => Builder(
+                    builder: (titleContext) => InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap:
+                          (mediaItem.artist ?? '').trim().isEmpty &&
+                              (mediaItem.album ?? '').trim().isEmpty
+                          ? null
+                          : () => onTrackNavigation(titleContext, mediaItem),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _PlayingMarquee(
+                            resetKey: (mediaItem.id, mediaItem.title),
+                            child: PlayerMetadataTitle(
+                              mediaItem: mediaItem,
+                              metadata: metadata,
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: 22 - 4 * progress,
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 4),
+                          _PlayingMarquee(
+                            resetKey: (mediaItem.id, mediaItem.artist),
+                            child: Text(
+                              mediaItem.artist ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 20 - 4 * progress,
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.72,
+                                ),
+                              ),
+                            ),
+                          ),
+                          PlaybackSourceLabel(
+                            item: mediaItem,
+                            color: colorScheme.onSurface.withValues(alpha: 0.72),
+                          ),
+                        ],
                       ),
-                      PlaybackSourceLabel(
-                        item: mediaItem,
-                        color: colorScheme.onSurface.withValues(alpha: 0.72),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          MornyePlayerFavoriteButton(
-            key: ValueKey(mediaItem.id),
-            mediaItem: mediaItem,
-            compact: page != 0,
-            iconSize: actionSize,
-            color: colorScheme.onSurface,
-          ),
-          Builder(
-            builder: (buttonContext) => SizedBox.square(
-              dimension: _mornyeHeaderButtonSize,
-              child: IconButton(
-                tooltip: MaterialLocalizations.of(context).moreButtonTooltip,
-                color: colorScheme.onSurface,
+              MornyePlayerFavoriteButton(
+                key: ValueKey(mediaItem.id),
+                mediaItem: mediaItem,
+                compact: page != 0,
                 iconSize: actionSize,
-                icon: const Icon(CupertinoIcons.ellipsis),
-                onPressed: () => onMoreActions(
-                  buttonContext,
-                  mediaItem,
-                  mornyeMenuAnchor(buttonContext),
+                color: colorScheme.onSurface,
+              ),
+              Builder(
+                builder: (buttonContext) => SizedBox.square(
+                  dimension: _mornyeHeaderButtonSize,
+                  child: IconButton(
+                    tooltip: MaterialLocalizations.of(
+                      context,
+                    ).moreButtonTooltip,
+                    color: colorScheme.onSurface,
+                    iconSize: actionSize,
+                    icon: const Icon(CupertinoIcons.ellipsis),
+                    onPressed: () => onMoreActions(
+                      buttonContext,
+                      mediaItem,
+                      mornyeMenuAnchor(buttonContext),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!compact && progress < 1.0)
+            SizeTransition(
+              sizeFactor: AlwaysStoppedAnimation(1.0 - progress),
+              alignment: AlignmentDirectional.topStart,
+              child: FadeTransition(
+                opacity: AlwaysStoppedAnimation(
+                  (1.0 - progress * 2.5).clamp(0.0, 1.0),
+                ),
+                child: PlayerLyricPreview(
+                  metadata: metadata,
+                  seekPreview: seekPreview,
+                  colorScheme: colorScheme,
+                  onTap: () => onPageChanged(1),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

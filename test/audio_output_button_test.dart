@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mornye/l10n/app_localizations.dart';
 import 'package:mornye/widgets/audio_output_button.dart';
+
+import 'support/tooltip_finder.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +45,7 @@ void main() {
         return picker.future;
       });
       await tester.pumpWidget(app(onChanged: visibility.add));
-      await tester.tap(find.byTooltip('Audio Output'));
+      await tester.tap(findByTooltip('Audio Output'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('AirPlay and Bluetooth'));
       await tester.pumpAndSettle();
@@ -69,7 +71,7 @@ void main() {
       return completion.future;
     });
     await tester.pumpWidget(app(onChanged: visibility.add));
-    await tester.tap(find.byTooltip('Audio Output'));
+    await tester.tap(findByTooltip('Audio Output'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('This device and Bluetooth'));
     await tester.pumpAndSettle();
@@ -86,7 +88,7 @@ void main() {
   ) async {
     messenger.setMockMethodCallHandler(channel, (_) async => true);
     await tester.pumpWidget(app());
-    await tester.tap(find.byTooltip('Audio Output'));
+    await tester.tap(findByTooltip('Audio Output'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('This device and Bluetooth'));
     await tester.pumpAndSettle();
@@ -94,7 +96,7 @@ void main() {
 
     final completion = Completer<bool>();
     messenger.setMockMethodCallHandler(channel, (_) => completion.future);
-    await tester.tap(find.byTooltip('Audio Output'));
+    await tester.tap(findByTooltip('Audio Output'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('This device and Bluetooth'));
     await tester.pumpAndSettle();
@@ -122,7 +124,7 @@ void main() {
         tester.getSize(find.byType(AudioOutputButton)),
         const Size(56, 48),
       );
-      await tester.tap(find.byTooltip('Audio Output'));
+      await tester.tap(findByTooltip('Audio Output'));
       await tester.pumpAndSettle();
       await tester.tap(
         find.text(

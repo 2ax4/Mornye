@@ -1,7 +1,7 @@
 import 'dart:ui' show lerpDouble;
 
-import 'package:flutter/cupertino.dart' show CupertinoIcons;
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoIcons;
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/library_collections_provider.dart';
@@ -18,6 +18,7 @@ import 'package:mornye/widgets/desktop/desktop_commands.dart';
 import 'package:mornye/widgets/desktop/desktop_inspector.dart';
 import 'package:mornye/widgets/desktop/desktop_now_playing.dart';
 import 'package:mornye/widgets/desktop/desktop_player_bar.dart';
+import 'package:mornye/widgets/desktop/desktop_row_ink.dart';
 import 'package:mornye/widgets/desktop/desktop_window.dart';
 import 'package:mornye/widgets/no_scrollbars.dart';
 
@@ -395,6 +396,7 @@ class DesktopShellLayout extends ConsumerWidget {
   }
 }
 
+/// Opens and closes the full-window Now Playing over [shell]. Material fades
 /// Gives [child] the size of the space it lays out in, so width-based layout
 /// (centered columns, grids) measures the pane rather than the whole window.
 /// [bottomInset] becomes the bottom padding, which pages add after their
@@ -561,12 +563,12 @@ class _DesktopContentArea extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             pane,
-            const Positioned(
+            Positioned(
               top: 0,
               left: 0,
               right: 0,
-              height: desktopTitleBarHeight,
-              child: DesktopWindowDragArea(),
+              height: desktopTitleBarHeightFor(context),
+              child: const DesktopWindowDragArea(),
             ),
           ],
         );
@@ -772,7 +774,10 @@ class DesktopNavigationRail extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final background = colorScheme.surfaceContainer;
     if (!materialExpressiveEnabled(context)) {
-      // Reduced motion keeps Flutter's rail; Settings stays last.
+      // Reduced motion keeps Flutter's rail; Settings stays last. Its extend
+      // controller follows the platform's reduced-motion flag, which cuts
+      // the 200 ms to a single frame, and the rail stays the same element so
+      // a focused destination keeps keyboard focus.
       final index = destinations.indexWhere((d) => d.tab == selected);
       return NavigationRail(
         extended: extended,
@@ -804,9 +809,11 @@ class DesktopNavigationRail extends StatelessWidget {
     final settings = destinations
         .where((destination) => destination.tab == ShellTab.settings)
         .firstOrNull;
+    // Only reached with expressive motion on; reduced motion takes the
+    // static rail above, so the fallback never animates.
     final motion = AppMotion.spatial(
       context,
-      const AppMotionSpec(Duration(milliseconds: 300), Curves.easeInOutCubic),
+      const AppMotionSpec(Duration.zero, Curves.linear),
     );
     final openLink = onOpenLibraryLink;
     // One expansion value drives the width, every pill and every label, so
@@ -835,10 +842,13 @@ class DesktopNavigationRail extends StatelessWidget {
           return ColoredBox(
             color: background,
             child: SizedBox(
+              // The width stops at its ends while the pills and labels keep
+              // the spring: a rail growing past its width would narrow the
+              // content below its final size and flip its breakpoints twice.
               width: lerpDouble(
                 desktopCollapsedRailWidth,
                 desktopSidebarWidth,
-                expansion,
+                expansion.clamp(0.0, 1.0),
               ),
               child: ClipRect(
                 child: Column(
@@ -954,6 +964,109 @@ class _RailPlaylists extends ConsumerWidget {
   }
 }
 
+/// The Material rail's selection fill: a `secondaryContainer` stadium behind
+/// [child]. On selection it grows from its centre, half to full width, on
+/// the fast spatial spring while its fill fades in on the fast effects
+/// spring; on deselection the fill fades out on the effects spring alone at
+/// the width it had, shorter than the entrance. It paints nothing and runs
+/// no animation while unselected and faded out.
+class _RailIndicator extends StatefulWidget {
+  const _RailIndicator({required this.selected, required this.child});
+
+  final bool selected;
+  final Widget child;
+
+  @override
+  State<_RailIndicator> createState() => _RailIndicatorState();
+}
+
+class _RailIndicatorState extends State<_RailIndicator>
+    with TickerProviderStateMixin {
+  // Linear progress; [_growSpec] and [_fadeSpec] shape it when read, so a
+  // stopped grow keeps the width it reached.
+  late final _grow = AnimationController(
+    vsync: this,
+    value: widget.selected ? 1 : 0,
+  );
+  late final _fade = AnimationController(
+    vsync: this,
+    value: widget.selected ? 1 : 0,
+  );
+  late final _listenable = Listenable.merge([_grow, _fade]);
+
+  AppMotionSpec get _growSpec => AppMotion.spatialFast(
+    context,
+    const AppMotionSpec(Duration(milliseconds: 200), Curves.easeOutCubic),
+  );
+
+  AppMotionSpec get _fadeSpec => AppMotion.effectsFast(
+    context,
+    const AppMotionSpec(Duration(milliseconds: 150), Curves.easeOut),
+  );
+
+  @override
+  void didUpdateWidget(_RailIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selected == oldWidget.selected) return;
+    final fade = _fadeSpec;
+    _fade.duration = fade.duration;
+    if (widget.selected) {
+      // A pill that had faded out grows again from half width; one still
+      // fading out grows on from where it is.
+      if (_fade.value == 0) _grow.value = 0;
+      _grow.duration = _growSpec.duration;
+      _grow.forward();
+      _fade.forward();
+    } else {
+      // The outgoing pill keeps its width and only fades.
+      _grow.stop();
+      _fade.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _grow.dispose();
+    _fade.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.secondaryContainer;
+    final grow = _growSpec.curve;
+    final fade = _fadeSpec.curve;
+    return AnimatedBuilder(
+      animation: _listenable,
+      child: widget.child,
+      builder: (context, child) {
+        final fill = fade.transform(_fade.value).clamp(0.0, 1.0);
+        return Stack(
+          fit: StackFit.passthrough,
+          children: [
+            if (fill > 0)
+              Positioned.fill(
+                child: Center(
+                  child: FractionallySizedBox(
+                    widthFactor: 0.5 + grow.transform(_grow.value) / 2,
+                    child: DecoratedBox(
+                      key: const ValueKey('desktop-rail-indicator'),
+                      decoration: ShapeDecoration(
+                        color: color.withValues(alpha: color.a * fill),
+                        shape: const StadiumBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            child!,
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// A row in the expanded Material rail's Playlists section: the icon in line
 /// with the destination icons, a stadium hover layer and the selected
 /// destination's fill.
@@ -978,6 +1091,7 @@ class _RailLinkRow extends StatelessWidget {
     final foreground = selected
         ? colorScheme.onSecondaryContainer
         : colorScheme.onSurfaceVariant;
+    final press = desktopRowInk(context, content: foreground);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _RailDestination._inset),
       // Long playlist names are cut, so the tooltip shows them whole.
@@ -990,36 +1104,40 @@ class _RailLinkRow extends StatelessWidget {
           selected: selected,
           label: label,
           excludeSemantics: true,
-          child: Material(
-            color: selected ? colorScheme.secondaryContainer : null,
-            type: selected ? MaterialType.canvas : MaterialType.transparency,
-            shape: const StadiumBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: onTap,
-              hoverColor: foreground.withValues(alpha: 0.08),
-              child: SizedBox(
-                height: 44,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    AppIcon(icon, size: 24, color: foreground),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: foreground,
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+          child: _RailIndicator(
+            selected: selected,
+            child: Material(
+              type: MaterialType.transparency,
+              shape: const StadiumBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onTap,
+                hoverColor: foreground.withValues(alpha: 0.08),
+                splashFactory: press.splashFactory,
+                highlightColor: press.highlightColor,
+                child: SizedBox(
+                  height: 44,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 16),
+                      AppIcon(icon, size: 24, color: foreground),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: foreground,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                  ],
+                      const SizedBox(width: 16),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1037,7 +1155,7 @@ class _RailLinkRow extends StatelessWidget {
 /// labels under the icons. Expanded, a 56dp row spans the rail with the
 /// label beside the icon, as wide as the Playlists rows below (the owner's
 /// call over M3 Expressive's pill that hugs its label). Both take the
-/// Playlists rows' fill, hover and ripple, and in between they cross-fade
+/// Playlists rows' fill, hover and press, and in between they cross-fade
 /// around a fixed icon while the row narrows with the rail, as the owner
 /// preferred to a morphing pill. Only the row, or the whole 56dp square
 /// while collapsed, takes clicks and hover.
@@ -1085,19 +1203,24 @@ class _RailDestination extends StatelessWidget {
     final foreground = selected
         ? colorScheme.onSecondaryContainer
         : colorScheme.onSurfaceVariant;
+    final press = desktopRowInk(context, content: foreground);
 
-    // A stadium with the selected fill, the hover layer and the ink ripple
-    // of the Playlists rows.
-    Widget surface({required bool active, Widget? child}) => Material(
-      color: selected ? colorScheme.secondaryContainer : null,
-      type: selected ? MaterialType.canvas : MaterialType.transparency,
-      shape: const StadiumBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: active ? onTap : null,
-        canRequestFocus: active,
-        hoverColor: foreground.withValues(alpha: 0.08),
-        child: child ?? const SizedBox.expand(),
+    // A stadium with the selected fill and the hover and press layers of
+    // the Playlists rows.
+    Widget surface({required bool active, Widget? child}) => _RailIndicator(
+      selected: selected,
+      child: Material(
+        type: MaterialType.transparency,
+        shape: const StadiumBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: active ? onTap : null,
+          canRequestFocus: active,
+          hoverColor: foreground.withValues(alpha: 0.08),
+          splashFactory: press.splashFactory,
+          highlightColor: press.highlightColor,
+          child: child ?? const SizedBox.expand(),
+        ),
       ),
     );
 
@@ -1349,21 +1472,29 @@ class DesktopSidebar extends ConsumerWidget {
     );
     final panel = ValueListenableBuilder<Color?>(
       valueListenable: ShellNavigationService.chromeSurface,
-      builder: (context, tint, child) => DecoratedBox(
-        // One piece with the window: only a hairline parts it
-        // from the content, and the window's own corners are its corners.
-        decoration: BoxDecoration(
-          color: panelColor(context, tint),
-          border: BorderDirectional(
-            end: BorderSide(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.1),
-              width: 0.5,
+      // The tint follows the backdrop's crossfade instead of landing in one
+      // frame.
+      builder: (context, tint, child) => TweenAnimationBuilder<Color?>(
+        tween: ColorTween(end: panelColor(context, tint)),
+        duration: _SidebarBackdrop.crossFade(context).duration,
+        curve: _SidebarBackdrop.crossFade(context).curve,
+        child: child,
+        builder: (context, color, child) => DecoratedBox(
+          // One piece with the window: only a hairline parts it
+          // from the content, and the window's own corners are its corners.
+          decoration: BoxDecoration(
+            color: color,
+            border: BorderDirectional(
+              end: BorderSide(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
             ),
           ),
+          child: child,
         ),
-        child: child,
       ),
       child: Stack(
         fit: StackFit.expand,
@@ -1409,6 +1540,13 @@ class _SidebarBackdrop extends StatelessWidget {
   /// Decoded width; the fewer pixels, the softer the enlarged image.
   static const int _decodeWidth = 48;
 
+  /// The artwork's crossfade, which the panel's tint follows: Mornye's
+  /// effects spring, or a cut with reduced motion.
+  static AppMotionSpec crossFade(BuildContext context) =>
+      MediaQuery.disableAnimationsOf(context)
+      ? const AppMotionSpec(Duration.zero, Curves.linear)
+      : MornyeMotion.effects;
+
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<String?>(
     valueListenable: ShellNavigationService.chromeBackdrop,
@@ -1416,10 +1554,11 @@ class _SidebarBackdrop extends StatelessWidget {
       final image = source == null
           ? null
           : coverImageProvider(source, cacheWidth: _decodeWidth);
+      final fade = crossFade(context);
       return AnimatedSwitcher(
-        duration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : const Duration(milliseconds: 300),
+        duration: fade.duration,
+        switchInCurve: fade.curve,
+        switchOutCurve: fade.leaving,
         layoutBuilder: (current, previous) =>
             Stack(fit: StackFit.expand, children: [...previous, ?current]),
         child: image == null
@@ -1577,7 +1716,7 @@ class _SidebarHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
     height: desktopTitleBarInContentFor(context)
-        ? desktopTitleBarHeight
+        ? desktopTitleBarHeightFor(context)
         : height,
     child: const DesktopWindowDragArea(
       zoomOnDoubleClick: true,

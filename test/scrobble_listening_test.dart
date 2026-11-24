@@ -1,12 +1,12 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mornye/services/lastfm/lastfm_listening.dart';
+import 'package:mornye/services/scrobbling/scrobble_listening.dart';
 
 void main() {
   late Duration elapsed;
-  late LastfmListening listening;
-  late List<LastfmTrack> announcements;
-  late List<(LastfmTrack, DateTime)> scrobbles;
+  late ScrobbleListening listening;
+  late List<ScrobbleTrack> announcements;
+  late List<(ScrobbleTrack, DateTime)> scrobbles;
   final start = DateTime.utc(2026, 11, 1, 12);
   MediaItem track({
     int instance = 1,
@@ -36,7 +36,7 @@ void main() {
     elapsed = Duration.zero;
     announcements = [];
     scrobbles = [];
-    listening = LastfmListening(
+    listening = ScrobbleListening(
       elapsed: () => elapsed,
       now: () => start.add(elapsed),
       onNowPlaying: announcements.add,
@@ -62,6 +62,29 @@ void main() {
     elapsed = const Duration(minutes: 10);
     listening.tick();
     expect(scrobbles, hasLength(1));
+  });
+
+  test('half the song counts at any playback speed', () {
+    PlaybackState at(double speed) => state().copyWith(speed: speed);
+    listening.update(track(), at(2), enabled: true);
+    // 60 s at 2x plays 120 s of the 240 s song.
+    elapsed = const Duration(seconds: 59);
+    listening.tick();
+    expect(scrobbles, isEmpty);
+    elapsed = const Duration(seconds: 60);
+    listening.tick();
+    expect(scrobbles, hasLength(1));
+
+    listening.update(track(instance: 2), at(0.5), enabled: true);
+    elapsed += const Duration(seconds: 200);
+    // A change of speed counts the time before it at the old speed.
+    listening.update(track(instance: 2), at(1), enabled: true);
+    elapsed += const Duration(seconds: 19);
+    listening.tick();
+    expect(scrobbles, hasLength(1));
+    elapsed += const Duration(seconds: 1);
+    listening.tick();
+    expect(scrobbles, hasLength(2));
   });
 
   test('seeking does not add listening time or begin another play', () {
@@ -175,5 +198,33 @@ void main() {
     listening.tick();
     expect(announcements, isEmpty);
     expect(scrobbles, isEmpty);
+  });
+
+  test('tagged identifiers travel with the song, invalid ones do not', () {
+    MediaItem tagged(Map<String, Object> tags, int instance) => track(
+      instance: instance,
+    ).copyWith(extras: {'playbackInstance': instance, 'displayMetadata': tags});
+    listening.update(
+      tagged({'isrc': 'xx-000-00-00001', 'track_number': '3/12'}, 1),
+      state(),
+      enabled: true,
+    );
+    listening.update(
+      tagged({'isrc': 'not an isrc', 'track': 0}, 2),
+      state(),
+      enabled: true,
+    );
+    expect(announcements.first.isrc, 'XX0000000001');
+    expect(announcements.first.trackNumber, 3);
+    expect(announcements.first.toJson()['isrc'], 'XX0000000001');
+    // Last.fm-compatible services keep receiving the fields they always did.
+    expect(announcements.first.lastfmParameters.keys, [
+      'track',
+      'artist',
+      'album',
+      'duration',
+    ]);
+    expect(announcements.last.isrc, isNull);
+    expect(announcements.last.trackNumber, isNull);
   });
 }

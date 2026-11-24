@@ -9,6 +9,8 @@ import 'package:mornye/theme/app_theme.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/widgets/settings_group.dart';
 
+import 'support/page_back.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -99,7 +101,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(AboutPage), findsOneWidget);
 
-      await tester.pageBack();
+      await pageBack(tester);
       await tester.pumpAndSettle();
 
       final restoredField = tester.widget<TextField>(find.byType(TextField));

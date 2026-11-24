@@ -913,6 +913,16 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                 showDivider: isActive || minutes != durations.last,
                 onTap: () => Navigator.of(sheetContext).pop('$minutes'),
               ),
+            SettingsItem(
+              icon: Icons.music_note_outlined,
+              title: sheetContext.l10n.nowPlayingSleepTimerEndOfSong,
+              selected: controller.sleepAtEndOfSong,
+              trailing: controller.sleepAtEndOfSong
+                  ? AppIcon(Icons.check, color: colorScheme.primary)
+                  : null,
+              showDivider: isActive,
+              onTap: () => Navigator.of(sheetContext).pop('endOfSong'),
+            ),
             if (isActive)
               SettingsItem(
                 icon: Icons.timer_off_outlined,
@@ -925,6 +935,11 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
       ),
     );
     if (!mounted || !context.mounted || selection == null) return;
+
+    if (selection == 'endOfSong') {
+      controller.setSleepTimerEndOfSong();
+      return;
+    }
 
     if (selection == 'off') {
       controller.cancelSleepTimer();

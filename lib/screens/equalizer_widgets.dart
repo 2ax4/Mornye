@@ -116,7 +116,6 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
-/// Status, master switch and the estimated response of the whole chain.
 class _EqualizerOverview extends ConsumerWidget {
   const _EqualizerOverview({this.onEnabledChanged});
 
@@ -138,6 +137,12 @@ class _EqualizerOverview extends ConsumerWidget {
     final tokens = context.tokens;
     final enabled = settings.enabled;
     final curveColor = enabled ? colors.primary : colors.outline;
+    // Turning the equalizer on or off recolors the title and the curve on
+    // the effects spring.
+    final recolor = AppMotion.effects(
+      context,
+      AppMotionSpec(tokens.motionMedium, Curves.linear),
+    );
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(
         tokens.rowPaddingH,
@@ -155,7 +160,8 @@ class _EqualizerOverview extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AnimatedDefaultTextStyle(
-                      duration: tokens.motionMedium,
+                      duration: recolor.duration,
+                      curve: recolor.curve,
                       style: theme.textTheme.headlineSmall!.copyWith(
                         fontWeight: FontWeight.w600,
                         color: enabled
@@ -208,7 +214,8 @@ class _EqualizerOverview extends ConsumerWidget {
               height: 152,
               child: TweenAnimationBuilder<Color?>(
                 tween: ColorTween(end: curveColor),
-                duration: tokens.motionMedium,
+                duration: recolor.duration,
+                curve: recolor.curve,
                 builder: (context, color, _) => CustomPaint(
                   size: Size.infinite,
                   painter: _EqualizerCurve(
@@ -236,7 +243,6 @@ class _EqualizerOverview extends ConsumerWidget {
   }
 }
 
-/// Quick-apply chips for every preset, plus save, reset and overflow actions.
 class _PresetBar extends ConsumerWidget {
   const _PresetBar({
     required this.busy,
@@ -349,7 +355,6 @@ class _PresetBar extends ConsumerWidget {
   }
 }
 
-/// Band count picker and one vertical gain fader per band.
 class _BandEditor extends ConsumerWidget {
   const _BandEditor();
 
@@ -551,7 +556,6 @@ class _BandFader extends StatelessWidget {
     String semantics(double v) => '${v.toStringAsFixed(1)} dB';
     return Column(
       children: [
-        // Tapping the gain returns the band to 0 dB.
         Tooltip(
           message: '$resetLabel $hz Hz',
           child: SizedBox(

@@ -55,7 +55,7 @@ impl Output {
             return Err("Invalid USB device/configuration".into());
         }
         if candidates.is_empty() {
-            return Err("No compatible USB format".into());
+            return Err(descriptors::mismatch(&device, rate, channels, bits, dsd));
         }
         let shared = Arc::new((Mutex::new(State::default()), Condvar::new()));
         let state = shared.clone();
@@ -313,6 +313,7 @@ struct Session {
     alternate: Alternate,
     endpoint: Endpoint,
     feedback: Option<Endpoint>,
+    bus_speed: i32,
     high_speed: bool,
     interval: u32,
     #[allow(clippy::vec_box)] // libusb user_data must survive Vec moves/reallocation.
@@ -346,6 +347,7 @@ impl Session {
             alternate: Alternate::default(),
             endpoint: Endpoint::default(),
             feedback: None,
+            bus_speed: 0,
             high_speed: false,
             interval: 0,
             slots: vec![],
@@ -363,7 +365,7 @@ impl Session {
                 fd as _,
                 &mut s.handle,
             ))?;
-            s.high_speed = usb::libusb_get_device_speed(usb::libusb_get_device(s.handle)) >= 3;
+            s.bus_speed = usb::libusb_get_device_speed(usb::libusb_get_device(s.handle));
             check(usb::libusb_set_auto_detach_kernel_driver(s.handle, 1))?;
         }
         let mut failure = "No supported USB endpoint".to_string();
@@ -426,10 +428,11 @@ impl Session {
             .find(|e| e.address & 0x80 == 0 && e.attributes & 3 == 1 && e.attributes & 0x30 == 0)
             .ok_or("No isochronous audio output")?
             .clone();
-        if !(1..=4).contains(&ep.interval) || ep.max_packet == 0 || ep.max_packet > 3072 {
+        if ep.max_packet == 0 || ep.max_packet > 3072 {
             return Err("Unsupported USB interval/packet size".into());
         }
-        let interval = (if self.high_speed { 125 } else { 1000 }) * (1 << (ep.interval - 1));
+        let timing = descriptors::packet_timing(self.bus_speed, ep.interval)?;
+        let interval = timing.interval_us;
         let maximum_frames = (f.sample_rate as u64 * interval as u64).div_ceil(1_000_000) as usize;
         if maximum_frames * f.channels as usize * f.subslot as usize > ep.max_packet {
             return Err("USB endpoint bandwidth too small".into());
@@ -469,7 +472,15 @@ impl Session {
             ))?;
         }
         if a.uac2 {
-            let index = ((a.clock as u16) << 8) | a.control as u16;
+            // The rate belongs to the clock source; a selector in front of it
+            // answers this request with its 1-byte input pin instead.
+            let clock = descriptors::clock_source(&a, |selector| {
+                let mut pin = [0];
+                let index = ((selector as u16) << 8) | a.control as u16;
+                self.control(true, 1, 0x100, index, &mut pin, false)?;
+                Ok(pin[0])
+            })?;
+            let index = ((clock as u16) << 8) | a.control as u16;
             let mut rate = f.sample_rate.to_le_bytes();
             // A read-only clock already at the exact rate needs no SET_CUR.
             let mut current = [0; 4];
@@ -503,6 +514,7 @@ impl Session {
         self.alternate = a;
         self.endpoint = ep;
         self.feedback = feedback;
+        self.high_speed = timing.high_speed;
         self.interval = interval;
         self.format = f;
         Ok(())

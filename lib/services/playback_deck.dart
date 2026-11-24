@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:mornye/utils/desktop_platform.dart';
@@ -9,7 +10,8 @@ enum PlaybackDeckState { stopped, playing, paused, completed, disposed }
 /// The engine behind `PlaybackDependencies.createDeck`.
 enum PlaybackEngine {
   /// audioplayers: Android, iOS and macOS, where the forks carry the
-  /// equalizer tap and Android's USB output.
+  /// equalizer tap and Android's USB output. Android can move ordinary
+  /// sources to media3 ([playbackMedia3Engine]).
   audioplayers,
 
   /// libmpv through media_kit: Windows and Linux.
@@ -66,6 +68,27 @@ Stream<double> playbackOutputVolumeChanges() =>
 /// device.
 final playbackExclusiveOutput = ValueNotifier<bool>(false);
 
+/// Android: the beta `media3Engine` setting, off by default. While it is on,
+/// the music player and AutoMix decks play through media3
+/// (`Media3EngineDeck`), except sources for the native USB and AAudio
+/// outputs, which stay on audioplayers. A change applies from the next song.
+final playbackMedia3Engine = ValueNotifier<bool>(false);
+
+/// Android: the `skipSilence` setting while [playbackMedia3Engine] is on and
+/// AutoMix is off. media3 decks jump over silent passages while it is true;
+/// audioplayers decks ignore it.
+final playbackSkipSilence = ValueNotifier<bool>(false);
+
+/// The `playbackSpeed` setting. Every deck multiplies the rate it is given
+/// ([PlaybackDeck.setPlaybackRate], 1 unless AutoMix is beat matching) by
+/// this value, and applies a change at once, also mid-song.
+final playbackSpeed = ValueNotifier<double>(1);
+
+/// The `spatialAudio` setting. True lets the platform spatialize songs (its
+/// default on Android); false asks it never to. media3 decks and the
+/// audioplayers forks apply it; libmpv decks ignore it.
+final playbackSpatialAudio = ValueNotifier<bool>(true);
+
 /// Linux: the ALSA device [playbackExclusiveOutput] opens, as an mpv device
 /// name. Empty until one is known; the output stays shared meanwhile.
 final playbackExclusiveDevice = ValueNotifier<String>('');
@@ -107,6 +130,9 @@ abstract interface class QueuedPlaybackDeck implements PlaybackDeck {
 /// - applies `playbackEqualizer` (`playback_equalizer.dart`) to its own output
 ///   and reports failures with `reportEqualizerError`, keyed by player id;
 /// - multiplies [setVolume] by [playbackOutputVolume];
+/// - multiplies [setPlaybackRate] by [playbackSpeed] and applies it at once
+///   on every change, also mid-song and while paused (without starting
+///   playback), and to every later source;
 /// - delivers runtime failures as errors on [onPlayerStateChanged], and makes
 ///   [resume] throw when the current source failed to load.
 abstract interface class PlaybackDeck {

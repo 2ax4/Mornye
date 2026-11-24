@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'package:flutter/cupertino.dart' show CupertinoButton, CupertinoIcons;
+import 'package:cupertino_ui/cupertino_ui.dart'
+    show CupertinoButton, CupertinoIcons;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mornye/widgets/app_snack_bar.dart';
 import 'package:mornye/widgets/tv_navigation.dart';
 import 'package:mornye/theme/app_tokens.dart';
@@ -28,7 +29,7 @@ import 'package:mornye/widgets/mornye_context_menu.dart';
 import 'package:mornye/widgets/mornye_mix_banner.dart';
 import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/library_search_results.dart';
-import 'package:mornye/screens/mornye_library_screen.dart';
+import 'package:mornye/screens/library_artist_screen.dart';
 import 'package:mornye/widgets/app_bottom_sheet.dart';
 import 'package:mornye/widgets/app_alert_dialog.dart';
 import 'package:mornye/widgets/app_sliver_header.dart';
@@ -47,16 +48,25 @@ import 'package:mornye/providers/recent_access_provider.dart';
 import 'package:mornye/providers/explore_provider.dart';
 import 'package:mornye/providers/home_top_picks_provider.dart';
 import 'package:mornye/providers/user_profile_provider.dart';
+import 'package:mornye/providers/weekly_releases_provider.dart';
+import 'package:mornye/screens/weekly_releases_screen.dart';
+import 'package:mornye/services/weekly_releases.dart';
 import 'package:mornye/widgets/desktop/desktop_scroll_arrows.dart';
+import 'package:mornye/widgets/desktop/hover_play_button.dart';
 import 'package:mornye/widgets/explore_featured_section.dart';
 import 'package:mornye/providers/library_counts_provider.dart';
 import 'package:mornye/providers/library_mixes_provider.dart';
 import 'package:mornye/providers/local_library_provider.dart';
 import 'package:mornye/providers/music_player_provider.dart';
 import 'package:mornye/models/unified_library_item.dart';
+import 'package:mornye/models/home_shortcut.dart';
 import 'package:mornye/screens/equalizer_screen.dart';
+import 'package:mornye/screens/favorite_artists_screen.dart';
 import 'package:mornye/screens/library_mix_screen.dart';
+import 'package:mornye/screens/library_tracks_folder_screen.dart';
 import 'package:mornye/screens/listening_statistics_screen.dart';
+import 'package:mornye/screens/settings/link_desktop_settings_page.dart';
+import 'package:mornye/screens/settings/link_settings_page.dart';
 import 'package:mornye/screens/music_recognition_screen.dart';
 import 'package:mornye/screens/now_playing_screen.dart';
 import 'package:mornye/services/library_database.dart';
@@ -84,6 +94,7 @@ import 'package:mornye/screens/playlist_screen.dart';
 import 'package:mornye/widgets/track_collection_quick_actions.dart';
 import 'package:mornye/widgets/desktop/context_menu.dart';
 import 'package:mornye/widgets/animation_utils.dart';
+import 'package:mornye/widgets/loaded_sliver_fade_in.dart';
 import 'package:mornye/widgets/audio_quality_badges.dart';
 import 'package:mornye/widgets/cached_cover_image.dart';
 import 'package:mornye/widgets/extension_icon_image.dart';
@@ -185,15 +196,29 @@ class _HomeTabState extends ConsumerState<HomeTab>
   double _exploreCardSize(BuildContext context) {
     // Six phone-sized cards across an iPad made the feed look like a desktop
     // page zoomed out. A higher tablet cap gives roughly five generous cards
-    // in portrait while leaving all phone sizes unchanged.
-    final scale = responsiveScale(context: context, min: 0.82, max: 1.32);
+    // in portrait while leaving all phone sizes unchanged. A desktop pane is
+    // always wider than the 515 that reaches the cap, and one shorter than
+    // that takes the height cap below, so desktop skips the size read and
+    // width-only resizes do not rebuild Home.
+    final scale = isDesktopPlatform
+        ? 1.32
+        : responsiveScale(context: context, min: 0.82, max: 1.32);
     final textScale = effectiveTextScale(context);
     final size = 145 * scale * (1 + (textScale - 1) * 0.12);
     // Landscape tablets are short: one carousel row should not take over a
     // third of the screen. Portrait and phone heights never reach this cap.
-    final heightCap = MediaQuery.sizeOf(context).height * 0.24;
+    final heightCap = MediaQuery.heightOf(context) * 0.24;
     return size < heightCap ? size : heightCap;
   }
+
+  /// Whether Home takes its tablet type sizes (a shortest side of at least
+  /// 600). A Material desktop pane is always wider than that (an 800 window
+  /// less the collapsed rail, or a 1200 window less the expanded rail and
+  /// the inspector beside it), so only its height counts there.
+  bool _usesTabletSizes(BuildContext context) =>
+      isDesktopPlatform && !context.isMornye
+      ? MediaQuery.heightOf(context) >= 600
+      : MediaQuery.sizeOf(context).shortestSide >= 600;
 
   /// The square artwork of an explore card. Each card pads 6 on both sides,
   /// so the artwork takes the width that is left rather than the full card.
@@ -829,7 +854,7 @@ class _HomeTabState extends ConsumerState<HomeTab>
     final isShowingRecentAccess =
         _showsSearch &&
         ref.watch(trackProvider.select((s) => s.isShowingRecentAccess));
-    final screenHeight = MediaQuery.sizeOf(context).height;
+    final screenHeight = MediaQuery.heightOf(context);
 
     final recentModeRequested =
         widget.mode == HomeTabMode.search ||
@@ -898,10 +923,11 @@ class _HomeTabState extends ConsumerState<HomeTab>
     final showLibraryResults = _searchingLibrary && hasSearchInput;
     // The library scope waits for input before showing local matches.
     final showLibraryPrompt = _searchingLibrary && !hasSearchInput;
-    final sectionMotion = AppMotion.spatial(
-      context,
-      const AppMotionSpec(Duration(milliseconds: 250), Curves.easeOut),
-    );
+    // A section opening or closing moves everything below it, as much as a
+    // screen at a time, so it stops at its size: Material's standard spatial
+    // spring, whose overshoot is a thousandth of the travel, and Mornye's
+    // spring. Reduced motion resizes at once.
+    final sectionMotion = AppMotion.surface(context);
     // Without a feed, Home gathers the player, shortcuts and Library shelves.
     final showHomeSections =
         _showsHome && !showFeedSurface && !showEmptyHomeState;
@@ -970,6 +996,7 @@ class _HomeTabState extends ConsumerState<HomeTab>
                 _buildDesktopSearchToolbarSliver()
               else
                 _buildHeaderSliver(greeting: greeting),
+              AppRefreshIndicator.sliver(enabled: showExplore),
               if (_showsHome) const SliverToBoxAdapter(child: AppCrashBanner()),
               _buildHomeIntroSliver(
                 sectionMotion: sectionMotion,
@@ -1167,16 +1194,8 @@ class _HomeTabState extends ConsumerState<HomeTab>
     return LibrarySearchResults(
       query: _libraryQuery,
       shelves: true,
-      onOpenArtist: (artist) => pushPage<void>(
-        context,
-        (_) => Scaffold(
-          body: MornyeLibraryScreen(
-            page: MornyeLibraryPage.albums,
-            artist: artist,
-            onOpenSection: (_) {},
-          ),
-        ),
-      ),
+      onOpenArtist: (artist) =>
+          pushPage<void>(context, (_) => LibraryArtistScreen(artist: artist)),
     );
   }
 
@@ -1200,14 +1219,12 @@ class _HomeTabState extends ConsumerState<HomeTab>
     required bool showEmptyHomeState,
   }) {
     return SliverToBoxAdapter(
-      child: AnimatedSize(
+      child: _resizeSection(
         // A provider installed offscreen replaces the empty panel without
         // carrying its height into the compact intro on the first frame.
         key: ValueKey(showEmptyHomeState),
-        alignment: AlignmentDirectional.topStart,
-        duration: sectionMotion.duration,
-        curve: sectionMotion.curve,
-        child: (hasResults || showExplore || !_showsHome)
+        sectionMotion,
+        (hasResults || showExplore || !_showsHome)
             ? const SizedBox.shrink()
             : _buildHomeIntro(
                 colorScheme: colorScheme,
@@ -1331,15 +1348,9 @@ class _HomeTabState extends ConsumerState<HomeTab>
     required bool showEmptyHomeState,
   }) {
     return SliverToBoxAdapter(
-      child: AnimatedSize(
-        // Sections stay where they are while the space below them opens or
-        // closes; centered, they would sink and rise as a section comes or
-        // goes (such as Continue listening when the player hides).
-        alignment: AlignmentDirectional.topStart,
-        duration: sectionMotion.duration,
-        curve: sectionMotion.curve,
-        child:
-            (!_showsHome ||
+      child: _resizeSection(
+        sectionMotion,
+        (!_showsHome ||
                 hasResults ||
                 showRecentAccess ||
                 showExplore ||
@@ -1347,6 +1358,24 @@ class _HomeTabState extends ConsumerState<HomeTab>
             ? const SizedBox.shrink()
             : _HomeSections(inset: 16 + homeContentInset(context)),
       ),
+    );
+  }
+
+  /// Opens or closes the space a Home section takes. Sections stay where
+  /// they are while the space below them opens or closes; centered, they
+  /// would sink and rise as a section comes or goes (such as Continue
+  /// listening when the player hides).
+  static Widget _resizeSection(AppMotionSpec motion, Widget child, {Key? key}) {
+    // A zero-length AnimatedSize re-dirties itself during layout.
+    if (motion.duration == Duration.zero) {
+      return KeyedSubtree(key: key, child: child);
+    }
+    return AnimatedSize(
+      key: key,
+      alignment: AlignmentDirectional.topStart,
+      duration: motion.duration,
+      curve: motion.curve,
+      child: child,
     );
   }
 

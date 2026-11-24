@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoIcons;
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -25,6 +25,7 @@ import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/desktop/desktop_commands.dart';
 import 'package:mornye/widgets/desktop/desktop_inspector.dart';
 import 'package:mornye/widgets/desktop/desktop_navigation.dart';
+import 'package:mornye/widgets/desktop/desktop_now_playing.dart';
 import 'package:mornye/widgets/desktop/desktop_player_bar.dart';
 import 'package:mornye/widgets/desktop/desktop_shortcuts.dart';
 import 'package:mornye/widgets/desktop/desktop_window.dart';
@@ -34,6 +35,7 @@ import 'package:mornye/widgets/mornye_bottom_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fixed_settings.dart';
+import 'support/tooltip_finder.dart';
 
 class _FakeController implements MusicPlayerController {
   final calls = <String>[];
@@ -213,6 +215,12 @@ void main() {
               : AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(disableAnimations: reducedMotion),
+            child: child!,
+          ),
           home: Scaffold(
             body: DesktopShellLayout(
               destinations: _destinations(mornye: mornye),
@@ -233,6 +241,9 @@ void main() {
       await tester.pumpAndSettle();
     }
   }
+
+  /// The Material rail's selection fill.
+  final railIndicator = find.byKey(const ValueKey('desktop-rail-indicator'));
 
   /// The page shown in the content pane.
   Finder contentPage() => find
@@ -274,7 +285,7 @@ void main() {
       );
       items.add(_track);
       await tester.pumpAndSettle();
-      expect(find.byTooltip('Dismiss'), findsOneWidget);
+      expect(findByTooltip('Dismiss'), findsOneWidget);
       desktopInspectorPanel.value = DesktopInspectorPanel.upNext;
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('desktop-player-dismiss')));
@@ -345,6 +356,158 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+
+    double nowPlayingOpacity(WidgetTester tester) => tester
+        .widget<Opacity>(find.byKey(const ValueKey('desktop-now-playing-fade')))
+        .opacity;
+
+    double nowPlayingRise(WidgetTester tester) =>
+        tester.getTopLeft(find.byKey(const ValueKey('desktop-now-playing'))).dy;
+
+    testWidgets('Now Playing fades in over the shell and out again '
+        '($mornye)', (tester) async {
+      addTearDown(() => desktopNowPlayingOpen.value = false);
+      await pumpShell(
+        tester,
+        mornye: mornye,
+        width: 1400,
+        nowPlaying: const ColoredBox(color: Colors.black),
+      );
+
+      desktopNowPlayingOpen.value = true;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(nowPlayingOpacity(tester), greaterThan(0));
+      expect(nowPlayingOpacity(tester), lessThan(1));
+      expect(nowPlayingRise(tester), mornye ? 0 : greaterThan(0));
+      // The shell keeps painting under the entrance.
+      expect(find.text('content'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(nowPlayingOpacity(tester), 1);
+      expect(nowPlayingRise(tester), 0);
+      expect(find.text('content'), findsNothing);
+
+      desktopNowPlayingOpen.value = false;
+      await tester.pump();
+      expect(find.text('content'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 80));
+      expect(nowPlayingOpacity(tester), lessThan(1));
+      // The exit is shorter than the entrance.
+      await tester.pump(const Duration(milliseconds: 130));
+      expect(find.byKey(const ValueKey('desktop-now-playing')), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Esc during the Now Playing entrance fades out from where it '
+        'is ($mornye)', (tester) async {
+      addTearDown(() => desktopNowPlayingOpen.value = false);
+      await pumpShell(
+        tester,
+        mornye: mornye,
+        width: 1400,
+        nowPlaying: const ColoredBox(color: Colors.black),
+      );
+
+      desktopNowPlayingOpen.value = true;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      final opacity = nowPlayingOpacity(tester);
+      final rise = nowPlayingRise(tester);
+      expect(dismissDesktopPlayerLayer(1400, mornye: mornye), isTrue);
+      await tester.pump();
+      expect(nowPlayingOpacity(tester), closeTo(opacity, 0.01));
+      expect(nowPlayingRise(tester), rise);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(nowPlayingOpacity(tester), lessThan(opacity));
+
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('desktop-now-playing')), findsNothing);
+      expect(find.text('content'), findsOneWidget);
+    });
+
+    testWidgets('focus leaves the shell as soon as Now Playing opens '
+        '($mornye)', (tester) async {
+      addTearDown(() => desktopNowPlayingOpen.value = false);
+      await pumpShell(
+        tester,
+        mornye: mornye,
+        width: 1400,
+        nowPlaying: const ColoredBox(color: Colors.black),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final shellFocus = FocusManager.instance.primaryFocus!;
+      expect(
+        shellFocus.context!.findAncestorWidgetOfExactType<DesktopShellLayout>(),
+        isNotNull,
+      );
+
+      desktopNowPlayingOpen.value = true;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      // Still mid-entrance, with the shell painted underneath.
+      expect(find.text('content'), findsOneWidget);
+      expect(shellFocus.hasPrimaryFocus, isFalse);
+
+      await tester.pumpAndSettle();
+      desktopNowPlayingOpen.value = false;
+      await tester.pump();
+      // The shell takes focus again while Now Playing leaves.
+      shellFocus.requestFocus();
+      await tester.pump();
+      expect(shellFocus.hasPrimaryFocus, isTrue);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('the Downloads popover opens and closes at once ($mornye)', (
+      tester,
+    ) async {
+      await pumpShell(tester, mornye: mornye, width: 1400);
+      final button = find.byKey(const ValueKey('desktop-downloads-button'));
+      double popoverOpacity() => tester
+          .widgetList<FadeTransition>(
+            find.ancestor(
+              of: find.byType(DesktopDownloadsPopover),
+              matching: find.byType(FadeTransition),
+            ),
+          )
+          .fold(1.0, (opacity, fade) => opacity * fade.opacity.value);
+
+      await tester.tap(button);
+      await tester.pump();
+      expect(find.byType(DesktopDownloadsPopover), findsOneWidget);
+      expect(popoverOpacity(), 1);
+
+      await tester.tap(button);
+      await tester.pump();
+      expect(find.byType(DesktopDownloadsPopover), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('reduced motion swaps Now Playing at once ($mornye)', (
+      tester,
+    ) async {
+      addTearDown(() => desktopNowPlayingOpen.value = false);
+      await pumpShell(
+        tester,
+        mornye: mornye,
+        width: 1400,
+        nowPlaying: const ColoredBox(color: Colors.black),
+        reducedMotion: true,
+      );
+
+      desktopNowPlayingOpen.value = true;
+      await tester.pump();
+      expect(nowPlayingOpacity(tester), 1);
+      expect(nowPlayingRise(tester), 0);
+      expect(find.text('content'), findsNothing);
+
+      desktopNowPlayingOpen.value = false;
+      await tester.pump();
+      expect(find.byKey(const ValueKey('desktop-now-playing')), findsNothing);
+      expect(find.text('content'), findsOneWidget);
+    });
   }
 
   group('Material shell', () {
@@ -377,7 +540,7 @@ void main() {
                 expect(rect.top, greaterThanOrEqualTo(bar.top));
                 expect(rect.bottom, lessThanOrEqualTo(bar.bottom));
               }
-              await tester.tap(find.byTooltip('Next track (Ctrl+Right)'));
+              await tester.tap(findByTooltip('Next track (Ctrl+Right)'));
               expect(controller.calls, ['next']);
               if (!playing) {
                 await tester.tap(
@@ -465,8 +628,8 @@ void main() {
       expect(find.byTooltip('Play (Space)'), findsOneWidget);
       expect(find.byTooltip('Up next (Ctrl+Shift+U)'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Next track (Ctrl+Right)'));
-      await tester.tap(find.byTooltip('Play (Space)'));
+      await tester.tap(findByTooltip('Next track (Ctrl+Right)'));
+      await tester.tap(findByTooltip('Play (Space)'));
       expect(controller.calls, ['next', 'play']);
     });
 
@@ -477,7 +640,7 @@ void main() {
 
       expect(find.byType(DesktopPlayerBar), findsOneWidget);
       expect(find.text('Not playing'), findsOneWidget);
-      await tester.tap(find.byTooltip('Next track (Ctrl+Right)'));
+      await tester.tap(findByTooltip('Next track (Ctrl+Right)'));
       expect(controller.calls, isEmpty);
     });
 
@@ -532,12 +695,12 @@ void main() {
       // The menu button sits over the destination icons.
       expect(
         tester.getCenter(menuIcon(Icons.menu)).dx,
-        closeTo(tester.getCenter(find.byTooltip('library')).dx, 0.5),
+        closeTo(tester.getCenter(findByTooltip('library')).dx, 0.5),
       );
       // No labels under the icons: tooltips and semantics name them, and
       // the whole 56dp square around an icon takes the click.
       expect(find.text('library'), findsNothing);
-      expect(find.byTooltip('library'), findsOneWidget);
+      expect(findByTooltip('library'), findsOneWidget);
       final semantics = tester.ensureSemantics();
       await tester.pump();
       expect(
@@ -548,7 +711,7 @@ void main() {
         'library\n2',
       );
       semantics.dispose();
-      final library = tester.getRect(find.byTooltip('library'));
+      final library = tester.getRect(findByTooltip('library'));
       expect(library.size, const Size(56, 56));
       await tester.tapAt(library.topLeft + const Offset(4, 4));
       expect(selections, [ShellTab.library]);
@@ -562,9 +725,78 @@ void main() {
       expect(railWidth(), greaterThan(desktopCollapsedRailWidth));
       expect(railWidth(), lessThan(desktopSidebarWidth));
       expect(find.text('library'), findsOneWidget);
+      // The spring moves the pills, but the width stops at its ends, so the
+      // content beside it never narrows or widens past its final size.
+      final widths = <double>[];
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        widths.add(railWidth());
+      }
+      expect(widths.where((width) => width > desktopSidebarWidth), isEmpty);
       await tester.pumpAndSettle();
       expect(railWidth(), closeTo(desktopSidebarWidth, 0.5));
       expect(menuIcon(Icons.menu_open), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('desktop-rail-menu')));
+      widths.clear();
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        widths.add(railWidth());
+      }
+      expect(
+        widths.where((width) => width < desktopCollapsedRailWidth),
+        isEmpty,
+      );
+      await tester.pumpAndSettle();
+      expect(railWidth(), closeTo(desktopCollapsedRailWidth, 0.5));
+    });
+
+    testWidgets('reduced motion snaps the rail and keeps its focus', (
+      tester,
+    ) async {
+      // The platform flag shortens Flutter's extend controller; the harness
+      // passes the same setting on to MediaQuery, as the app does.
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      await pumpShell(tester, mornye: false, width: 1400, reducedMotion: true);
+      double railWidth() => tester.getSize(find.byType(NavigationRail)).width;
+      final expanded = railWidth();
+      expect(expanded, greaterThan(desktopCollapsedRailWidth));
+      final rail = tester.element(find.byType(NavigationRail));
+      // Keyboard focus on an unselected destination.
+      final focus = Focus.of(
+        tester.element(
+          find
+              .byWidgetPredicate(
+                (w) => w is AppIcon && w.icon == Icons.circle_outlined,
+              )
+              .first,
+        ),
+      );
+      focus.requestFocus();
+      await tester.pump();
+      expect(focus.hasPrimaryFocus, isTrue);
+
+      desktopSidebarCollapsed.value = true;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      final collapsed = railWidth();
+      expect(collapsed, lessThan(expanded));
+      // Nothing is left to animate.
+      expect(tester.binding.transientCallbackCount, 0);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(railWidth(), collapsed);
+      expect(tester.element(find.byType(NavigationRail)), same(rail));
+      expect(focus.hasPrimaryFocus, isTrue);
+
+      desktopSidebarCollapsed.value = false;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(railWidth(), expanded);
+      expect(focus.hasPrimaryFocus, isTrue);
     });
 
     testWidgets('narrow windows hide the rail menu button', (tester) async {
@@ -621,12 +853,7 @@ void main() {
         onOpenLibraryLink: opened.add,
       );
       bool selectedFill(Finder finder) =>
-          tester
-              .widget<Material>(
-                find.descendant(of: finder, matching: find.byType(Material)),
-              )
-              .type ==
-          MaterialType.canvas;
+          tester.any(find.descendant(of: finder, matching: railIndicator));
       final mix = find.byKey(const ValueKey('desktop-rail-link:playlist:mix'));
       expect(selectedFill(mix), isFalse);
       desktopSidebarLink.value = 'playlist:mix';
@@ -814,7 +1041,7 @@ void main() {
 
       expect(find.bySemanticsLabel('Not playing'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('desktop-player-shuffle')));
-      await tester.tap(find.byTooltip('Next track (Ctrl+Right)'));
+      await tester.tap(findByTooltip('Next track (Ctrl+Right)'));
       expect(controller.calls, isEmpty);
     });
 
@@ -890,6 +1117,54 @@ void main() {
       expect(find.byKey(backdrop), findsNothing);
     });
 
+    for (final reduced in [false, true]) {
+      testWidgets('the sidebar tint follows the backdrop crossfade'
+          '${reduced ? ' (reduced motion)' : ''}', (tester) async {
+        if (reduced) {
+          tester.platformDispatcher.accessibilityFeaturesTestValue =
+              const FakeAccessibilityFeatures(disableAnimations: true);
+          addTearDown(
+            tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+          );
+        }
+        addTearDown(() => ShellNavigationService.chromeSurface.value = null);
+        await pumpShell(tester, mornye: true, width: 1400);
+        Color panel() =>
+            (tester
+                        .widget<DecoratedBox>(
+                          find
+                              .descendant(
+                                of: find.byType(DesktopSidebar),
+                                matching: find.byType(DecoratedBox),
+                              )
+                              .first,
+                        )
+                        .decoration
+                    as BoxDecoration)
+                .color!;
+        final context = tester.element(find.byType(DesktopSidebar));
+        final start = DesktopSidebar.panelColor(context, null);
+        final end = DesktopSidebar.panelColor(context, const Color(0xffc02040));
+        expect(panel(), start);
+
+        ShellNavigationService.chromeSurface.value = const Color(0xffc02040);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 150));
+        if (reduced) {
+          expect(panel(), end);
+        } else {
+          expect(panel(), isNot(start));
+          expect(panel(), isNot(end));
+          expect(
+            (panel().g - start.g) / (end.g - start.g),
+            inExclusiveRange(0, 1),
+          );
+          await tester.pumpAndSettle();
+          expect(panel(), end);
+        }
+      });
+    }
+
     testWidgets('sidebar lists Library pages and playlists', (tester) async {
       final opened = <String>[];
       await pumpShell(
@@ -905,7 +1180,7 @@ void main() {
       expect(find.text('Playlists'), findsOneWidget);
       expect(find.text('library'), findsNothing);
       // The first Library page stands for Library and takes its shortcut.
-      expect(find.byTooltip('Recently Added (Ctrl+2)'), findsOneWidget);
+      expect(findByTooltip('Recently Added (Ctrl+2)'), findsOneWidget);
       await tester.tap(find.text('Albums'));
       await tester.tap(find.text('All Playlists'));
       await tester.tap(find.text('Road trip'));
@@ -1151,6 +1426,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await pump();
     await tester.pumpAndSettle();
-    expect(touchGestures(), findsOneWidget);
+    // The surface and its title lines share one sideways swipe.
+    expect(touchGestures(), findsWidgets);
   });
 }

@@ -242,6 +242,9 @@ class MediaKitPlaybackDeck
     playbackOutputVolume.addListener(_outputVolumeChanged);
     playbackPitch.addListener(_pitchChanged);
     playbackTempo.addListener(_tempoChanged);
+    // Play together nudges the shared rate through [playbackSpeed]; the
+    // pitch and tempo sliders stay untouched by it.
+    playbackSpeed.addListener(_speedFactorChanged);
     playbackExclusiveOutput.addListener(_exclusiveChanged);
     playbackExclusiveDevice.addListener(_exclusiveChanged);
     _subscriptions.addAll([
@@ -664,6 +667,11 @@ class MediaKitPlaybackDeck
     unawaited(_applyRatePitch());
   }
 
+  void _speedFactorChanged() {
+    if (_disposed) return;
+    unawaited(_applyRatePitch());
+  }
+
   /// mpv keeps one `speed` value: with `audio-pitch-correction` off, it
   /// resamples, which shifts the pitch, and a leading `scaletempo` filter
   /// stretches time back, which leaves the requested tempo. Net tempo is
@@ -676,7 +684,7 @@ class MediaKitPlaybackDeck
 
   Future<void> _syncRatePitch() async {
     if (_disposed) return;
-    final rate = _rate * _tempo;
+    final rate = _rate * _tempo * playbackSpeed.value;
     try {
       await _engine.setProperty(
         'audio-pitch-correction',
@@ -944,6 +952,7 @@ class MediaKitPlaybackDeck
     playbackOutputVolume.removeListener(_outputVolumeChanged);
     playbackPitch.removeListener(_pitchChanged);
     playbackTempo.removeListener(_tempoChanged);
+    playbackSpeed.removeListener(_speedFactorChanged);
     playbackExclusiveOutput.removeListener(_exclusiveChanged);
     playbackExclusiveDevice.removeListener(_exclusiveChanged);
     _equalizerTimer?.cancel();

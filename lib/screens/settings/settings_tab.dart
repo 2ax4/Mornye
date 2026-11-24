@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/constants/app_info.dart';
 import 'package:mornye/l10n/l10n.dart';
@@ -19,6 +19,7 @@ import 'package:mornye/screens/settings/metadata_settings_page.dart';
 import 'package:mornye/screens/settings/playback_settings_page.dart';
 import 'package:mornye/utils/settings_search_catalog.dart';
 import 'package:mornye/services/shell_navigation_service.dart';
+import 'package:mornye/theme/app_motion.dart';
 import 'package:mornye/theme/app_tokens.dart';
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/utils/adaptive_layout.dart';
@@ -32,7 +33,6 @@ import 'package:mornye/widgets/beta_badge.dart';
 import 'package:mornye/widgets/settings_group.dart';
 import 'package:mornye/widgets/no_scrollbars.dart';
 
-/// One entry on the Settings tab.
 class _Destination {
   const _Destination({
     required this.icon,
@@ -102,6 +102,10 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
   int _selected = 0;
   String? _selectedTarget;
   var _detailNavigatorKey = GlobalKey<NavigatorState>();
+
+  /// Whether the detail pane fades in: after a category change, not when
+  /// Settings first opens.
+  bool _fadeDetail = false;
 
   bool get _supportsListDetail => isDesktopPlatform && !widget.asPage;
 
@@ -182,7 +186,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
           ),
           if (Platform.isAndroid || Platform.isIOS)
             _Destination(
-              icon: Icons.computer,
+              icon: Icons.devices,
               iconColor: Colors.deepPurple,
               title: l10n.linkSettingsTitle,
               subtitle: l10n.linkSettingsSubtitle,
@@ -191,9 +195,13 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                 'desktop',
                 'pc',
                 'mac',
+                'phone',
+                'device',
                 'pair',
                 'link',
                 'komputer',
+                'ponsel',
+                'perangkat',
               ],
               pageBuilder: () => const LinkSettingsPage(),
               beta: true,
@@ -415,6 +423,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
       _selected = index;
       _selectedTarget = target;
       _detailNavigatorKey = GlobalKey<NavigatorState>();
+      _fadeDetail = true;
     });
   }
 
@@ -429,6 +438,32 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
       child: target == null
           ? page
           : SettingsSearchHighlightScope(targetLabel: target, child: page),
+    );
+  }
+
+  /// Material fades a new category's page in on the fast effects spring.
+  /// Keyed by the navigator key, so each category mounts one fresh navigator
+  /// and the previous one leaves at once; the two never share the pane.
+  /// Mornye keeps the source-list cut, and reduced motion cuts too.
+  Widget _detailFade(BuildContext context, Widget navigator) {
+    final fade = AppMotion.effectsFast(
+      context,
+      const AppMotionSpec(Duration.zero, Curves.linear),
+    );
+    return TweenAnimationBuilder<double>(
+      key: ObjectKey(_detailNavigatorKey),
+      tween: Tween<double>(
+        begin: _fadeDetail && fade.duration > Duration.zero ? 0 : 1,
+        end: 1,
+      ),
+      duration: fade.duration,
+      curve: fade.curve,
+      builder: (context, opacity, child) => Opacity(
+        key: const ValueKey('settings-detail-fade'),
+        opacity: opacity,
+        child: child,
+      ),
+      child: navigator,
     );
   }
 
@@ -478,16 +513,19 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                         // modal barriers from hiding the category list.
                         child: Semantics(
                           container: true,
-                          child: HeroControllerScope.none(
-                            child: Navigator(
-                              key: _detailNavigatorKey,
-                              onGenerateInitialRoutes: (_, _) => [
-                                PageRouteBuilder<void>(
-                                  transitionDuration: Duration.zero,
-                                  reverseTransitionDuration: Duration.zero,
-                                  pageBuilder: (_, _, _) => _detailPage(),
-                                ),
-                              ],
+                          child: _detailFade(
+                            context,
+                            HeroControllerScope.none(
+                              child: Navigator(
+                                key: _detailNavigatorKey,
+                                onGenerateInitialRoutes: (_, _) => [
+                                  PageRouteBuilder<void>(
+                                    transitionDuration: Duration.zero,
+                                    reverseTransitionDuration: Duration.zero,
+                                    pageBuilder: (_, _, _) => _detailPage(),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

@@ -24,7 +24,6 @@ double _homeMixCoverSizeOf(BuildContext context) =>
 
 double _homeShelfRadiusOf(BuildContext context) => context.isMornye ? 10 : 20;
 
-/// Whether Home uses compact Mornye desktop typography.
 bool _homeCompactText(BuildContext context) =>
     context.isMornye && isDesktopPlatform;
 
@@ -380,8 +379,12 @@ class _HomeSections extends ConsumerWidget {
         ref.watch(homeOnRepeatProvider.select((s) => s.value)) ?? const [];
     final mixes =
         ref.watch(libraryMixesProvider.select((s) => s.value)) ?? const [];
+    final newReleases =
+        ref.watch(homeNewReleasesProvider.select((s) => s.value)) ?? const [];
 
-    final showContinue = hasMediaItem || hasResume || hasSessionPreview;
+    final showContinue =
+        (hasMediaItem || hasResume || hasSessionPreview) &&
+        ref.watch(settingsProvider.select((s) => s.homeContinueListening));
 
     final mornye = context.isMornye;
     final recentlyPlayed = mornye
@@ -449,6 +452,20 @@ class _HomeSections extends ConsumerWidget {
             inset: mornye ? inset + 8 : inset,
           ),
         ),
+      if (newReleases.isNotEmpty)
+        _HomeSection(
+          title: l10n.weeklyReleases,
+          inset: inset,
+          shelf: true,
+          onShowAll: () => pushPage<void>(
+            context,
+            (_) => const WeeklyReleasesScreen(days: homeReleaseDays),
+          ),
+          child: _HomeNewReleasesShelf(
+            releases: newReleases,
+            inset: mornye ? inset + 8 : inset,
+          ),
+        ),
       if (onRepeat.isNotEmpty)
         _HomeSection(
           title: l10n.homeOnRepeat,
@@ -460,6 +477,27 @@ class _HomeSections extends ConsumerWidget {
           ),
         ),
     ];
+
+    // The Material Home always has its Shortcuts. The Mornye Home has only
+    // shelves, so an empty Library with nothing played would leave the page
+    // blank: say so once the Library shelves have answered.
+    if (mornye && sections.isEmpty) {
+      final librarySettled = ref.watch(
+        homeRecentlyAddedProvider.select((s) => s.hasValue || s.hasError),
+      );
+      if (librarySettled && !recentlyPlayedLoading) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.sizeOf(context).height * 0.5,
+          ),
+          child: EmptyState(
+            icon: Icons.music_note,
+            title: l10n.homeNothingYetTitle,
+            message: l10n.homeNothingYetMessage,
+          ),
+        );
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 24),
@@ -1122,6 +1160,54 @@ class _HomeRecentlyAddedShelf extends ConsumerWidget {
   }
 }
 
+/// The favorite artists' latest albums and singles, newest first.
+class _HomeNewReleasesShelf extends StatelessWidget {
+  const _HomeNewReleasesShelf({required this.releases, required this.inset});
+
+  final List<WeeklyRelease> releases;
+  final double inset;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return _HomeShelfSize(
+      inset: inset,
+      builder: (context, coverSize) {
+        final cacheWidth = (coverSize * MediaQuery.devicePixelRatioOf(context))
+            .round();
+        return _HomeShelf(
+          inset: inset,
+          coverSize: coverSize,
+          itemCount: releases.length,
+          itemBuilder: (context, index) {
+            final release = releases[index];
+            return _HomeShelfTile(
+              size: coverSize,
+              title: release.name,
+              subtitle: release.artist,
+              semanticLabel: context.l10n.a11yOpenAlbum(release.name),
+              cover: PlayerArtwork(
+                artUri: release.coverUrl,
+                colorScheme: colorScheme,
+                cacheWidth: cacheWidth,
+                iconSize: 32,
+              ),
+              onTap: () => navigateToAlbum(
+                context,
+                albumName: release.name,
+                albumId: release.id,
+                artistName: release.artist,
+                coverUrl: release.coverUrl,
+                extensionId: release.providerId,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 /// A Library track's own artwork: a download's embedded cover with its
 /// online cover as fallback, or a scanned file's extracted thumbnail.
 Widget _homeLibraryCover(
@@ -1525,7 +1611,9 @@ enum _HomeShortcutsLayout {
   row,
 }
 
-/// Quick ways into player tools that otherwise sit a few screens deep.
+/// Quick ways into tools and collections that otherwise sit a few screens
+/// deep. The user picks them: a long press or right-click on a tile opens
+/// its menu.
 class _HomeShortcuts extends ConsumerWidget {
   const _HomeShortcuts({this.layout = _HomeShortcutsLayout.grid});
 
@@ -1533,52 +1621,39 @@ class _HomeShortcuts extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
-    void open(Widget screen) => pushPage<void>(context, (_) => screen);
+    final shortcuts = HomeShortcut.resolve(
+      ref.watch(settingsProvider.select((s) => s.homeShortcuts)),
+    );
 
-    // Shuffle is the one emphasized action; the other tools share a neutral
-    // tile so color marks importance rather than varying per tile. Mornye
-    // keeps all shortcut tiles neutral.
+    // The first shortcut is the one emphasized action; the others share a
+    // neutral tile so color marks importance rather than varying per tile.
+    // Mornye keeps all shortcut tiles neutral.
     final emphasized = context.isMornye ? -1 : 0;
-    final shortcuts = <({String label, IconData icon, VoidCallback onTap})>[
-      (
-        label: l10n.nowPlayingShuffleLibrary,
-        icon: Icons.shuffle,
-        onTap: () => _shuffle(context, ref),
-      ),
-      (
-        label: l10n.equalizerTitle,
-        icon: Icons.graphic_eq,
-        onTap: () => open(const EqualizerScreen()),
-      ),
-      (
-        label: l10n.listeningStats,
-        icon: Icons.insights,
-        onTap: () => open(const ListeningStatisticsScreen()),
-      ),
-    ];
     final tiles = [
       for (final (index, shortcut) in shortcuts.indexed)
-        _HomeShortcutTile(
-          label: shortcut.label,
-          icon: shortcut.icon,
-          container: index == emphasized
-              ? colorScheme.primaryContainer
-              : colorScheme.surfaceContainerHigh,
-          onContainer: index == emphasized
-              ? colorScheme.onPrimaryContainer
-              : colorScheme.onSurface,
-          badge: index == emphasized
-              ? colorScheme.primary
-              : colorScheme.secondaryContainer,
-          onBadge: index == emphasized
-              ? colorScheme.onPrimary
-              : colorScheme.onSecondaryContainer,
-          onTap: shortcut.onTap,
-          layout: layout,
-          position: (index: index, count: shortcuts.length),
-        ),
+        if (_entry(context, ref, shortcut) case final entry)
+          _HomeShortcutTile(
+            label: entry.label,
+            icon: entry.icon,
+            container: index == emphasized
+                ? colorScheme.primaryContainer
+                : colorScheme.surfaceContainerHigh,
+            onContainer: index == emphasized
+                ? colorScheme.onPrimaryContainer
+                : colorScheme.onSurface,
+            badge: index == emphasized
+                ? colorScheme.primary
+                : colorScheme.secondaryContainer,
+            onBadge: index == emphasized
+                ? colorScheme.onPrimary
+                : colorScheme.onSecondaryContainer,
+            onTap: entry.onTap,
+            onMenu: (position) =>
+                _showMenu(context, ref, shortcuts, index, position),
+            layout: layout,
+            position: (index: index, count: shortcuts.length),
+          ),
     ];
 
     switch (layout) {
@@ -1633,6 +1708,120 @@ class _HomeShortcuts extends ConsumerWidget {
     );
   }
 
+  ({String label, IconData icon, VoidCallback onTap}) _entry(
+    BuildContext context,
+    WidgetRef ref,
+    HomeShortcut shortcut,
+  ) {
+    final l10n = context.l10n;
+    void open(Widget screen) => pushPage<void>(context, (_) => screen);
+    return switch (shortcut) {
+      HomeShortcut.shuffle => (
+        label: l10n.nowPlayingShuffleLibrary,
+        icon: Icons.shuffle,
+        onTap: () => _shuffle(context, ref),
+      ),
+      HomeShortcut.equalizer => (
+        label: l10n.equalizerTitle,
+        icon: Icons.graphic_eq,
+        onTap: () => open(const EqualizerScreen()),
+      ),
+      HomeShortcut.listeningStats => (
+        label: l10n.listeningStats,
+        icon: Icons.insights,
+        onTap: () => open(const ListeningStatisticsScreen()),
+      ),
+      HomeShortcut.loved => (
+        label: l10n.collectionLoved,
+        icon: Icons.favorite_border,
+        onTap: () => open(
+          const LibraryTracksFolderScreen(mode: LibraryTracksFolderMode.loved),
+        ),
+      ),
+      HomeShortcut.wishlist => (
+        label: l10n.collectionWishlist,
+        icon: Icons.add_circle_outline,
+        onTap: () => open(
+          const LibraryTracksFolderScreen(
+            mode: LibraryTracksFolderMode.wishlist,
+          ),
+        ),
+      ),
+      HomeShortcut.favoriteArtists => (
+        label: l10n.collectionFavoriteArtists,
+        icon: Icons.person_outline,
+        onTap: () => open(const FavoriteArtistsScreen()),
+      ),
+      HomeShortcut.newReleases => (
+        label: l10n.weeklyReleases,
+        icon: Icons.new_releases_outlined,
+        onTap: () => open(const WeeklyReleasesScreen(days: homeReleaseDays)),
+      ),
+      // Pairing opens the other side's settings: the computer from a
+      // phone, the phone from a computer.
+      HomeShortcut.link when isDesktopPlatform => (
+        label: l10n.linkDesktopSettingsTitle,
+        icon: Icons.phone_android,
+        onTap: () => open(const LinkDesktopSettingsPage()),
+      ),
+      HomeShortcut.link => (
+        label: l10n.linkSettingsTitle,
+        icon: Icons.devices,
+        onTap: () => open(const LinkSettingsPage()),
+      ),
+    };
+  }
+
+  void _showMenu(
+    BuildContext context,
+    WidgetRef ref,
+    List<HomeShortcut> shortcuts,
+    int slot,
+    Offset position,
+  ) {
+    final l10n = context.l10n;
+    // Read up front: the layout can rebuild this widget while the menu or
+    // the sheet is open.
+    final settings = ref.read(settingsProvider.notifier);
+    final choices = [
+      for (final shortcut in HomeShortcut.values)
+        if (_entry(context, ref, shortcut) case final entry)
+          AppChoice(shortcut, entry.icon, entry.label),
+    ];
+    showContextMenu(
+      context,
+      position: position,
+      groups: [
+        [
+          ContextMenuAction(
+            icon: Icons.swap_horiz,
+            label: l10n.homeShortcutChange,
+            onSelected: () {
+              if (!context.mounted) return;
+              showAppChoiceSheet<HomeShortcut>(
+                context: context,
+                title: l10n.homeShortcutChange,
+                subtitle: l10n.homeShortcutChangeSubtitle,
+                selected: shortcuts[slot],
+                choices: choices,
+                onSelected: (picked) => settings.setHomeShortcuts(
+                  HomeShortcut.place(shortcuts, slot, picked),
+                ),
+              );
+            },
+          ),
+          ContextMenuAction(
+            icon: Icons.restart_alt,
+            label: l10n.homeShortcutsReset,
+            onSelected: listEquals(shortcuts, HomeShortcut.defaults)
+                ? null
+                : () => settings.setHomeShortcuts(HomeShortcut.defaults),
+          ),
+        ],
+      ],
+    );
+  }
+
   Future<void> _shuffle(BuildContext context, WidgetRef ref) async {
     final shuffled = await ref
         .read(musicPlayerControllerProvider)
@@ -1653,6 +1842,7 @@ class _HomeShortcutTile extends StatelessWidget {
     required this.badge,
     required this.onBadge,
     required this.onTap,
+    required this.onMenu,
     required this.layout,
     required this.position,
   });
@@ -1664,6 +1854,10 @@ class _HomeShortcutTile extends StatelessWidget {
   final Color badge;
   final Color onBadge;
   final VoidCallback onTap;
+
+  /// Opens the tile's menu at a global position: where a right-click
+  /// landed, or the tile's center for a long press or the menu key.
+  final ValueChanged<Offset> onMenu;
   final _HomeShortcutsLayout layout;
 
   /// Where the tile sits among the shortcuts, for the list's corners.
@@ -1735,11 +1929,21 @@ class _HomeShortcutTile extends StatelessWidget {
           ),
         );
     }
-    return Material(
-      color: container,
-      shape: RoundedRectangleBorder(borderRadius: radius),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(onTap: onTap, child: content),
+    return DesktopContextMenuRegion(
+      onContextMenu: onMenu,
+      child: Material(
+        color: container,
+        shape: RoundedRectangleBorder(borderRadius: radius),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: () {
+            final origin = contextMenuOriginOf(context);
+            if (origin != null) onMenu(origin);
+          },
+          child: content,
+        ),
+      ),
     );
   }
 }
