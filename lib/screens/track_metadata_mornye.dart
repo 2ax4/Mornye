@@ -1,6 +1,15 @@
 part of 'track_metadata_screen.dart';
 
 extension _TrackMetadataMornye on _TrackMetadataScreenState {
+  RoundedRectangleBorder _sectionCardShape(ColorScheme colorScheme) {
+    return RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+      side: BorderSide(
+        color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+      ),
+    );
+  }
+
   Widget _buildMornyePage(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;

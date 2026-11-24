@@ -429,6 +429,10 @@ class AppSettings {
 
   final bool hasCompletedTutorial;
 
+  /// The last `AppInfo.whatsNewRelease` tour shown or skipped. New installs
+  /// mark the current one at setup, so only updates show the tour.
+  final String whatsNewSeen;
+
   final List<String> lyricsProviders;
 
   /// Take the best-timed lyrics any enabled provider has (word-synced, then
@@ -493,10 +497,6 @@ class AppSettings {
   /// Save each lyrics translation once the player shows it.
   final bool lyricsTranslationAutoSave;
 
-  /// Translate the lyrics of each finished download and save them with the
-  /// song, so they show offline. Off by default: every download is a
-  /// request on the user's API key.
-  final bool lyricsTranslateDownloads;
 
   final String
   lastSeenVersion; // Last app version the user has acknowledged (e.g. '3.7.0')
@@ -656,6 +656,7 @@ class AppSettings {
     this.localLibraryAutoScan = 'off',
     this.linkHideDisconnectedSongs = true,
     this.hasCompletedTutorial = false,
+    this.whatsNewSeen = '',
     this.lyricsProviders = const [
       'apple_music',
       'lrcred',
@@ -682,7 +683,6 @@ class AppSettings {
     this.lyricsAiWordSync = false,
     this.lyricsTranslationSaveTo = lyricsTranslationSaveToSongFile,
     this.lyricsTranslationAutoSave = false,
-    this.lyricsTranslateDownloads = false,
     this.lastSeenVersion = '',
     this.deduplicateDownloads = true,
     this.allowQualityVariants = false,
@@ -856,6 +856,7 @@ class AppSettings {
     String? localLibraryAutoScan,
     bool? linkHideDisconnectedSongs,
     bool? hasCompletedTutorial,
+    String? whatsNewSeen,
     List<String>? lyricsProviders,
     bool? lyricsPreferBestTiming,
     bool? lyricsIncludeTranslationNetease,
@@ -876,7 +877,6 @@ class AppSettings {
     bool? lyricsAiWordSync,
     String? lyricsTranslationSaveTo,
     bool? lyricsTranslationAutoSave,
-    bool? lyricsTranslateDownloads,
     String? lastSeenVersion,
     bool? deduplicateDownloads,
     bool? allowQualityVariants,
@@ -1070,6 +1070,7 @@ class AppSettings {
       linkHideDisconnectedSongs:
           linkHideDisconnectedSongs ?? this.linkHideDisconnectedSongs,
       hasCompletedTutorial: hasCompletedTutorial ?? this.hasCompletedTutorial,
+      whatsNewSeen: whatsNewSeen ?? this.whatsNewSeen,
       lyricsProviders: lyricsProviders ?? this.lyricsProviders,
       lyricsPreferBestTiming:
           lyricsPreferBestTiming ?? this.lyricsPreferBestTiming,
@@ -1103,8 +1104,6 @@ class AppSettings {
           lyricsTranslationSaveTo ?? this.lyricsTranslationSaveTo,
       lyricsTranslationAutoSave:
           lyricsTranslationAutoSave ?? this.lyricsTranslationAutoSave,
-      lyricsTranslateDownloads:
-          lyricsTranslateDownloads ?? this.lyricsTranslateDownloads,
       lastSeenVersion: lastSeenVersion ?? this.lastSeenVersion,
       deduplicateDownloads: deduplicateDownloads ?? this.deduplicateDownloads,
       allowQualityVariants: allowQualityVariants ?? this.allowQualityVariants,

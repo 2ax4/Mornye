@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mornye/constants/app_info.dart';
 import 'package:mornye/screens/main_shell.dart';
 import 'package:mornye/screens/setup_screen.dart';
+import 'package:mornye/screens/whats_new_screen.dart';
 import 'package:mornye/screens/tutorial_screen.dart';
 import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/providers/equalizer_provider.dart';
@@ -35,9 +36,11 @@ import 'package:mornye/widgets/tv_navigation.dart';
 String initialLocationForAppState({
   required bool isFirstLaunch,
   required bool hasCompletedTutorial,
+  bool hasSeenWhatsNew = true,
 }) {
   if (isFirstLaunch) return '/setup';
   if (!hasCompletedTutorial) return '/tutorial';
+  if (!hasSeenWhatsNew) return '/whats-new';
   return '/';
 }
 
@@ -47,6 +50,10 @@ final _routerProvider = Provider<GoRouter>((ref) {
       (settings) => (
         isFirstLaunch: settings.isFirstLaunch,
         hasCompletedTutorial: settings.hasCompletedTutorial,
+        // Desktop shows the tour as a dialog over the shell instead.
+        hasSeenWhatsNew:
+            isDesktopPlatform ||
+            settings.whatsNewSeen == AppInfo.whatsNewRelease,
       ),
     ),
   );
@@ -54,6 +61,7 @@ final _routerProvider = Provider<GoRouter>((ref) {
   final initialLocation = initialLocationForAppState(
     isFirstLaunch: routingSettings.isFirstLaunch,
     hasCompletedTutorial: routingSettings.hasCompletedTutorial,
+    hasSeenWhatsNew: routingSettings.hasSeenWhatsNew,
   );
 
   return GoRouter(
@@ -66,6 +74,10 @@ final _routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/tutorial',
         builder: (context, state) => const TutorialScreen(),
+      ),
+      GoRoute(
+        path: '/whats-new',
+        builder: (context, state) => const WhatsNewScreen(),
       ),
     ],
     // Safety net: if a deep link URL (e.g. Spotify/Deezer) somehow reaches

@@ -1,18 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mornye/widgets/mornye_artwork_contrast.dart';
-import 'package:mornye/widgets/mornye_player_background.dart';
-
-/// Records in [reports] when the readings turn the dark layer on or off.
-ValueChanged<double> changes(List<bool> reports) => (strength) {
-  final on = strength > 0;
-  if (on != (reports.isNotEmpty && reports.last)) reports.add(on);
-};
 
 void main() {
   for (final interruption in ['none', 'disabled', 'background', 'hidden']) {
@@ -37,7 +29,7 @@ void main() {
           MornyeArtworkContrast.debugReadback = null;
           if (!release.isCompleted) release.complete();
         });
-        final reports = <bool>[];
+        Map<String, Color> colors = {};
         Widget app(Color color, {bool enabled = true, bool tickers = true}) =>
             MaterialApp(
               home: TickerMode(
@@ -49,7 +41,7 @@ void main() {
                       key: capture,
                       enabled: enabled,
                       targets: {'header': target},
-                      onDim: changes(reports),
+                      onChanged: (value) => colors = value,
                       child: ColoredBox(color: color),
                     ),
                     Positioned(
@@ -84,13 +76,12 @@ void main() {
         }
         release.complete();
         await finishReadback();
-        // The held black frame needs no layer, whether or not it was read.
-        expect(reports, isEmpty);
+        if (interruption != 'none') expect(colors, isEmpty);
         await tester.pump(const Duration(milliseconds: 334));
         await finishReadback();
         if (interruption == 'none') {
           expect(MornyeArtworkContrast.debugReadbackCount(capture), 2);
-          expect(reports, [true]);
+          expect(colors['header'], Colors.black);
         } else {
           expect(MornyeArtworkContrast.debugReadbackCount(capture), 1);
           if (interruption == 'disabled' || interruption == 'hidden') {
@@ -103,7 +94,7 @@ void main() {
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 334));
           await finishReadback();
-          expect(reports, [true]);
+          expect(colors['header'], Colors.black);
         }
         final settled = MornyeArtworkContrast.debugReadbackCount(capture);
         for (var frame = 0; frame < 4; frame++) {
@@ -134,7 +125,7 @@ void main() {
       provider,
       () => OneFrameImageStreamCompleter(pending.future),
     );
-    final reports = <bool>[];
+    Map<String, Color> colors = {};
     await tester.pumpWidget(
       MaterialApp(
         home: Stack(
@@ -144,7 +135,7 @@ void main() {
               key: capture,
               enabled: true,
               targets: {'header': target},
-              onDim: changes(reports),
+              onChanged: (value) => colors = value,
               child: RepaintBoundary(
                 child: ColoredBox(
                   color: Colors.black,
@@ -168,15 +159,13 @@ void main() {
     );
     Future<void> sample() async {
       await tester.pump(const Duration(milliseconds: 334));
-      // The test engine can take over 100 ms of real time to rasterize the
-      // readback of a scene that draws the decoded cover.
       await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 300)),
+        () => Future<void>.delayed(const Duration(milliseconds: 30)),
       );
     }
 
     await sample();
-    expect(reports, isEmpty);
+    expect(colors['header'], Colors.white);
     final initial = MornyeArtworkContrast.debugReadbackCount(capture);
     for (var i = 0; i < 4; i++) {
       await sample();
@@ -199,7 +188,7 @@ void main() {
     pending.complete(ImageInfo(image: image!));
     await tester.pumpAndSettle();
     await sample();
-    expect(reports, [true]);
+    expect(colors['header'], Colors.black);
     final decoded = MornyeArtworkContrast.debugReadbackCount(capture);
     expect(decoded, greaterThan(initial));
     await sample();
@@ -208,8 +197,80 @@ void main() {
     targetTop.value = 500;
     await tester.pump();
     await sample();
-    expect(reports, [true, false]);
+    expect(colors['header'], Colors.white);
     expect(MornyeArtworkContrast.debugReadbackCount(capture), decoded + 1);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('video sampling stops when hidden or backgrounded', (
+    tester,
+  ) async {
+    final capture = GlobalKey();
+    final target = GlobalKey();
+    final tickers = ValueNotifier(true);
+    addTearDown(tickers.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ValueListenableBuilder<bool>(
+          valueListenable: tickers,
+          builder: (context, enabled, child) =>
+              TickerMode(enabled: enabled, child: child!),
+          child: Stack(
+            children: [
+              MornyeArtworkContrast(
+                key: capture,
+                enabled: true,
+                continuous: true,
+                targets: {'header': target},
+                onChanged: (_) {},
+                child: const ColoredBox(
+                  color: Colors.black,
+                  child: SizedBox.expand(),
+                ),
+              ),
+              SizedBox(key: target, width: 80, height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+    Future<void> sample() async {
+      await tester.pump(const Duration(milliseconds: 334));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 30)),
+      );
+    }
+
+    await sample();
+    final before = MornyeArtworkContrast.debugReadbackCount(capture);
+    await sample();
+    expect(
+      MornyeArtworkContrast.debugReadbackCount(capture),
+      greaterThan(before),
+    );
+    tickers.value = false;
+    await tester.pump();
+    final hidden = MornyeArtworkContrast.debugReadbackCount(capture);
+    await sample();
+    await sample();
+    expect(MornyeArtworkContrast.debugReadbackCount(capture), hidden);
+    tickers.value = true;
+    await tester.pump();
+    await sample();
+    expect(
+      MornyeArtworkContrast.debugReadbackCount(capture),
+      greaterThan(hidden),
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    final paused = MornyeArtworkContrast.debugReadbackCount(capture);
+    await sample();
+    expect(MornyeArtworkContrast.debugReadbackCount(capture), paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await sample();
+    expect(
+      MornyeArtworkContrast.debugReadbackCount(capture),
+      greaterThan(paused),
+    );
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -232,33 +293,13 @@ void main() {
     }
   });
 
-  test('the layer is only as strong as white labels need', () {
-    expect(mornyeDimStrength(0), 0);
-    expect(mornyeDimStrength(mornyeLabelBackgroundLuminance), 0);
-    expect(mornyeDimStrength(1), 1);
-    var previous = 0.0;
-    for (var luminance = 0.0; luminance <= 1; luminance += 0.01) {
-      final strength = mornyeDimStrength(luminance);
-      expect(strength, greaterThanOrEqualTo(previous));
-      previous = strength;
-      if (strength == 0 || strength == 1) continue;
-      // Dimmed, the background is about as light as the limit: no darker
-      // than a step of the layer below it.
-      final scale = 1 - strength * mornyeControlsDimAlpha;
-      expect(
-        luminance * math.pow(scale, 2.2),
-        closeTo(mornyeLabelBackgroundLuminance, 0.03),
-        reason: 'luminance $luminance',
-      );
-    }
-  });
-
-  testWidgets('the lightest region sets how strong the layer is', (
+  testWidgets('foreground follows changing frames separately for each region', (
     tester,
   ) async {
     final header = GlobalKey();
     final controls = GlobalKey();
-    final reports = <double>[];
+    Map<String, Color> colors = {};
+    var changes = 0;
     Widget app(Color top, Color bottom) => MaterialApp(
       home: Stack(
         fit: StackFit.expand,
@@ -266,7 +307,10 @@ void main() {
           MornyeArtworkContrast(
             enabled: true,
             targets: {'header': header, 'controls': controls},
-            onDim: reports.add,
+            onChanged: (value) {
+              colors = value;
+              changes++;
+            },
             child: Column(
               children: [
                 Expanded(
@@ -307,43 +351,41 @@ void main() {
 
     await tester.pumpWidget(app(Colors.white, Colors.black));
     await sample();
-    expect(reports.last, 1);
-    // A light region anywhere keeps the one layer on.
+    expect(colors, {'header': Colors.black, 'controls': Colors.white});
     await tester.pumpWidget(app(Colors.black, Colors.white));
     await sample();
-    expect(reports.last, 1);
-    await tester.pumpWidget(app(Colors.black, Colors.black));
+    expect(colors, {'header': Colors.white, 'controls': Colors.black});
+    final previousChanges = changes;
     await sample();
-    expect(reports.last, 0);
-    final readings = reports.length;
+    expect(changes, previousChanges);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pumpWidget(app(Colors.white, Colors.black));
     await sample();
-    expect(reports, hasLength(readings));
+    expect(changes, previousChanges);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     await sample();
-    expect(reports, hasLength(greaterThan(readings)));
-    expect(reports.last, 1);
+    expect(colors, {'header': Colors.black, 'controls': Colors.white});
 
-    // A mid-tone cover stays as bright as it is: white reads on it, though
-    // under 4.5:1.
-    const teal = Color(0xff4f8f96);
-    expect(1.05 / (teal.computeLuminance() + 0.05), inExclusiveRange(3.5, 4.5));
-    await tester.pumpWidget(app(teal, teal));
+    // A muted pink frame still supports white player labels, including after
+    // a bright frame temporarily required black labels.
+    const pastel = Color(0xffa08398);
+    await tester.pumpWidget(app(pastel, pastel));
     await sample();
-    expect(reports.last, 0);
-
-    // A light cover is dimmed as far as it needs, not all the way, rather
-    // than given black labels.
-    const silver = Color(0xffc0c0c0);
-    await tester.pumpWidget(app(silver, Colors.black));
+    expect(colors, {'header': Colors.white, 'controls': Colors.white});
+    final pastelChanges = changes;
+    await tester.pumpWidget(app(const Color(0xff939393), pastel));
     await sample();
-    expect(reports.last, inExclusiveRange(0.5, 0.9));
-    expect(
-      reports.last,
-      closeTo(mornyeDimStrength(silver.computeLuminance()), 0.051),
-    );
+    expect(changes, pastelChanges);
+    await tester.pumpWidget(app(Colors.white, pastel));
+    await sample();
+    expect(colors, {'header': Colors.black, 'controls': Colors.white});
+    await tester.pumpWidget(app(const Color(0xff939393), pastel));
+    await sample();
+    expect(colors, {'header': Colors.black, 'controls': Colors.white});
+    await tester.pumpWidget(app(pastel, pastel));
+    await sample();
+    expect(colors, {'header': Colors.white, 'controls': Colors.white});
     await tester.pumpWidget(const SizedBox());
   });
 }

@@ -950,9 +950,6 @@ class SettingsNotifier extends Notifier<AppSettings> {
   void setLyricsTranslationAutoSave(bool enabled) =>
       _commit(state.copyWith(lyricsTranslationAutoSave: enabled));
 
-  void setLyricsTranslateDownloads(bool enabled) =>
-      _commit(state.copyWith(lyricsTranslateDownloads: enabled));
-
   Future<void> setFirstLaunchComplete() async {
     // The router leaves setup as soon as this flag changes. Persist the final
     // folder settings first so a restart cannot send the user back to setup.
@@ -1225,6 +1222,9 @@ class SettingsNotifier extends Notifier<AppSettings> {
 
   void setTutorialComplete() =>
       _commit(state.copyWith(hasCompletedTutorial: true));
+
+  void setWhatsNewSeen() =>
+      _commit(state.copyWith(whatsNewSeen: AppInfo.whatsNewRelease));
 
   void setDeduplicateDownloads(bool enabled) =>
       _commit(state.copyWith(deduplicateDownloads: enabled));

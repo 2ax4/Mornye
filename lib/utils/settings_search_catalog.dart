@@ -650,43 +650,6 @@ class SettingsSearchCatalog {
           subtitle: l10n.lyricsKeepScreenOnSubtitle,
           keywords: const ['screen timeout', 'awake', 'sleep', 'layar'],
         ),
-        if (!isDesktopPlatform)
-          SettingsSearchEntry(
-            icon: Icons.screen_lock_portrait_outlined,
-            title: l10n.lyricsLockScreen,
-            keywords: const ['lockscreen', 'notification', 'media controls'],
-          ),
-        SettingsSearchEntry(
-          icon: Icons.lyrics_outlined,
-          title: l10n.lyricsPlayerPreview,
-          subtitle: l10n.lyricsPlayerPreviewSubtitle,
-          keywords: const [
-            'lyric preview',
-            'snippet',
-            'now playing',
-            'karaoke',
-          ],
-        ),
-        SettingsSearchEntry(
-          icon: Icons.record_voice_over_outlined,
-          title: l10n.lyricsRomanize,
-          subtitle: l10n.lyricsRomanizeSubtitle,
-          keywords: const [
-            'romanization',
-            'pronunciation',
-            'romaji',
-            'pinyin',
-            'transliteration',
-            'latin',
-            'offline',
-          ],
-        ),
-        SettingsSearchEntry(
-          icon: Icons.swap_vert_rounded,
-          title: l10n.lyricsRomanizedMainLine,
-          subtitle: l10n.lyricsRomanizedMainLineSubtitle,
-          keywords: const ['romanization', 'romaji', 'pinyin', 'main line'],
-        ),
         SettingsSearchEntry(
           icon: Icons.auto_awesome_outlined,
           title: l10n.lyricsAiTranslation,
@@ -714,16 +677,6 @@ class SettingsSearchCatalog {
           icon: Icons.source_outlined,
           title: l10n.lyricsProvidersTitle,
           keywords: const ['lyrics priority', 'lyrics source'],
-        ),
-        SettingsSearchEntry(
-          icon: Icons.timer_outlined,
-          title: l10n.lyricsPreferBestTiming,
-          keywords: const [
-            'synced lyrics',
-            'word synced',
-            'karaoke',
-            'plain lyrics',
-          ],
         ),
         SettingsSearchEntry(
           icon: Icons.translate_outlined,

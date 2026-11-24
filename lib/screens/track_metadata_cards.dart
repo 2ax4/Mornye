@@ -1,5 +1,17 @@
 part of 'track_metadata_screen.dart';
 
+const _trackMetadataHeroScheme = ColorScheme.dark(
+  surface: Colors.black,
+  onSurface: Colors.white,
+  onSurfaceVariant: Colors.white70,
+);
+
+final ImageFilter _trackMetadataBackdropBlur = ImageFilter.blur(
+  sigmaX: 32,
+  sigmaY: 32,
+);
+
+
 /// Content width, inside the page padding, at which the cards split into two
 /// columns of about 470 or more each.
 const double _trackMetadataTwoColumnMinWidth = 960;
@@ -703,5 +715,197 @@ extension _TrackMetadataCards on _TrackMetadataScreenState {
     final artist = _sanitizeFileNameSegment(artistName);
     final track = _sanitizeFileNameSegment(trackName);
     return '$artist - $track';
+  }
+
+  Widget _buildHeaderBackground(
+    BuildContext context,
+    ColorScheme colorScheme,
+    double expandedHeight,
+    bool showContent,
+  ) {
+    final coverCacheWidth = coverCacheWidthForViewport(context);
+    final backdropCacheWidth = metadataBackdropCacheExtent(context);
+    // Downloaded-item entry points must await resolveOrExtract before pushing
+    // this route. That precondition keeps the Hero, foreground, and backdrop
+    // on one source from the first frame; this synchronous lookup also covers
+    // cached rebuilds and in-screen swipe navigation.
+    final sharedEmbeddedCoverPath = _hasPath(_embeddedCoverPreviewPath)
+        ? _embeddedCoverPreviewPath
+        : DownloadedEmbeddedCoverResolver.resolve(_filePath);
+    final artworkSource = resolveMetadataArtworkSource(
+      embeddedCoverPath: sharedEmbeddedCoverPath,
+      localCoverPath: _localCoverPath,
+      remoteCoverUrl: _coverUrl,
+    );
+
+    Widget artworkImage({required int cacheWidth, int? cacheHeight}) {
+      final source = artworkSource;
+      if (source == null) {
+        return Container(
+          color: colorScheme.surfaceContainerHighest,
+          child: Icon(
+            Icons.music_note,
+            size: 80,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        );
+      }
+
+      if (isHttpCoverUrl(source)) {
+        return CachedCoverImage(
+          imageUrl: source,
+          fit: BoxFit.cover,
+          memCacheWidth: cacheWidth,
+          memCacheHeight: cacheHeight,
+          placeholder: (_, _) => Container(color: colorScheme.surface),
+          errorWidget: (_, _, _) => Container(color: colorScheme.surface),
+        );
+      }
+
+      final filePath = coverFilePath(source);
+      if (filePath == null) return Container(color: colorScheme.surface);
+      return Image.file(
+        File(filePath),
+        fit: BoxFit.cover,
+        cacheWidth: cacheWidth,
+        cacheHeight: cacheHeight,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.low,
+        errorBuilder: (_, _, _) => Container(color: colorScheme.surface),
+      );
+    }
+
+    Widget coverImage() => artworkImage(cacheWidth: coverCacheWidth);
+    Widget backdropImage() => artworkImage(
+      cacheWidth: backdropCacheWidth,
+      cacheHeight: backdropCacheWidth,
+    );
+
+    // Centered square cover over a blurred backdrop (same layout as the album
+    // header) so the Hero flight from a list thumbnail keeps its square shape.
+    // Landscape headers are short: the cover also yields to the height left
+    // below the toolbar after the title block, so nothing rises into it.
+    final toolbarBottom = MediaQuery.paddingOf(context).top + kToolbarHeight;
+    const textBlockHeight = 190.0;
+    // Desktop allows up to 260, close to the desktop album header's cover.
+    final coverSize = math.min(
+      (MediaQuery.sizeOf(context).width * 0.5).clamp(
+        150.0,
+        isDesktopPlatform ? 260.0 : 210.0,
+      ),
+      math.max(96.0, expandedHeight - toolbarBottom - textBlockHeight),
+    );
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        RepaintBoundary(
+          key: ValueKey<String>('metadata_backdrop_$_itemId'),
+          child: ImageFiltered(
+            imageFilter: _trackMetadataBackdropBlur,
+            child: backdropImage(),
+          ),
+        ),
+        Container(color: Colors.black.withValues(alpha: 0.35)),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: expandedHeight * 0.65,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.85),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 20,
+          right: 20,
+          bottom: 40,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            opacity: showContent ? 1.0 : 0.0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Hero(
+                  tag: _coverHeroTag,
+                  child: Container(
+                    width: coverSize,
+                    height: coverSize,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: SizedBox(
+                        width: coverSize,
+                        height: coverSize,
+                        child: coverImage(),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ExplicitTrackTitle(
+                  title: trackName,
+                  explicit: isExplicit,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  colorScheme: _trackMetadataHeroScheme,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  artistName,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  albumName,
+                  style: const TextStyle(color: Colors.white54, fontSize: 14),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                HeaderPalette(
+                  scheme: _trackMetadataHeroScheme,
+                  child: HeaderMetaRow(items: _headerMetadataItems(context)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

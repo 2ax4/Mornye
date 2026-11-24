@@ -642,11 +642,9 @@ class ExtensionNotifier extends Notifier<ExtensionState> {
     final prefs = await SharedPreferences.getInstance();
     // The native repository is initialized lazily when Repo is opened. Keep
     // its persisted URL in backups made before that first visit.
-    var registryUrl = (prefs.getString(_storeRegistryUrlPrefKey) ?? '').trim();
-    try {
-      final activeUrl = (await PlatformBridge.getRepoRegistryUrl()).trim();
-      if (activeUrl.isNotEmpty) registryUrl = activeUrl;
-    } catch (_) {}
+    // The desktop backend keeps a registry-url list (upstream model); the
+    // fork's single active URL lives in prefs, which is restored below.
+    final registryUrl = (prefs.getString(_storeRegistryUrlPrefKey) ?? '').trim();
 
     List<Map<String, dynamic>> installed;
     try {
@@ -731,7 +729,7 @@ class ExtensionNotifier extends Notifier<ExtensionState> {
       ).create(recursive: true);
       await PlatformBridge.initExtensionRepo(destDir.path);
       if (registryUrl.isNotEmpty) {
-        await PlatformBridge.setRepoRegistryUrl(registryUrl);
+        await PlatformBridge.setRepoRegistryUrls([registryUrl]);
         await prefs.setString(_storeRegistryUrlPrefKey, registryUrl);
       }
     } catch (e) {

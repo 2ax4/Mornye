@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart'
         defaultTargetPlatform,
         listEquals,
         setEquals;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mornye/widgets/app_alert_dialog.dart';
 import 'package:mornye/widgets/app_choice_chip.dart';
 import 'package:mornye/widgets/app_content_card.dart';

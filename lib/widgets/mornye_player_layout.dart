@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoIcons;
@@ -111,9 +112,6 @@ class MornyePlayerLayout extends ConsumerWidget {
           compactCoverSize,
           double.infinity,
         );
-        // Made once per layout, so the panel switch moves the same panels on
-        // every frame instead of rebuilding their rows.
-        late final queuePanel = MornyePlayerQueue(colorScheme: colorScheme);
         Widget stage({
           bool artworkOnly = false,
           double progress = 0,
@@ -350,15 +348,18 @@ class MornyePlayerLayout extends ConsumerWidget {
           0.0,
           controlsHeadroom,
         );
-        Widget controls() => PlayerPlaybackControls(
-          key: artworkKeys.controls,
-          mediaId: mediaItem.id,
-          duration: mediaItem.duration ?? Duration.zero,
-          seekPreview: seekPreview,
-          colorScheme: foreground,
-          metadata: metadata,
-          compact: landscape,
-          transportTopPadding: 16 + transportShift,
+        Widget controls() => AnimatedBuilder(
+          animation: artworkForeground,
+          builder: (context, _) => PlayerPlaybackControls(
+            key: artworkKeys.controls,
+            mediaId: mediaItem.id,
+            duration: mediaItem.duration ?? Duration.zero,
+            seekPreview: seekPreview,
+            colorScheme: foreground('controls'),
+            metadata: metadata,
+            compact: landscape,
+            transportTopPadding: 16 + transportShift,
+          ),
         );
 
         if (landscape) {
@@ -377,8 +378,8 @@ class MornyePlayerLayout extends ConsumerWidget {
 
         Widget content() => TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: showQueue ? 1 : 0),
-          duration: motion,
-          curve: Curves.easeInOutCubic,
+          duration: motion.duration,
+          curve: motion.curve,
           builder: (context, progress, controls) => CustomMultiChildLayout(
             delegate: _PlayerHeaderLayout(
               progress: progress,
@@ -394,11 +395,12 @@ class MornyePlayerLayout extends ConsumerWidget {
                 id: _PlayerHeaderSlot.header,
                 child: KeyedSubtree(
                   key: const ValueKey('player-track-header'),
-                  child: KeyedSubtree(
+                  child: AnimatedBuilder(
                     key: artworkKeys.header,
-                    child: _trackHeader(
+                    animation: artworkForeground,
+                    builder: (context, _) => _trackHeader(
                       context,
-                      foreground,
+                      foreground('header'),
                       compactProgress: progress,
                     ),
                   ),
@@ -543,26 +545,25 @@ class MornyePlayerLayout extends ConsumerWidget {
               ),
             ],
           ),
-          if (!compact && progress < 1.0)
-            SizeTransition(
-              sizeFactor: AlwaysStoppedAnimation(1.0 - progress),
-              alignment: AlignmentDirectional.topStart,
-              child: FadeTransition(
-                opacity: AlwaysStoppedAnimation(
-                  (1.0 - progress * 2.5).clamp(0.0, 1.0),
-                ),
-                child: PlayerLyricPreview(
-                  metadata: metadata,
-                  seekPreview: seekPreview,
-                  colorScheme: colorScheme,
-                  onTap: () => onPageChanged(1),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
+}
+
+/// Rests at the start while paused; only this marquee rebuilds on play/pause.
+class _PlayingMarquee extends ConsumerWidget {
+  const _PlayingMarquee({required this.resetKey, required this.child});
+
+  final Object resetKey;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => OverflowMarquee(
+    resetKey: resetKey,
+    playing: ref.watch(playbackPlayingProvider),
+    child: child,
+  );
 }
 
 enum _PlayerHeaderSlot { stage, header, controls }

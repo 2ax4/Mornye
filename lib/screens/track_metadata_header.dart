@@ -282,43 +282,4 @@ extension _TrackMetadataHeader on _TrackMetadataScreenState {
     );
   }
 
-  RoundedRectangleBorder _sectionCardShape(
-    BuildContext context,
-    ColorScheme colorScheme,
-  ) {
-    return RoundedRectangleBorder(
-      borderRadius: context.tokens.borderRadiusCard,
-      side: BorderSide(
-        color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-      ),
-    );
-  }
-
-  /// The surface of one section of the page, shared by both styles.
-  Widget _metadataSectionSurface(
-    BuildContext context,
-    ColorScheme scheme, {
-    required Widget child,
-  }) {
-    if (context.isMornye) {
-      return Material(
-        color: MornyeTheme.controlFill(context),
-        // The radius of Mornye's grouped lists (see SettingsGroup).
-        borderRadius: BorderRadius.circular(28),
-        clipBehavior: Clip.antiAlias,
-        child: DividerTheme(
-          data: DividerTheme.of(
-            context,
-          ).copyWith(color: MornyeTheme.metadataDividerColor(context)),
-          child: child,
-        ),
-      );
-    }
-    return Card(
-      elevation: 0,
-      color: settingsGroupColor(context),
-      shape: _sectionCardShape(context, scheme),
-      child: child,
-    );
-  }
 }

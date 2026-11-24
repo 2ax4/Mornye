@@ -2,10 +2,18 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:mornye/providers/song_leftovers_provider.dart';
+import 'package:mornye/theme/app_motion.dart';
+import 'package:mornye/widgets/app_icon.dart';
+import 'package:mornye/widgets/error_card.dart';
+import 'package:mornye/widgets/desktop/detail_header.dart'
+    show desktopDetailSubtitleStyle;
+import 'package:mornye/widgets/expressive_button_group.dart';
 import 'package:mornye/theme/app_tokens.dart';
 import 'package:mornye/widgets/app_alert_dialog.dart';
-import 'package:flutter/cupertino.dart' show CupertinoButton, CupertinoIcons;
+import 'package:cupertino_ui/cupertino_ui.dart'
+    show CupertinoButton, CupertinoIcons;
 import 'package:mornye/widgets/app_bottom_sheet.dart';
 import 'package:mornye/widgets/app_snack_bar.dart';
 import 'package:mornye/widgets/expressive_button.dart';
@@ -60,7 +68,12 @@ import 'package:mornye/theme/cover_palette.dart' show HeaderPalette;
 import 'package:mornye/theme/mornye_theme.dart';
 import 'package:mornye/theme/mornye_icons.dart';
 import 'package:mornye/widgets/album_detail_header.dart'
-    show HeaderMetaRow, HeaderMetaItem, HeaderCircleButton, HeaderFilledButton;
+    show
+        AlbumDetailHeader,
+        HeaderMetaRow,
+        HeaderMetaItem,
+        HeaderCircleButton,
+        HeaderFilledButton;
 import 'package:mornye/widgets/desktop/context_menu.dart';
 import 'package:mornye/widgets/link/link_actions.dart';
 import 'package:mornye/widgets/link/link_library_actions.dart';
@@ -87,6 +100,7 @@ import 'package:mornye/screens/track_metadata_edit_sheet.dart';
 part 'track_metadata_screen_cover.dart';
 part 'track_metadata_screen_display.dart';
 part 'track_metadata_screen_menu.dart';
+part 'track_metadata_header.dart';
 part 'track_metadata_mornye.dart';
 
 part 'track_metadata_cards.dart';
@@ -100,8 +114,15 @@ class _MetadataItem {
   final String value;
   final String rawValue;
 
-  _MetadataItem(this.label, this.value, {String? rawValue})
-    : rawValue = rawValue ?? value;
+  /// Whether a tap copies the value, for identifiers people paste elsewhere.
+  final bool copyable;
+
+  _MetadataItem(
+    this.label,
+    this.value, {
+    String? rawValue,
+    this.copyable = false,
+  }) : rawValue = rawValue ?? value;
 }
 
 class _EmbeddedCoverPreviewCacheEntry {
