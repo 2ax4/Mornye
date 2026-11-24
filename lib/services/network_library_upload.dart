@@ -61,20 +61,32 @@ class NetworkUploadSong {
   final String fileName;
 }
 
-/// The uploadable songs of [items], once each by file.
-List<NetworkUploadSong> networkUploadSongs(Iterable<UnifiedLibraryItem> items) {
+/// The songs of [items] stored on this device, once each by file.
+List<UnifiedLibraryItem> networkUploadItems(
+  Iterable<UnifiedLibraryItem> items,
+) {
   final paths = <String>{};
   return [
     for (final item in items)
-      if (canUploadLibraryItem(item) && paths.add(item.filePath))
-        NetworkUploadSong(
-          path: item.filePath,
-          title: item.trackName,
-          relativeDir: networkUploadRelativeDir(item),
-          fileName: networkUploadFileName(item),
-        ),
+      if (canUploadLibraryItem(item) && paths.add(item.filePath)) item,
   ];
 }
+
+/// The uploadable songs of [items], once each by file, each in the folder
+/// [folderFor] gives it: where the download folder settings put a download
+/// of it, so the copies are laid out like the songs on this device.
+Future<List<NetworkUploadSong>> networkUploadSongs(
+  Iterable<UnifiedLibraryItem> items, {
+  required Future<String> Function(UnifiedLibraryItem item) folderFor,
+}) async => [
+  for (final item in networkUploadItems(items))
+    NetworkUploadSong(
+      path: item.filePath,
+      title: item.trackName,
+      relativeDir: await folderFor(item),
+      fileName: networkUploadFileName(item),
+    ),
+];
 
 String networkUploadRelativeDir(UnifiedLibraryItem item) {
   final albumArtist =
