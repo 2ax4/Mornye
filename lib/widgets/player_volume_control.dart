@@ -223,7 +223,10 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
                   ? Icons.volume_down_rounded
                   : Icons.volume_up_rounded,
               size: 22,
-              color: colors.onSurfaceVariant,
+              // onSurface, like the bar's other icon buttons: onSurfaceVariant
+              // reads as a dimmer second class next to them, most of all on
+              // the artwork scheme the Material player bar carries.
+              color: colors.onSurface,
             ),
           ),
         ),
@@ -274,11 +277,7 @@ class _PlayerVolumeControlState extends ConsumerState<PlayerVolumeControl> {
               message: context.l10n.audioControlTitle,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                child: AppIcon(
-                  Icons.tune,
-                  size: 22,
-                  color: colors.onSurfaceVariant,
-                ),
+                child: AppIcon(Icons.tune, size: 22, color: colors.onSurface),
               ),
             ),
           ),

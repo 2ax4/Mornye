@@ -1078,7 +1078,19 @@ class _MaterialAudioPanelAnchorState
         elevation: WidgetStatePropertyAll(0),
       ),
       menuChildren: [
-        _MornyePopoverEntrance(child: AudioControlPanel(width: 320)),
+        _MornyePopoverEntrance(
+          // The menu renders in the root overlay, outside the bar's
+          // PlayerArtworkTheme scope, so unwrapped the panel draws the app
+          // scheme's surface and sliders and looks nothing like the bar
+          // beneath it. Carry the bar's theme — the artwork scheme when a
+          // track with artwork plays, the app scheme otherwise — into the
+          // overlay, the way the Mornye capsule's glass popover already
+          // matches it.
+          child: Theme(
+            data: Theme.of(context),
+            child: const AudioControlPanel(width: 320),
+          ),
+        ),
       ],
       child: PlayerVolumeControl(
         foreground: Theme.of(context).colorScheme.onSurface,
