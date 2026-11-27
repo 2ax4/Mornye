@@ -209,6 +209,14 @@ class _PlayerArtworkThemeState extends State<PlayerArtworkTheme>
     final progress = base.progressIndicatorTheme;
     return base.copyWith(
       colorScheme: scheme,
+      // The base theme built its icon theme from its own scheme, so left
+      // alone it keeps the app scheme's onSurface while everything else
+      // here moves to [scheme]. Icon-theme reads under the scope — the
+      // player bar's volume and tune glyphs, the audio panel's foreground
+      // — would then draw the app scheme's color on the artwork scheme's
+      // surface, a pair that can land on the same tone and vanish. Derive
+      // the icon theme from [scheme], like the component colours below.
+      iconTheme: base.iconTheme.copyWith(color: scheme.onSurface),
       canvasColor: scheme.surface,
       scaffoldBackgroundColor: scheme.surface,
       appBarTheme: appBar.copyWith(

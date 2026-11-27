@@ -1085,10 +1085,15 @@ class _MaterialAudioPanelAnchorState
           // beneath it. Carry the bar's theme — the artwork scheme when a
           // track with artwork plays, the app scheme otherwise — into the
           // overlay, the way the Mornye capsule's glass popover already
-          // matches it.
+          // matches it. The panel paints that scheme's surface, so its
+          // foreground is the same onSurface the bar draws everything
+          // else with.
           child: Theme(
             data: Theme.of(context),
-            child: const AudioControlPanel(width: 320),
+            child: AudioControlPanel(
+              width: 320,
+              foreground: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ),
       ],
